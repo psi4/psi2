@@ -1,0 +1,288 @@
+      SUBROUTINE OUTPTX(SU,ALPHA,BETA,NLAMDA,NORBS,NC,NO,ITYP,CM,
+     1   EIG,QLAST,TWOCON,KLI,KLII,CI1,CI2,IALPHA,IBETA,
+     2   sf1,sf2,fc,fo,wmot,sd,iwmsiz)
+C
+C
+C ROUTINE TO WRITE FINAL SCF VECTOR, OCCUPATIONS, EIGENVALUES,
+C ENERGY AND COUPLING CONSTANTS TO TAPE30     PWS 12 JULY 1983
+C
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C
+CSEL  REAL*8 SU(MXCOEF),ALPHA(1),BETA(1),CM(2,MSFRU)
+CSEL 1,                EIG(NTOTAL)
+      integer msfru,nsym,jl
+      REAL*8 CM(2,MSFRU)
+cets030491      INTEGER SU(1),EIG(1),IBETA(1),IALPHA(1)
+      real*8 eig(*),su(*)
+      integer ialpha(*),ibeta(*)
+      DOUBLE PRECISION BETA(JL),ALPHA(JL)
+      INTEGER ITYP(20),NLAMDA(NSYM),NORBS(NSYM),NC(NSYM),NO(NSYM)
+      LOGICAL TWOCON,OSS,TWO,HS
+      INTEGER BLABEL,ALABEL
+      INTEGER IELAST(1)
+      real*8 sf1(nmat),sf2(nmat),fc(iwmsiz),fo(iwmsiz),wmot(*)
+      real*8 sd(msfru)
+C
+      EQUIVALENCE (IELAST,ELAST)
+C
+      COMMON /FLAGS/  IDEBUG,ISTO,IPUNCH,ISAVE,IRORDR
+      COMMON /OLDCI/ OCI1,OCI2
+      COMMON /TFOC/   OSS,TWO,IOP1,IOP2,OCC1,OCC2,OLDC1,OLDC2,HS
+      COMMON /SCFIN/  REPNUC,IOPEN,ISCF,IPRCT,IVECT,NBFLD,ICUT
+      COMMON /INPT/   NSYM,IPMAX,NMAT,ITMAX,NSFMAX,NTOTAL,MXCOEF,
+     #MSFRU
+      COMMON /HOLL/   BLABEL(20),ALABEL(26),FMT(10),JL
+      COMMON /TAPES/ NIN,IR,IOUT,ICHECK,IFLAG3,ITAPE,I30
+      COMMON /TAPE30/ I10(200),ITAP30
+      common /dim21/ ipq(256)
+C
+C
+C
+      ELAST=QLAST
+C
+CTJL  WRITE(ICHECK,*) '  IN OUTPTX'
+      A0=0.0D+00
+      A1=1.0D+00
+      A2=2.0D+00
+      OSS=.FALSE.
+      HS=.FALSE.
+      IF (IOPEN.EQ.0) GOTO 921
+      OCI1=CI1
+      OCI2=CI2
+      HS=.TRUE.
+      DO 101 I=1,JL
+        IF (DABS(BETA(I)) .NE. A1) HS=.FALSE.
+ 101  CONTINUE
+      IF (DABS(BETA(2)) .EQ. 3.0D+00) OSS=.TRUE.
+      IF (HS.AND.OSS) THEN
+        WRITE(IOUT,922) HS
+ 922    FORMAT(/'  BOTH HIGH-SPIN AND OPEN-SHELL-SINGLET FLAGS ARE '
+     1  ,I3,'  PROGRAM ABORTED.')
+        WRITE(1000,922)HS
+      END IF
+      IOP1=0
+      IOP2=0
+      IF (OSS .OR. HS) THEN
+        DO 801 K=1,MSFRU
+          IF (CM(2,K) .NE. A0) THEN
+            IF (IOP1 .EQ. 0) THEN
+              IOP1=K
+            ELSE
+              IOP2=K
+            END IF
+          END IF
+ 801    CONTINUE
+        OLDC1=A1
+        OLDC2=A1
+        OCC1=A1
+        OCC2=A1
+      END IF
+ 921  CONTINUE
+      TWO=.FALSE.
+      IF (TWOCON) THEN
+CTJL    WRITE(ICHECK,*) '  IN TWOCON TEST'
+        ITWO=2
+        TWO=.TRUE.
+        ALPHA(1)=1.0D+00-2.0D+00/CM(2,KLI)
+        ALPHA(2)=1.0D+00
+        BETA(2)=-1.0D+00/(CI1*CI2)
+        ALPHA(3)=1.0D+00-2.0D+00/CM(2,KLII)
+        IOP1=KLI
+        IOP2=KLII
+        OCC1=CM(2,KLI)
+        OCC2=CM(2,KLII)
+        OLDC1=OCC1
+        OLDC2=OCC2
+        IF (OCC2 .GT. OCC1) THEN
+          ITEMP=IOP1
+          IOP1=IOP2
+          IOP2=ITEMP
+          VAL=OCC1
+          OCC1=OCC2
+          OCC2=VAL
+        END IF
+      END IF
+C
+C     ----- GET ARRAY OF CONSTANTS FROM TAPE30 -----
+C
+CTJL  WRITE(ICHECK,*) '  GETTING CONSTANTS FROM 10'
+      ITAP30=30
+CSEL  CALL SFILE(ITAP30)
+      CALL WREADW(ITAP30,I10,200,101,JUNK)
+      IEND=I10(1)
+      MPOINT=I10(2)
+      MCONST=I10(3)
+      MCALCS=I10(4)
+      NCALCS=I10(5)
+      NAT=I10(19)
+      nbfao=i10(22)
+      nx=i10(24)
+      I10(41)=NSYM
+      I10(42)=MXCOEF
+      ITEMP=0
+      IF (IOPEN.NE.0) ITEMP=JL
+      IF (TWOCON) ITEMP=-JL
+      I10(43)=ITEMP
+cets030291 write a 1 to i10(45) to let scf know an old vector exists
+      i10(45)=1
+c
+cets030491 an incredible hack to get scfth to write file30 correctly
+c          for scf gradients
+C
+C ---- CALCULATE LAGRANGIAN IN MO FORM ----
+C
+      IF (IOPEN .EQ. 0) THEN
+C
+C       CLOSED SHELL SINGLET
+C
+        DO 103 II=1,NX
+  103   WMOT(II)=A0
+C
+        IOR = 0
+        DO 105 L=1,NSYM
+          NN=NLAMDA(L)
+          DO 104 I=1,NN
+            IOR=IOR+1
+            IJTF=IOR*(IOR+1)/2
+            IF (CM(1,IOR) .NE. A0) WMOT(IJTF)=EIG(IOR)*A2
+  104     CONTINUE
+  105   CONTINUE
+C
+      ELSE
+C
+        DO 106 II=1,NX
+  106   WMOT(II)=A0
+        WRITE(6,1002) IOP1,OCC1,IOP2,OCC2,OLDC1,OLDC2
+ 1002   FORMAT(/'  OPEN ORBITAL #1 IS',I5,'  OCCUPATION',F10.6/
+     1'  OPEN ORBITAL #2 IS',I5,'  OCCUPATION',F10.6/
+     2'  OLD OCCUPATIONS:',2F10.6)
+        CM(2,IOP1)=A1
+        CM(2,IOP2)=A1
+        NSOFF=0
+        IS=0
+        KK=0
+        ISU=0
+        DO 109 L=1,NSYM
+          NN=NLAMDA(L)
+          NDET=NN*(NN+1)/2
+          CALL TRITRN(NN,ISU,KK,FC,SF2,SU,SD)
+          CALL TRITRN(NN,ISU,KK,FO,SF1,SU,SD)
+          IJ=0
+          DO 108 IOR=1,NN
+            ITF=IOR+NSOFF
+            DO 107 JOR=1,IOR
+              JTF=JOR+NSOFF
+              IJ=IJ+1
+              IJTF=IPQ(MAX0(ITF,JTF))+MIN0(ITF,JTF)
+              IF (CM(1,ITF).EQ.A2 .AND. CM(1,JTF).EQ.A2  .OR.
+     1            CM(1,ITF).EQ.A2 .AND. CM(2,JTF).EQ.A1  .OR.
+     2            CM(2,ITF).EQ.A1 .AND. CM(1,JTF).EQ.A2)      THEN
+C
+C                 CLOSED SHELL WITH CLOSED SHELL OR OPEN SHELL
+C
+                WMOT(IJTF)=A2*FC(IJ)
+C
+              ELSE
+                IF (CM(2,ITF).EQ.A1 .AND. CM(2,JTF).EQ.A1) THEN
+C                 OPEN SHELL WITH OPEN SHELL
+C
+                  WMOT(IJTF)=FO(IJ)
+C
+                  IF (OSS.OR.TWOCON) THEN
+C
+C                   OPEN SHELL SINGLET OR TWO CONFIGURATION SCF
+C
+                    IS=IS+1
+                    IF (IS.EQ.1) THEN
+                      WMOT(IJTF)=OLDC1*FO(IJ)
+                    ELSE
+                      WMOT(IJTF)=OLDC2*FO(IJ)
+                    END IF
+                  END IF
+                END IF
+              END IF
+  107       CONTINUE
+  108     CONTINUE
+          NSOFF=NSOFF+NN
+          KK=KK+NDET
+          ISU=ISU+NN*NN
+  109   CONTINUE
+        CM(2,IOP1)=OCC1
+        CM(2,IOP2)=OCC2
+      END IF
+C
+      IF (AND(IPRINT,2) .NE. 0) THEN
+        WRITE(6,1003)
+ 1003   FORMAT(/'  MO BASIS LAGRANGIAN:'/)
+        CALL PRINT(WMOT,NX,MSFRU,6)
+      END IF
+c
+cets end of hack job
+
+C
+C     ----- WRITE CONSTANTS BACK TO FILE -----
+C
+      CALL WWRITW(ITAP30,I10,200,101,JUNK)
+C
+C     ----- GET POINTERS TO CALCULATIONS AND TO THIS ONE -----
+C
+      JUNK=101+MCONST+MPOINT
+      CALL WREADW(ITAP30,I10,MCALCS,JUNK,JUNK)
+      LOCCAL=I10(NCALCS)
+C
+C     ----- POINTER TO SCF VECTOR IS FIRST IN CALCULATION POINTERS -
+C
+      JUNK=LOCCAL+60
+      CALL WREADW(ITAP30,I10,20,JUNK,JUNK1)
+      NEWVEC=0
+      LOCVEC=I10(1)
+      IF (LOCVEC.LE.0) THEN
+        LOCVEC=IEND
+        I10(1)=IEND
+        CALL WWRITW(ITAP30,I10,20,JUNK,JUNK1)
+        NEWVEC=1
+      END IF
+C
+C     ----- PUT SCF ENERGY AS SECOND ENERGY -----
+C
+      JUNK=LOCCAL+60+20+INTOWP(3*NAT)+INTOWP(1)
+      CALL WWRITW(ITAP30,IELAST,INTOWP(1),JUNK,JUNK)
+C
+C     ----- NOW FOR VARIOUS ARRAYS AND VECTOR -----
+C
+      WRITE (ICHECK,*) ' WRITING VEC AT ',LOCVEC,' MXC ',MXCOEF
+      CALL WWRITW(ITAP30,SU,INTOWP(MXCOEF),LOCVEC,LOCVEC)
+      CALL WWRITW(ITAP30,EIG,INTOWP(MSFRU),LOCVEC,LOCVEC)
+      CALL WWRITW(ITAP30,ITYP,NSYM,LOCVEC,LOCVEC)
+      CALL WWRITW(ITAP30,NLAMDA,NSYM,LOCVEC,LOCVEC)
+      CALL WWRITW(ITAP30,NC,NSYM,LOCVEC,LOCVEC)
+      IF (IOPEN.NE.0) THEN
+        CALL WWRITW(ITAP30,NO,NSYM,LOCVEC,LOCVEC)
+        DO 1 I=1,JL
+          BETA(I) = ALPHA(I) - BETA(I)
+    1   CONTINUE
+        CALL WWRITW(ITAP30,IALPHA,INTOWP(JL),LOCVEC,LOCVEC)
+        CALL WWRITW(ITAP30,IBETA,INTOWP(JL),LOCVEC,LOCVEC)
+      END IF
+      call wwritw(itap30,wmot,intowp(nx),locvec,locvec)
+C
+      IF (NEWVEC.NE.0) THEN
+C
+C     ----- UPDATE IEND POINTER -----
+C
+        CALL WWRITW(ITAP30,LOCVEC,1,101,JUNK)
+C
+C     ----- SCF INFORMATION HAS BEEN PUT ON TAPE30 -----
+C
+CCCCC   WRITE (IOUT,900) LOCVEC,I2SEC(LOCVEC)
+        WRITE (ICHECK,900) LOCVEC,I2SEC(LOCVEC)
+  900   FORMAT (//,' TAPE30 EXTENDED TO ',I9,' WORDS OR ',I6,' SECTORS',
+     *  //)
+      END IF
+C
+C
+C
+      RETURN
+      END

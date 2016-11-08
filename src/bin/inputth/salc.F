@@ -1,0 +1,118 @@
+      SUBROUTINE SALC(KLASS,KTYPE,KMIN,KATOM,LOC,LOC2,LAB,CC,
+     1  LAMBDA,SLAB,ISC,IPC,ICT)
+C
+C     ----- PRINTS SYMMETRY-ADAPTED LINEAR COMBINATIONS -----
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+      COMMON /MAXDIM/ MXAT,MXTRN,MXPR,MXSH,MXSYM,MXCF,MXT,MXISO,MXPSYM
+      COMMON /NSHEL/  NSHELL,MSHELL
+      COMMON /SALCS/  NIRRED
+      COMMON /SYMTRY/ NT
+      COMMON /IOFILE/ IR,IW
+      COMMON /INOUT/  IOUT,ICHECK,ITAP30
+      COMMON /INFOA/  NAT
+      COMMON /PACKQ/  I1,I2,I3,I4,I5
+      COMMON /ISOPAC/ INDIN(120),INDOUT(30)
+C
+      REAL*8 CC(MXCF)
+      INTEGER KLASS(MXAT),KTYPE(MXSH),KMIN(MXSH),KATOM(MXSH)
+      INTEGER LOC(MXAT,5),LOC2(MXAT,5),LAB(MXCF),LAMBDA(MXSYM)
+      INTEGER ISC(MXSH,MXPSYM),IPC(MXSH,MXPSYM),ICT(MXAT,MXTRN)
+      INTEGER SLAB(MXSYM)
+C
+      DIMENSION II(50),CA(50,18),IA(5)
+      CHARACTER*4 A(35)
+C
+      DATA IA /0,1,4,10,20/
+      DATA  A /'  S ','  X ','  Y ','  Z ',' XX ',' YY ',' ZZ ',' XY ',
+     1  ' XZ ',' YZ ',' XXX',' YYY',' ZZZ',' XXY',' XXZ',' XYY',' YYZ',
+     2  ' XZZ',' YZZ',' XYZ','XXXX','YYYY','ZZZZ','XXXY','XXXZ','XYYY',
+     3  'YYYZ','XZZZ','YZZZ','XXYY','XXZZ','YYZZ','XXYZ','XYYZ','XYZZ'/
+C
+      ITM=NT
+      NTSAVE=NT
+      NT=NIRRED
+      NTD=(NT+3)/4
+      WRITE(IW,902)
+  902 FORMAT('0-- SYMMETRY ADAPTED LINEAR COMBINATIONS --'/)
+C
+      DO 500 NATOM=1,NAT
+C
+        DO 170 IT=1,ITM
+          IF(ICT(NATOM,IT).GT.NATOM) GO TO 500
+  170   CONTINUE
+C
+        ICLASS=KLASS(NATOM)
+C
+        DO 180 I=1,NAT
+  180   II(I)=0
+C
+        DO 190 IT=1,ITM
+          JCEN=ICT(NATOM,IT)
+  190     II(JCEN)=1
+ 
+        NP=0
+        DO 400 KT=1,5
+          NP=NP+KT
+C
+          DO 210 I=1,NSHELL
+            J=KATOM(I)
+            IF(J.NE.NATOM) GO TO 210
+            IF(KTYPE(I).EQ.KT) GO TO 240
+            IF(KT.EQ.1.AND.KTYPE(I).EQ.2.AND.KMIN(I).EQ.1) GO TO 220
+  210     CONTINUE
+          GO TO 400
+  220     CONTINUE
+          DO 230 IQ=1,NTD
+            INDOUT(IQ)=ISC(I,IQ)
+  230     CONTINUE
+          GO TO 260
+  240     CONTINUE
+          DO 250 IQ=1,NTD
+            INDOUT(IQ)=IPC(I,IQ)
+  250     CONTINUE
+C
+  260     CALL ISOOUT
+          ID=IA(KT)
+          KA=LOC(ICLASS,KT)
+          KAA=KA
+          KB=LOC2(ICLASS,KT)
+C
+  270     I5=LAB(KA+1)
+          CALL UNPAK
+          IRP=I3
+          IPA=I2+INDIN(IRP)-1
+          LL=LAMBDA(IRP)
+          MAX=NP*LL
+C
+          DO 280 I=1,MAX
+  280     CA(NATOM,I)=CC(KA+I)
+C
+          DO 300 JCEN=1,NAT
+            IF(II(JCEN).EQ.0) GO TO 300
+            IF(JCEN.EQ.NATOM) GO TO 300
+            JCLASS=KLASS(JCEN)
+            KC=LOC(JCLASS,KT)+KA-KAA
+            DO 290 I=1,MAX
+  290       CA(JCEN,I)=CC(KC+I)
+  300     CONTINUE
+C
+          K=0
+          DO 330 L=1,LL
+             WRITE(IW,900) IPA,SLAB(IRP),L
+             DO 320 N=1,NAT
+               IF(II(N).EQ.0) GO TO 320
+               WRITE(IW,901) (CA(N,K+I),A(ID+I),N,I=1,NP)
+  320        CONTINUE
+  330     K=K+NP
+  900     FORMAT(/ ' PSI(',I2,A4,',',I1,')=')
+  901     FORMAT(10X,7(F10.6,A4,I2))
+C
+          KA=KA+MAX
+          IF(KA.LT.KB) GO TO 270
+  400   CONTINUE
+  500 CONTINUE
+      NT=NTSAVE
+      RETURN
+      END

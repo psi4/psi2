@@ -1,0 +1,107 @@
+.TH casscf 1 "3 Febuary, 1995" "\*(]W" "\*(]D" 
+.SH NAME
+
+casscf \- a small Complete Active Space SCF (CASSCF) program
+
+.SH DESCRIPTION
+.LP
+The program
+.B casscf
+carries out a Complete Active Space SCF calculation.
+
+.SH REFERENCES
+.LP
+Methodology:
+.IP "1."
+H. J. Werner, Advances in Chemical Physics: Ab Initio Methods in Quantum Chemistry Part II,
+K. P. Lawley editor, John Wiley & Sons, New York, vol. 69, p. 1 (1987).
+.IP "2."
+R. Shepard, Same book as reference 1, p. 63 (1987).
+.IP "3."
+B. O. Roos, Same book as reference 1, p. 399 (1987).
+.LP
+
+.sL
+.pN INPUT
+.pN FILE14
+.pN FILE35 "  (MO integrals in SO-SCF order)"
+.pN FILE40 "  (Master File)"
+.pN FILE56 "  (TWO PDMs in SO-SCF order)"
+.eL "FILES REQUIRED"
+
+.sL
+.pN FILE91
+.pN FILE92
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN CHECK
+.pN FILE4
+.pN FILE14
+.pN FILE30
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.SH INPUT REQUIRED
+.LP
+The
+.B casscf
+program
+searches through the default keyword path (first
+.B CASSCF
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBECONVERGENCE =\fP \fIinteger\fP"
+Tolerance for the MCSCF energy.  The
+energy convergence criterion is
+.if n 10**(\-\fIinteger\fP).
+.if t 10\s-2\u(\-\fIinteger\fP)\d\s0.
+The default is 8.
+
+.IP "\fBDCONVERGENCE =\fP \fIinteger\fP"
+Tolerance for the density matrix.  The
+density convergence criterion is
+.if n 10**(\-\fIinteger\fP).
+.if t 10\s-2\u(\-\fIinteger\fP)\d\s0.
+The default is 8.
+
+.IP "\fBGCONVERGENCE =\fP \fIinteger\fP"
+Tolerance for the Lagrangian matrix.  The
+Lagrangian convergence criterion is
+.if n 10**(\-\fIinteger\fP).
+.if t 10\s-2\u(\-\fIinteger\fP)\d\s0.
+The default is 8.
+
+.IP "\fBMICROITER =\fP \fIinteger\fP"
+The maximum number of micro iterations to assure positiveness of the 
+MO Hessian.  If the determinant in SIMULT is negative, then increase
+.B MICROITER
+and/or
+.B HESSHIFT.  The 
+default is 30.
+
+.IP "\fBMOINCR =\fP \fIreal\fP"
+The maximum increment for changes (rotations) in the MO coefficients.  If 
+the energy osscilates, then 
+the MO changes are too big so decrease the 
+.B MOINCR.  The
+default is 0.10.
+
+.IP "\fBHESSHIFT =\fP \fIreal\fP"
+The level shift of the MO Hessian.  If the determiant in SIMULT is negative, then increase the 
+.B HESSHIFT.  The 
+default is 0.10.
+
+.IP "\fBDLIMIT =\fP \fIinteger\fP"
+The smallest positive determinant value allowed before level shift is 
+.if n 10**(\-\fIinteger\fP).  The
+.if t 10\s-2\u(\-\fIinteger\fP)\d\s0.  The
+default is 5.
+
+.IP "\fBPRINT =\fP \fIinteger\fP"
+The program will give additional output.  The higher the value of
+.BR PRINT
+the more output provided.  The default is 0 for minimal output.
+

@@ -1,0 +1,148 @@
+.TH cczv 1 "22 March, 1991" "\*(]W" "\*(]D"
+.SH NAME
+cczv \- compute the coupled cluster Z-vector
+
+.SH DESCRIPTION
+.LP
+The program
+.B cczv
+is used to computed the coupled cluster Z-vector.  This
+vector is required in the computation of first derivatives
+of the coupled cluster energy.
+
+.sL
+.pN INPUT
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B cczv
+program
+searches through the default keyword path (first
+.B CCZV
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBLABEL =\fP \fIstring\fP"
+A character string to be included in the output.  This string is not
+used by the program.
+There is no default.
+
+.IP "\fBSYMMETRY =\fP \fIstring\fP"
+The point group of the molecule as is described in the \fBinput\fP program
+manual pages.  There is no default.
+
+.IP "\fBWFN =\fP \fIstring\fP"
+The type of correlation energy calculation.  This must be one of
+.B CCSD
+(coupled cluster with single and double excitations from the reference),
+.B CCD
+(coupled cluster with double excitations),
+.B CCSDT1
+(CCSDT-1),
+and
+.B CCSD_T
+(CCSD(T)).
+The CCSDT-1 method is not recommended.  The CCSD(T) method should
+be used if the effects of triples are desired.  There is no default.
+
+.IP "\fBDERTYPE =\fP \fIstring\fP"
+This must be set to
+.B FIRST
+or the program will abort.
+There is no default.
+
+.IP "\fBFROZEN_DOCC =\fP \fIinteger_vector\fP"
+The number of doubly occupied orbitals in each irreducible
+representation which should not excited from.  The default is the
+zero vector.
+
+.IP "\fBFROZEN_UOCC =\fP \fIinteger_vector\fP"
+The number of unoccupied orbitals in each irreducible
+representation which should not excited into.  The default is the
+zero vector.
+
+.IP "\fBNCSF =\fP \fIinteger\fP"
+The number of Z-vector coefficients to print out. The
+default is 20.
+
+.IP "\fBMAXITER =\fP \fIinteger\fP"
+The maximum number of iterations. The default is 30.
+
+.IP "\fBCONVERGENCE =\fP \fIinteger\fP"
+The convergence criterion is 10**(\-\fIinteger\fP).  The default is 10.
+
+.IP "\fBRESTART =\fP \fIboolean\fP"
+The calculation will restart if \fIboolean\fP is true.  Possible values
+for this parameter are
+.BR TRUE ,
+.BR YES ,
+.BR 1 ,
+.BR FALSE ,
+.BR NO ,
+and
+.BR 0 .
+The default is false.
+
+.LP
+There are also parameters for controlling DIIS, however, these
+these are unneccessary for the normal use of Psi.
+
+.SH EXAMPLE
+.LP
+This is a sample input for a CCSD calculation in
+.if n C2V
+.if t C\s-1\d2v\u\s0
+symmetry
+with the lowest energy totally symmetric orbital frozen:
+
+.DS
+  default: (
+    label = "C2V test case -- one frozen core orbital"
+    wfn = ccsd
+    dertype = first
+    frozen_docc = (1 0 0 0)
+    frozen_uocc = (0 0 0 0)
+    )
+.DE
+
+.LP
+It will be almost never be necessary to include more input parameters than
+are shown in the above example.  Moreover, once the input for the
+.B cceg
+program has been set up, it is usually unnecessary to provide any more
+input for the
+.B cczv
+program.
+
+.LP
+Another example, this time of a large calculation with a
+restart from the old Z-vector:
+
+.DS
+  default: (
+    label = "C2V test case -- three frozen core orbitals"
+    symmetry = c2v
+    wfn = ccsd
+    dertype = first
+    frozen_docc = (2 0 1 0)
+    frozen_uocc = (0 0 0 0)
+    )
+
+  cczv: (
+    memory = (24.0 MB)
+    restart = yes
+    )
+.DE
+

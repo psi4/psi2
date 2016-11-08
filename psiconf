@@ -1,0 +1,9 @@
+#!/bin/csh -f
+
+set dir=`pwd`/psi
+
+echo "running autoconf in directory $dir"
+
+cd psi
+autoconf
+exit 0

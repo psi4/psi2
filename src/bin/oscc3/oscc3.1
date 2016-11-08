@@ -1,0 +1,205 @@
+.TH oscc3 1 "26 August, 1991" "\*(]W" "\*(]D"
+.SH NAME
+oscc3 \- compute the coupled cluster energy and wavefunction
+
+.SH DESCRIPTION
+.LP
+The program
+.B oscc3
+is used to compute the coupled cluster energy and wavefunction for
+atoms and molecules with a high spin open shell reference state.
+Energies for
+CCD, CCSD, and CCSD(T) wavefunctions can be computed.
+.B oscc3
+is intended for use for very large molecules for which the memory requirement
+for
+.B oscc
+is too large.  This program requires more I/O than
+.B oscc
+and should be avoided, if possible.
+.B oscc3
+uses more memory than
+.B oscc4
+when core and virtual orbitals are frozen, so in these cases it is 
+recommended that you use
+.B oscc4 .
+
+.LP
+If a closed shell reference wavefunction is desired, then either the
+.B cceg
+or the
+.B lcceg
+program must be used.
+
+.SH REFERENCES
+.LP
+CCSD(T) open-shell energy
+.IP "1."
+G. E. Scuseria
+Chem. Phys. Lett. 176, 27 (1991).
+
+
+.sL
+.pN INPUT
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B oscc3
+program
+searches through the default keyword path (first
+.B OSCC3
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBLABEL =\fP \fIstring\fP"
+A character string to be included in the output.  This string is not
+used by the program.
+There is no default.
+
+.IP "\fBSYMMETRY =\fP \fIstring\fP"
+The point group of the molecule as is described in the \fBinput\fP program
+manual pages.  There is no default.
+
+.IP "\fBWFN =\fP \fIstring\fP"
+The type of correlation energy calculation.  This must be one of
+.B CCSD
+(coupled cluster with single and double excitations from the reference),
+.B CCD
+(coupled cluster with double excitations),
+and
+.B CCSD_T
+(CCSD(T)).
+Also supported
+for debugging purposes are the values
+.B CC_CISD
+and
+.BR CC_BOTH .
+There is no default.
+
+.IP "\fBDERTYPE =\fP \fIstring\fP"
+This must be set to
+.B NONE
+or
+.BR FIRST .
+If coupled cluster gradients are desired then this parameter must
+be set to
+.BR FIRST .
+The default is
+.BR NONE .
+
+.IP "\fBFROZEN_DOCC =\fP \fIinteger_vector\fP"
+The number of lowest energy doubly occupied orbitals in each irreducible
+representation from which there will be no excitations.
+The Cotton ordering of the irredicible representations is used.
+The default is the zero vector.
+
+.IP "\fBFROZEN_UOCC =\fP \fIinteger_vector\fP"
+The number of highest energy unoccupied orbitals in each irreducible
+representation into which there will be no excitations.
+The default is the zero vector.
+
+.IP "\fBNCSF =\fP \fIinteger\fP"
+The number of cluster coefficients to print out. The
+default is 20.
+
+.IP "\fBMAXITER =\fP \fIinteger\fP"
+The maximum number of iterations. The default is 50
+for \fBDERTYPE = NONE\fP and 60 for \fBDERTYPE = FIRST\fP.
+
+.IP "\fBCONVERGENCE =\fP \fIinteger\fP"
+The convergence criterion is 10**(\-\fIinteger\fP).  The default is 7
+for \fBDERTYPE = NONE\fP and 10 for \fBDERTYPE = FIRST\fP.
+
+.IP "\fBRESTART =\fP \fIboolean\fP"
+The calculation will restart from the old wavefunction
+if \fIboolean\fP is true.  Possible values
+for this parameter are
+.BR TRUE ,
+.BR YES ,
+.BR 1 ,
+.BR FALSE ,
+.BR NO ,
+and
+.BR 0 .
+The default is false.
+
+.IP "\fBT_RESTART =\fP \fIboolean\fP"
+The calculation will restart a calculation including triples
+excitations in the middle of an iteration
+if \fIboolean\fP is true.  Possible values
+for this parameter are
+.BR TRUE ,
+.BR YES ,
+.BR 1 ,
+.BR FALSE ,
+.BR NO ,
+and
+.BR 0 .
+The default is false.
+
+.LP
+There are also parameters for controlling DIIS, however, these
+these are unneccessary for the normal use of Psi.
+
+.LP
+The occupancies of the orbitals in the reference is not read from
+the input.  The 
+.B oscc3
+program obtaines this information from 
+.pN FILE30 .
+
+.SH EXAMPLE
+.LP
+This is a sample input for a CCSD calculation in
+.if n C2V
+.if t C\s-1\d2v\u\s0
+symmetry
+with the lowest energy totally symmetric orbital frozen:
+
+.DS
+  default: (
+    label = "C2V test case -- one frozen core orbital"
+    symmetry = c2v
+    wfn = ccsd
+    frozen_docc = (1 0 0 0)
+    frozen_uocc = (0 0 0 0)
+    )
+.DE
+
+.LP
+It will be almost never be necessary to include more input parameters than
+are shown in the above example.
+
+.LP
+An example of a large calculation with
+restart and a small tolerance for error in the wavefunction:
+
+.DS
+  default: (
+    label = "C2V test case -- three frozen core orbitals"
+    symmetry = c2v
+    wfn = ccsd
+    dertype = none
+    frozen_docc = (2 0 1 0)
+    frozen_uocc = (0 0 0 0)
+    )
+
+  oscc3: (
+    memory = (24.0 MB)
+    restart = yes
+    convergence = 12
+    )
+.DE
+

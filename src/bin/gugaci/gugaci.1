@@ -1,0 +1,118 @@
+.TH gugaci 1 "11 April, 1991" "\*(]W" "\*(]D"
+.SH NAME
+gugaci \- calculates the configuration interation energy
+
+.SH DESCRIPTION
+.LP
+The program
+.B gugaci
+calculates the configuration interaction (CI) energy.
+The CI Hamiltonian matrix is
+constructed using the shape driven graphical unitary group
+approach for CISD.  For higher excitations, the loop driven GUGA
+approach is used.  The Davidson correction is also calculated
+(note, however, that the value printed out for the Davidson
+correction is only correct for one reference CISD wavefunctions).
+
+.SH REFERENCES
+.LP
+For GUGA-CI:
+.IP "1."
+I. Shavitt, Int. J. Quantum Chem. Symp. 11 (1977) 131.
+.IP "2."
+I. Shavitt, Int. J. Quantum Chem. Symp. 12 (1978) 5.
+.IP "3."
+B. R. Brooks and H. F. Schaefer, J. Chem. Phys. 70 (1979) 5092.
+.IP "4."
+P. Saxe, D. J. Fox, H. F. Schaefer and N. C. Handy, J. Chem.
+Phys. 77 (1982) 5584.
+.LP
+For Davidson correction:
+.IP "1."
+E. R. Davidson, J. Comput. Phys. 17 (1975) 87.
+.IP "2."
+S. R. Langhoff, E. R. Davidson, Int. J. Quantum Chem. 8 (1974) 61.
+
+.sL
+.pN INPUT
+.pN FILE52
+.pN FILE58
+.eL "FILES REQUIRED"
+
+.sL
+.pN FILE94
+.pN FILE99
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE54        "	(CI coefficients)"
+.pN FILE95
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B gugaci
+program
+searches through the default keyword path (first
+.B GUGACI
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBNUMVECTORS =\fP \fIinteger\fP"
+The number of vectors to read from
+.pN FILE54 .
+The default is 0.
+
+.if n .ds HA 1/2
+.if t .ds HA \(12
+.IP "\fBMAXITER =\fP \fIinteger\fP"
+The maximum number of iterations.  The disk space required for
+.B gugaci
+is roughly 16(\fIinteger\fP + 1/2)\fIn_csf\fP, where \fIn_csf\fP is the
+number of configuration state functions (this is sometimes referred to
+as the number of walks).
+The disk space requirement
+can be quite large, so indiscriminate use of a large \fIinteger\fP
+should be avoided.
+The default is 12 if \fBDERTYPE = NONE\fP and 16 if \fBDERTYPE = FIRST\fP.
+
+.IP "\fBROOT1 =\fP \fIinteger\fP"
+The number of the first root.  The default is 1.
+
+.IP "\fBNUMROOTS =\fP \fIinteger\fP"
+The number of roots sought.  The default is 1.
+
+.IP "\fBCONVERGENCE =\fP \fIinteger\fP"
+Convergence desired on the CI vector.  The default is 10.
+
+.IP "\fBEX_LVL =\fP \fIinteger\fP"
+Excitation level for excitations into virtual
+orbitals (default 2, i.e. CISD)
+
+.IP "\fBLOOPDRVN =\fP \fIboolean\fP"
+If this is true then a loop driven algorithm is used.  When the number
+of excitations from the reference or references is 2 then this should
+be false.  For higher excitations this must be true.  The default
+is TRUE if EX_LVL is greater than 2, FALSE otherwise.
+
+.LP
+There is also some less commonly used input, which novice uses of Psi
+will have no need to use.
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+A print option.  The default is 0.
+
+.IP "\fBFERMILVL =\fP \fIinteger\fP"
+This sets the Fermi level.
+
+.IP "\fBREFERENCE =\fP \fIinteger\fP"
+The configuration to use as the reference.
+

@@ -1,0 +1,579 @@
+      SUBROUTINE JK1DER(DS,DST,DF,DFT,D1T)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION DS(NBATRI,NTYPEP),DST(NBATRI)
+      DIMENSION DF(NBATRI,3,NTYPEP),DFT(NBATRI,3),D1T(3,NATOM,NMAXD)
+      DIMENSION M0(8),M1(8),M2(8),M3(8)
+      DIMENSION IX(10),IY(10),IZ(10),LX(20),LY(20),LZ(20),
+     1          KX(10),KY(10),KZ(10),JX(10),JY(10),JZ(10)
+      LOGICAL IANDJ,KANDL,SAME,EQUAL
+      COMMON/ABDEN/ABDENS(1296,10)
+      COMMON/BASIS/NBASIS,NBFAO,NBATRI,NBATR2
+      COMMON/CALCS/ISTYPE,ICTYPE
+      COMMON/COORD/ZAN(50),C(3,50)
+      COMMON/DIJPR/PIJ(100),DIJ(100),XIJ(100),YIJ(100),ZIJ(100),
+     1             AIJ(100),BIJ(100),ABIJ(100),TIJ(100)
+      COMMON/DINDX/IJX(100),IJY(100),IJZ(100),KLX(100),KLY(100),KLZ(100)
+      COMMON/D1INT/DD1(90)
+      COMMON/EXPNT/AIT,BJT,CKT,AIBJT,CKDLT,RHOTSQ,AI,BJ,CK,PPIJ,PPKL
+      COMMON/FUNCS/NTYPES,NTYPEP,NTREAD,NATOM,N3N,NATRI,NSYM
+      COMMON/GAUSA/ZS(200),CS(200)
+      COMMON/GAUSB/KNUC(200),KTYPE(200),KSTART(200),KLOC(200),
+     1             KMIN(200),KMAX(200),KNG(200)
+      COMMON/GAUSD/INVT(8),ISO(200,8),LBLAT(2,50),ICT(50,8)
+      COMMON/GAUSE/MXSPDF(50),MINSH(3,50),MAXSH(3,50)
+      COMMON/GEOIN/XAB,YAB,ZAB,XCD,YCD,ZCD,PXX,PYY,PZZ
+      COMMON/ISPAC/INDIN(120),INDOUT(30)
+      COMMON/MAXDS/NMAXD
+      COMMON/NDERS/NDERIV
+      COMMON/PARA1/NSHELL,NT,MXT,NISO
+      COMMON/PARA3/NATMS(4),NPASS
+      COMMON/PARA4/MIJ,MKL,ISAME(100)
+      COMMON/POSIX/IPOS(100),JPOS(100),KPOS(100),LPOS(100),IMUL(100)
+      COMMON/ROOT /XX,U(9),WT(9),NROOTS
+      COMMON/ROOTS/NONZER
+      COMMON/SETD /BP01,B00,B10,XCP00,XC00,YCP00,YC00,ZCP00,ZC00,F00,
+     1             NIMAX,NJMAX,NKMAX,NLMAX,NIJMAX,NKLMAX,IOFFST
+      COMMON/SHELL/ISH,JSH,KSH,LSH
+      COMMON/SIGNS/IOFF(256),IPRNT
+      COMMON/TWOD0/XIN(2304),YIN(2304),ZIN(2304)
+      COMMON/TWODI/DXI(2304),DYI(2304),DZI(2304)
+      COMMON/TWODJ/DXJ(2304),DYJ(2304),DZJ(2304)
+      COMMON/TWODK/DXK(2304),DYK(2304),DZK(2304)
+      DATA ZERO,HALF,ONE / 0.0D+00 , 0.5D+00 , 1.0D+00 /
+      DATA PI252 / 34.986836655250D+00 /
+      DATA ITOL / 20 /
+      DATA KX / 1,65, 1, 1,129, 1, 1,65,65, 1/
+      DATA KY / 1, 1,65, 1, 1,129, 1,65, 1,65/
+      DATA KZ / 1, 1, 1,65, 1, 1,129, 1,65,65/
+      DATA JX / 0,16, 0, 0,32, 0, 0,16,16, 0/
+      DATA JY / 0, 0,16, 0, 0,32, 0,16, 0,16/
+      DATA JZ / 0, 0, 0,16, 0, 0,32, 0,16,16/
+      DATA LX / 0, 4, 0, 0, 8, 0, 0, 4, 4, 0
+     1,        12, 0, 0, 8, 8, 4, 0, 4, 0, 4/
+      DATA LY / 0, 0, 4, 0, 0, 8, 0, 4, 0, 4
+     1,        0, 12, 0, 4, 0, 8, 8, 0, 4, 4/
+      DATA LZ / 0, 0, 0, 4, 0, 0, 8, 0, 4, 4
+     1,        0, 0, 12, 0, 4, 0, 4, 8, 8, 4/
+      DATA IX / 0, 1, 0, 0, 2, 0, 0, 1, 1, 0/
+      DATA IY / 0, 0, 1, 0, 0, 2, 0, 1, 0, 1/
+      DATA IZ / 0, 0, 0, 1, 0, 0, 2, 0, 1, 1/
+    1 FORMAT(//,2X,' D1T MATRIX BEFORE SYMD'/)
+C
+C
+C   TWO ELECTRON CONTRIBUTION TO THE GRADIENT
+C
+      TOL=ITOL*2.30258D+00
+C
+      ICOUNT=0
+C
+      DO 101 I=1,3
+      DO 101 J=1,NATOM
+      DO 101 K=1,NMAXD
+      D1T(I,J,K)=ZERO
+  101 CONTINUE
+C
+C%%%%%%%%%%%%%%%%%%%%%
+C%%%%%---ATOMS---%%%%%
+C%%%%%%%%%%%%%%%%%%%%%
+C
+      DO 9000 IAT=1,NATOM
+      DO 8000 JAT=1,IAT
+      DO 7000 KAT=1,IAT
+      DO 6000 LAT=1,KAT
+C
+C$$$$$$$$$$$$$$$$$$$$$$$$$$
+C$$$$$ANGULAR MOMENTUM$$$$$
+C$$$$$$$$$$$$$$$$$$$$$$$$$$
+C
+      DO 5000 ISPDF=1,MXSPDF(IAT)
+      JMXSPD=MXSPDF(JAT)
+      IF (IAT.EQ.JAT) JMXSPD=ISPDF
+      DO 4000 JSPDF=1,JMXSPD
+      KMXSPD=MXSPDF(KAT)
+      IF (IAT.EQ.KAT) KMXSPD=ISPDF
+      DO 3000 KSPDF=1,KMXSPD
+      LMXSPD=MXSPDF(LAT)
+      IF (KAT.EQ.LAT) LMXSPD=KSPDF
+      DO 2000 LSPDF=1,LMXSPD
+C
+C################
+C#####ISHELL#####
+C################
+C
+      DO 1000 II=MINSH(ISPDF,IAT),MAXSH(ISPDF,IAT)
+C
+      DO 111 IT=1,NISO
+  111 INDOUT(IT)=ISO(II,IT)
+      CALL ySOOUT
+      DO 112 IT=1,NT
+      ID=INDIN(IT)
+      IF(ID.GT.II) GO TO 1000
+      M0(IT)=ID
+  112 CONTINUE
+C
+C################
+C#####JSHELL#####
+C################
+C
+      MAXJJ=MAXSH(JSPDF,JAT)
+      IF (MAXJJ.GT.II) MAXJJ=II
+      DO 900 JJ=MINSH(JSPDF,JAT),MAXJJ
+C
+      DO 113 IT=1,NISO
+  113 INDOUT(IT)=ISO(JJ,IT)
+      CALL ySOOUT
+      DO 114 IT=1,NT
+      IDT=M0(IT)
+      JDT=INDIN(IT)
+      IF(JDT.GT.II) GO TO 900
+      ID=MAX0(IDT,JDT)
+      JD=MIN0(IDT,JDT)
+      IF(ID.EQ.II.AND.JD.GT.JJ) GO TO 900
+      M1(IT)=ID
+      M2(IT)=JD
+  114 CONTINUE
+C
+C################
+C#####KSHELL#####
+C################
+C
+      MAXKK=MAXSH(KSPDF,KAT)
+      IF (MAXKK.GT.II) MAXKK=II
+      DO 800 KK=MINSH(KSPDF,KAT),MAXKK
+C
+      DO 115 IT=1,NISO
+  115 INDOUT(IT)=ISO(KK,IT)
+      CALL ySOOUT
+      DO 116 IT=1,NT
+      KD=INDIN(IT)
+      IF(KD.GT.II) GO TO 800
+      M3(IT)=KD
+  116 CONTINUE
+C
+C################
+C#####LSHELL#####
+C################
+C
+      MAXLL=MAXSH(LSPDF,LAT)
+      IF (MAXLL.GT.KK) MAXLL=KK
+      IF (II.EQ.KK.AND.MAXLL.GT.JJ) MAXLL=JJ
+      DO 700 LL=MINSH(LSPDF,LAT),MAXLL
+C
+      DO 117 IT=1,NISO
+  117 INDOUT(IT)=ISO(LL,IT)
+      CALL ySOOUT
+      N4=0
+      DO 118 IT=1,NT
+      LDT=INDIN(IT)
+      IF(LDT.GT.II) GO TO 700
+      KDT=M3(IT)
+      KD=MAX0(KDT,LDT)
+      LD=MIN0(KDT,LDT)
+      ID=M1(IT)
+      JD=M2(IT)
+      IF(ID.NE.II.AND.KD.NE.II) GO TO 118
+      IF(KD.LT.ID) GO TO 203
+      IF(KD.EQ.ID.AND.LD.LE.JD) GO TO 203
+      ND=ID
+      ID=KD
+      KD=ND
+      ND=JD
+      JD=LD
+      LD=ND
+  203 IF(JD.LT.JJ) GO TO 118
+      IF(JD.GT.JJ) GO TO 700
+      IF(KD.LT.KK) GO TO 118
+      IF(KD.GT.KK) GO TO 700
+      IF(LD.LT.LL) GO TO 118
+      IF(LD.GT.LL) GO TO 700
+      N4=N4+1
+  118 CONTINUE
+C
+      Q4=DBLE(NT)/DBLE(N4)
+      CALL REDUN2(II,JJ,KK,LL,Q4,KNUC)
+      IF(NPASS.EQ.0) GO TO 700
+C
+      IANDJ=ISH.EQ.JSH
+C
+      IATOM=KNUC(ISH)
+      AX=C(1,IATOM)
+      AY=C(2,IATOM)
+      AZ=C(3,IATOM)
+      IGMIN=KSTART(ISH)
+      IGMAX=IGMIN+KNG(ISH)-1
+      LIT=KTYPE(ISH)
+      MINI=KMIN(ISH)
+      MAXI=KMAX(ISH)
+      LOCI=KLOC(ISH)
+C
+      JATOM=KNUC(JSH)
+      BX=C(1,JATOM)
+      BY=C(2,JATOM)
+      BZ=C(3,JATOM)
+      JGMIN=KSTART(JSH)
+      JGMAX=JGMIN+KNG(JSH)-1
+      LJT=KTYPE(JSH)
+      MINJ=KMIN(JSH)
+      MAXJ=KMAX(JSH)
+      LOCJ=KLOC(JSH)
+C
+      EQUAL=IATOM.EQ.JATOM
+C
+      MIJ=0
+      JMAX=MAXJ
+      III=-1
+      DO 122 I=MINI,MAXI
+      III=III+1
+      JJJ=-1
+      NX=IX(I)
+      NY=IY(I)
+      NZ=IZ(I)
+C***  IF(IANDJ) JMAX=I
+      DO 121 J=MINJ,JMAX
+      JJJ=JJJ+1
+      MIJ=MIJ+1
+      NFAC=1
+      IF(IANDJ.AND.I.EQ.J) NFAC=2
+      IMUL(MIJ)=NFAC
+      IJX(MIJ)=NX+JX(J)
+      IJY(MIJ)=NY+JY(J)
+      IJZ(MIJ)=NZ+JZ(J)
+      IPOS(MIJ)=LOCI+III
+      JPOS(MIJ)=LOCJ+JJJ
+  121 CONTINUE
+  122 CONTINUE
+C
+      XAB=AX-BX
+      YAB=AY-BY
+      ZAB=AZ-BZ
+      RAB=XAB*XAB+YAB*YAB+ZAB*ZAB
+C
+      NIJ=0
+      DO 124 IG=IGMIN,IGMAX
+      CSI=CS(IG)
+      AI=ZS(IG)
+      AXI=AI*AX
+      AYI=AI*AY
+      AZI=AI*AZ
+C***  IF(IANDJ) JGMAX=IG
+      DO 123 JG=JGMIN,JGMAX
+      CSJ=CS(JG)
+      BJ=ZS(JG)
+      BXJ=BJ*BX
+      BYJ=BJ*BY
+      BZJ=BJ*BZ
+      PPIJ=AI+BJ
+      AXB=AI*BJ
+      TTIJ=ONE/PPIJ
+      TMPIJ=(AXB*RAB)*TTIJ
+      IF(TMPIJ.GT.TOL) GO TO 123
+      NIJ=NIJ+1
+      AIJ(NIJ)=AI
+      BIJ(NIJ)=BJ
+      ABIJ(NIJ)=AXB
+      PIJ(NIJ)=PPIJ
+      TIJ(NIJ)=TTIJ
+      PXIJ=(AXI+BXJ)*TTIJ
+      PYIJ=(AYI+BYJ)*TTIJ
+      PZIJ=(AZI+BZJ)*TTIJ
+      XIJ(NIJ)=PXIJ
+      YIJ(NIJ)=PYIJ
+      ZIJ(NIJ)=PZIJ
+      DD=CSI*CSJ*TTIJ*DEXP(-TMPIJ)*PI252
+C***  IF(IANDJ.AND.IG.NE.JG) THEN
+C***  DIJ(NIJ)=DD+DD
+C***  ELSE
+      DIJ(NIJ)=DD
+C***  END IF
+  123 CONTINUE
+  124 CONTINUE
+C
+      IF(NIJ.EQ.0) GO TO 700
+C
+      KANDL=KSH.EQ.LSH
+      SAME=ISH.EQ.KSH.AND.JSH.EQ.LSH
+C
+      KATOM=KNUC(KSH)
+      CX=C(1,KATOM)
+      CY=C(2,KATOM)
+      CZ=C(3,KATOM)
+      KGMIN=KSTART(KSH)
+      KGMAX=KGMIN+KNG(KSH)-1
+      LKT=KTYPE(KSH)
+      MINK=KMIN(KSH)
+      MAXK=KMAX(KSH)
+      LOCK=KLOC(KSH)
+C
+      LATOM=KNUC(LSH)
+      DX=C(1,LATOM)
+      DY=C(2,LATOM)
+      DZ=C(3,LATOM)
+      LGMIN=KSTART(LSH)
+      LGMAX=LGMIN+KNG(LSH)-1
+      LLT=KTYPE(LSH)
+      MINL=KMIN(LSH)
+      MAXL=KMAX(LSH)
+      LOCL=KLOC(LSH)
+C
+      MKL=0
+      LMAX=MAXL
+      KKK=-1
+      DO 126 K=MINK,MAXK
+      KKK=KKK+1
+      LLL=-1
+      NX=KX(K)
+      NY=KY(K)
+      NZ=KZ(K)
+      IF(KANDL) LMAX=K
+      DO 125 L=MINL,LMAX
+      LLL=LLL+1
+      MKL=MKL+1
+      KLX(MKL)=NX+LX(L)
+      KLY(MKL)=NY+LY(L)
+      KLZ(MKL)=NZ+LZ(L)
+      KPOS(MKL)=LOCK+KKK
+      LPOS(MKL)=LOCL+LLL
+  125 CONTINUE
+  126 CONTINUE
+C
+      XCD=CX-DX
+      YCD=CY-DY
+      ZCD=CZ-DZ
+      RCD=XCD*XCD+YCD*YCD+ZCD*ZCD
+C
+      MAXIND=MKL
+      DO 128 I=1,MIJ
+      IF(SAME) MAXIND=I
+      ISAME(I)=MAXIND
+  128 CONTINUE
+      NIMAX=LIT-1
+      NJMAX=LJT-1
+      NKMAX=LKT-1
+      NLMAX=LLT-1
+      NIJMAX=NIMAX+NJMAX
+      NKLMAX=NKMAX+NLMAX
+C
+C     ----- CALCULATE NUMBER OF ROOTS FOR DERIVATIVES -----
+C
+      NROOTS=(LIT+LJT+LKT+LLT-2+NDERIV)/2
+C
+C     ----- FORM PRODUCTS OF DENSITY MATRIX ELEMENTS -----
+C
+      CALL DAB(DS,DST,DF,DFT,Q4)
+      IF(Q4.EQ.ZERO) GO TO 700
+C
+      NMAXD9=NMAXD*9
+      DO 131 I=1,NMAXD9
+  131 DD1(I)=ZERO
+C
+C========================
+C===K AND L PRIMITIVES===
+C========================
+C
+      MAXLG=LGMAX
+      DO 600 KG=KGMIN,KGMAX
+      CSK=CS(KG)
+      CK=ZS(KG)
+      CXK=CK*CX
+      CYK=CK*CY
+      CZK=CK*CZ
+C
+      IF(KANDL) MAXLG=KG
+      DO 500 LG=LGMIN,MAXLG
+      CSL=CS(LG)
+      DL=ZS(LG)
+      DXL=DL*DX
+      DYL=DL*DY
+      DZL=DL*DZ
+      PPKL=CK+DL
+      CXD=CK*DL
+      TTKL=ONE/PPKL
+      CKT=CK*TTKL
+      CKDLT=CXD*TTKL
+      TMPKL=(CK*DL*RCD)*TTKL
+      IF(TMPKL.GT.TOL) GO TO 500
+      PXKL=(CXK+DXL)*TTKL
+      PYKL=(CYK+DYL)*TTKL
+      PZKL=(CZK+DZL)*TTKL
+      PAXKL=(PXKL-AX)*PPKL
+      PAYKL=(PYKL-AY)*PPKL
+      PAZKL=(PZKL-AZ)*PPKL
+      PCXKL=(PXKL-CX)*PPKL
+      PCYKL=(PYKL-CY)*PPKL
+      PCZKL=(PZKL-CZ)*PPKL
+      DD=CSK*CSL*TTKL*DEXP(-TMPKL)
+      IF(KANDL.AND.KG.NE.LG) THEN
+      DKL=DD+DD
+      ELSE
+      DKL=DD
+      END IF
+C
+C============================
+C===PAIR OF I,J PRIMITIVES===
+C============================
+C
+      DO 400 IJG=1,NIJ
+      AI=AIJ(IJG)
+      BJ=BIJ(IJG)
+      AXB=ABIJ(IJG)
+      PPIJ=PIJ(IJG)
+      TTIJ=TIJ(IJG)
+      AIT=AI*TTIJ
+      BJT=BJ*TTIJ
+      AIBJT=AXB*TTIJ
+      PPP=PPIJ*PPKL
+      PSUM=PPIJ+PPKL
+      PPT=ONE/PSUM
+      PPQ=DSQRT(PPT)
+      DENS=DIJ(IJG)*DKL*PPQ
+      RHO=PPP*PPT
+      PXIJ=XIJ(IJG)
+      PYIJ=YIJ(IJG)
+      PZIJ=ZIJ(IJG)
+      PXX=PXIJ-PXKL
+      PYY=PYIJ-PYKL
+      PZZ=PZIJ-PZKL
+      XX=RHO*(PXX*PXX+PYY*PYY+PZZ*PZZ)
+      PAXIJ=(PXIJ-AX)*PPIJ
+      PAYIJ=(PYIJ-AY)*PPIJ
+      PAZIJ=(PZIJ-AZ)*PPIJ
+      PCXIJ=(PXIJ-CX)*PPIJ
+      PCYIJ=(PYIJ-CY)*PPIJ
+      PCZIJ=(PZIJ-CZ)*PPIJ
+      C1X=PCXIJ+PCXKL
+      C2X=PCXKL*PPIJ
+      C3X=PAXIJ+PAXKL
+      C4X=PAXIJ*PPKL
+      C1Y=PCYIJ+PCYKL
+      C2Y=PCYKL*PPIJ
+      C3Y=PAYIJ+PAYKL
+      C4Y=PAYIJ*PPKL
+      C1Z=PCZIJ+PCZKL
+      C2Z=PCZKL*PPIJ
+      C3Z=PAZIJ+PAZKL
+      C4Z=PAZIJ*PPKL
+C
+C     ----- ROOTS AND WEIGHTS FOR QUADRATURE
+C
+      IF(NROOTS.LE.3) THEN
+      CALL RT123
+      ELSE IF(NROOTS.EQ.4) THEN
+      CALL ROOT4
+      ELSE IF(NROOTS.EQ.5) THEN
+      CALL ROOT5
+      ELSE IF(NROOTS.GT.5.AND.NROOTS.LE.9) THEN
+      CALL DROOT
+      ELSE
+      STOP ' WEIRD NUMBER OF ROOTS'
+      END IF
+      IOFFST=0
+      NONZER=0
+C
+C:::::::::::::::::::::
+C:::::---ROOTS---:::::
+C:::::::::::::::::::::
+C
+      DO 300 IROOT=1,NROOTS
+      U2=U(IROOT)*RHO
+      RHOTSQ=U2*RHO/(RHO+U2)
+      F00=DENS*WT(IROOT)
+      NONZER=NONZER+1
+      DUM=PPP+U2*PSUM
+      DUMT=ONE/DUM
+      DUMTH=DUMT*HALF
+      BP01=(PPIJ+U2)*DUMTH
+      B00=U2*DUMTH
+      B10=(PPKL+U2)*DUMTH
+      XCP00=(U2*C1X+C2X)*DUMT
+      XC00 =(U2*C3X+C4X)*DUMT
+      YCP00=(U2*C1Y+C2Y)*DUMT
+      YC00 =(U2*C3Y+C4Y)*DUMT
+      ZCP00=(U2*C1Z+C2Z)*DUMT
+      ZC00 =(U2*C3Z+C4Z)*DUMT
+C
+      GO TO (211,212,213,214),NPASS
+         STOP
+  211 CONTINUE
+      CALL XYZIJK
+      GO TO 215
+  212 CONTINUE
+      CALL XYZIJ
+      GO TO 215
+  213 CONTINUE
+      CALL XYZIK
+      GO TO 215
+  214 CONTINUE
+      CALL XYZI
+  215 CONTINUE
+      IOFFST=IOFFST+256
+  300 CONTINUE
+C
+C::::::::::::::::::::::::::::
+C:::::---END OF ROOTS---:::::
+C::::::::::::::::::::::::::::
+C
+C     ----- FORM (I,J//K,L) INTEGRALS
+C
+      IF(NONZER.EQ.0) GO TO 400
+C
+C   TWO ELECTRON DERIVATIVES ONLY
+      GO TO (221,222,223,224),NPASS
+         STOP  ' WEIRD NUMBER OF NPASS'
+  221 CONTINUE
+      CALL FRMIJK
+      GO TO 400
+  222 CONTINUE
+      CALL FRMIJ
+      GO TO 400
+  223 CONTINUE
+      CALL FRMIK
+      GO TO 400
+  224 CONTINUE
+      CALL FRMI
+C
+  400 CONTINUE
+  500 CONTINUE
+  600 CONTINUE
+C
+CCC   ICOUNT=ICOUNT+1
+      CALL FORMEG(D1T)
+C
+C===========================
+C=====END OF PRIMITIVES=====
+C===========================
+C
+  700 CONTINUE
+  800 CONTINUE
+  900 CONTINUE
+ 1000 CONTINUE
+C
+C#######################
+C#####END OF SHELLS#####
+C#######################
+C
+ 2000 CONTINUE
+ 3000 CONTINUE
+ 4000 CONTINUE
+ 5000 CONTINUE
+C
+C$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+C$$$$$END OF ANGULAR MOMENTUM$$$$$
+C$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+C
+ 6000 CONTINUE
+ 7000 CONTINUE
+ 8000 CONTINUE
+ 9000 CONTINUE
+C
+C%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C%%%%%---END OF ATOMS---%%%%%
+C%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C
+C
+      IF(IPRNT.LE.2) GO TO 230
+      WRITE(6,1)
+      CALL MATOUT(D1T,N3N,NMAXD,N3N,NMAXD,6)
+C
+  230 CONTINUE
+      RETURN
+      END

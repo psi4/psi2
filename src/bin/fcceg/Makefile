@@ -1,0 +1,13 @@
+# Generated automatically from Makefile.in by configure.
+srcdir = /home/usrb/b3/longhorn/psi/src/bin/fcceg
+VPATH = /home/usrb/b3/longhorn/psi/src/bin/fcceg
+
+include ../MakeVars
+
+TRUESRC = \
+addd.F atau.F btau.F ccsdt1.F cdt1.F cisd9.F clus9.F consym.F coret3.F diisd.F diisd3.F divide.F ecorr.F et2.F fccsdt.F fentry.F fock2.F frozen.F fsdt1.F ft2.F goint.F got2.F gprgid.F gvint.F gvt2.F hiaint.F hoint.F ht1.F hvint.F indt3.F initt.F itype.F jkt2.F ncount.F pcorr.F rd78.F rdints.F read30.F symarr.F t3tots.F tdiff.F trnps.F twrit.F twrit3.F x3arr.F rdinpt.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+

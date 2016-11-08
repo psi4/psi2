@@ -1,0 +1,18 @@
+      SUBROUTINE MX2OUT(A,NAD,B,NBD,M,IOUT)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      CHARACTER*6 LINE(7)
+      DIMENSION A(NAD,NAD),B(NBD,NBD)
+      DATA LINE / 7*'------' /
+    1 FORMAT(3X,3(7X,I5),7X,3(7X,I5))
+    2 FORMAT(3X,7A6,1X,7A6,1X,7A6)
+    3 FORMAT(3X,I2,2X,3F12.7,3X,I2,2X,3F12.7)
+    4 FORMAT(/)
+C
+      WRITE (IOUT,1) (I,I=1,3),(I,I=1,3)
+      WRITE (IOUT,2) (LINE(I),I=1,7),(LINE(I),I=1,7)
+      DO 101 I=1,M
+      WRITE (IOUT,3) I,(A(I,J),J=1,3),I,(B(I,J),J=1,3)
+  101 CONTINUE
+      WRITE (IOUT,4)
+      RETURN
+      END

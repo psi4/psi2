@@ -1,0 +1,21 @@
+      SUBROUTINE ISOOUT
+      IMPLICIT REAL*8 (A-H,O-Z)
+      COMMON/ISPAC/INDIN(120),INDOUT(30)
+      COMMON/PARA1/NSHELL,NT,MXT,NISO
+      LOGICAL*4 TRANS(120)
+      LOGICAL*1 INDOUT
+      EQUIVALENCE (TRANS(1),INDIN(1))
+C
+      DO 101 I=1,NT
+      TRANS(I)=INDOUT(I)
+  101 CONTINUE
+      RETURN
+C
+C--ISOIN-------------------------------------------------ISOIN
+      ENTRY ISOIN
+C
+      DO 102 I=1,NT
+      INDOUT(I)=TRANS(I)
+  102 CONTINUE
+      RETURN
+      END

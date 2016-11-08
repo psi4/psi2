@@ -1,0 +1,445 @@
+      SUBROUTINE MNDRT(Z,CORTOP)
+C
+C*******************************************************************
+C
+C     GOULD 8705 VERSION, INTERIOR BALLISTICS DIVISION
+C                         BALLISTICS RESEARCH LABORATORY
+C                         ABERDEEN PROVING GROUND, MARYLAND.
+C
+C
+C   DISTINCT ROW TABLE PROGRAM FOR THE SDGUGA CI SYSTEM.
+C     WRITTEN BY PAUL SAXE, UC BERKELEY, 1981-1982
+C
+C   THIS PROGRAM WILL READ A FLEXIBLE INPUT FORMAT OF ORBITAL CODES,
+C   REARRANGE THE ORBITALS TO A FORM SUITABLE FOR THE CI AND GENERATE  *
+C   ALL THE ARRAYS NEEDED TO DESCRIBE THE CI CALCULATION AND THE
+C   INTEGRAL STORAGE. THE INPUT CONSISTS OF THE FOLLOWING CARDS
+C
+C   1. LABEL CARD (26A3)
+C   2. OPTIONS CARD (16I5)
+C       A. PRINTING OPTION (POWERS OF TWO TO TURN ON INDIVIDUAL ONES)  *
+C           1  PRINT DRT
+C           2  PRINT EXTERNAL WEIGHT ARRAYS
+C           4  PRINT INTEGRAL POINTER ARRAYS
+C           8
+C          16
+C          32
+C       B. EXCITATION LEVEL FOR EXCITATIONS INTO VIRTUALS (DEFAULT 2)  *
+C       C. EXCITATION LEVEL FOR REFERENCES IN ORBITALS FLAGGED '%'
+C                (DEFAULT 0)
+C       D. INTERACTING CONFIGURATIONS ONLY (DEFAULT YES FOR ONE
+C             REFERENCE AND %, NO FOR MULTI-REFERENCE)
+C
+C             USE A 1 TO TURN OF LIMITATION TO SPIN INTERACTING
+C                SPACE,
+C             A 2 TO LIMIT VALENCE REFERENCES TO THOSE OF THE
+C                SAME SYMMETRY AS THE ONE REFERENCE,
+C             AND 3 TO SYMMETRY LIMIT VALENCE REFERNCES BUT TO
+C                USE FULL SPIN-SPACE.
+C
+C       E. INTEGRAL BLOCK SIZE DESIRED IN THOUSANDS (DEFAULT 25000)
+C       F. USE 4-EXTERNAL ARRAYS IN CI IF NON-ZERO (DEFAULT=0)
+C       G. REASSIGN OUTPUT TO THIS LFN IF NOT 0
+C       H. SET FERMI-LEVEL TO THIE OPTIN IF NON-ZERO
+C   3. NUMBER OF SYMMETRIES, OF BASIS FCNT, OF REFERENCES  (3I5)
+C   4. OCCUPATION CODES: (REPEAT COUNT)(KEY)CODE SYMMETRY
+C          FZC  FROZEN CORE
+C          FZV  FROZEN VIRTUAL
+C          COR  RESTRICTED CORE (INTEGRALS ARE TRANSFORMED)
+C          VIR  RESTRICTED VIRTUAL
+C          DOC  DOUBLY OCCUPIED
+C          UOC  VIRTUAL
+C          ALP  ALPHA OCCUPANCY (SPIN INCREASE)
+C          BET  BETA OCCUPANCY  (SPIN DECREASE)
+C          SPE  SPECIAL ORBITALS TO BE DEFINED LATER IN INPUT
+C
+C          REPEAT COUNT (OPTIONAL) IS NUMBER OF IDENTICAL ORBITALS
+C          KEY IS % FOR VALENCE EXCITATION ORBITALS
+C                 / FOR ORBITALS DIFFERING IN DIFFERENT REFERENCES
+C          SYMMETRY IS A NUMBER (1-8) IDENTIFYING SYMMETRY TYPE,
+C                N.B. FOR D2H MANDATORY TO NUMBER IN COTTONS WAY.
+C
+C          EXAMPLE: FZC1 2%DOC1 3 %UOC1 15UOC3  (BLANKS IGNORED)
+C   5. EXTRA CODES FOR REFERENCES GREATER THAN FIRST. GIVE ONLY
+C      CODES FOR ORBITALS CORRESPONDING TO THOSE FLAGGED WITH A '/'
+C      IN SECTION 4! FOR EXAMPLE, THREE-CONFIGS FROM TWO-ORBITALS
+C      COULD BE AS FOLLOWS
+C            4)  /DOC1 3DOC1 /UOC1 5UOC1
+C            5)   UOC1 DOC1     ALP1 BET1
+C   6. IF THERE ARE SPECIAL CODES, THE PROGRAM NEEDS TO KNOW HOW
+C      TO HANDLE THEM. THE POSSIBILITIES ARE:
+C        A. GVB  PLACING THIS IN FIRST THREE POSITIONS OF THIS CARD
+C                CAUSES A TWO-REFERENCE INTERACTING CALCULATION TO
+C                BE RUN.
+C        B. OSS  FOR OPEN-SHELL SINGLET
+C        C. MAT  TO ENTER MATRIX,ETC.  NEXT CARDS ARE
+C            1. NO. E- IN SPECIAL ORBITALS, SPIN*2, AND TOTAL SYMMETRY *
+C                  SPECIAL ORBITALS. (3I5)
+C            2. MATRIX OF EXCITATIONS INTO ORBITALS, DIMENSION 4**NO.  *
+C               SPECIAL ORBITALS. ENTERED AS MULTI-DIMENSIONAL ARRAY
+C               IN FORTRAN, LEFTMOST INDEX GIVING CASE (1-4) FOR WALK  *
+C               FOR FIRST SPECIAL ORBITAL, ETC. (4(4I1,1X)).
+C               EXAMPLE, FOR GVB PAIR: 0000 0111 0111 0112
+C
+C   THE CI PROGRAM CAN HANDLE ARBITRARY REFERENCE SETS,ARBITRARY
+C   EXCITATION LEVELS, REFERENCES SUCH AS TRTIPLES IN A SELECTED SPACE *
+C   AND SAY SINGLES OUTSIDE THAT SPACE. THERE IS ESSENTIALLY NO LIMIT  *
+C   TO THE TOTAL NUMBER OF UNPAIRED ELECTRONS, ORBITALS OR
+C   CONFIGURATIONS EXCEPT FOR COMPUTER TIME AVALIABLE.
+C
+C*******************************************************************
+C
+C     31 MARCH 1983  CHANGED ORBITAL ORDER TO HANDLE CI GRADIENTS
+C                    WITH RESTRICTED CORE AND VIRTUAL ORBITALS.
+C                                                           PWS
+C
+C     22 JUNE 1983   MODIFIED PALDUS TO CALCULATE INTERACTING SPACE
+C                    FOR VALENCE TYPE CALCULATIONS, AT LEAST FOR
+C                    CLOSED SHELL TYPE REFERENCE FUNCTION   PWS
+C
+C
+C     24 JUNE 1983   ADDED ROUTINE REF TO CALCULATE WEIGHT (NUMBER)
+C                    OF REFERENCE CONFIGURATION(S) FOR SINGLE
+C                    REFERENCE, MULTI-REFERENCE AND VALENCE TYPE
+C                    CALCULATIONS. WILL NOT WORK FOR SPECIAL
+C                    CALCULATIONS.                          PWS
+C
+C     28 JUNE 1983   MODIFIED PALDUS AGAIN SO THAT CAN GET CORRECT
+C                    INTERACTING SPACE FOR AT LEAST 3-IN-3 TYPE
+C                    REFERENCES                             PWS
+C
+C     28 JUNE 1983   SET UP INTERACTING OPTION OF 2 TO RESTRICT
+C                    VALENCE TYPE REFERNCES TO SAME SYMMETRY.
+C                                                           PWS
+C
+C     1 JANUARY 1984 PE 3252 VERSION ADAPTED TO GOULD 8705, BRL/IBD.
+C                    1 PROBLEM IN SCAN WITH FUNCTION IN IF STATEMENT,
+C                    AND CHANGED BLOCK DATA NAMES SO THEY DIFFER FROM
+C                    THE COMMON BLOCK NAMES. VERSION 6
+C                                                           PWS
+C
+C*******************************************************************
+      IMPLICIT INTEGER (A-Z)
+      INTEGER NUMINT
+cets050191
+#include <error.h>
+      integer errcod, frdc, frdi, fcnt, frdboo
+      logical oldinp
+      character*8 intspc
+      DOUBLE PRECISION RSECS, VERSIN
+      CHARACTER*1 MULTRF,VALENC
+      CHARACTER*3 CODES,WORDS
+      CHARACTER*4 LABEL
+      character*104 nlbl
+C
+      COMMON /DRTINF/ NA,NB,NS,NESPEC,MAXB,LEVFRM,LEVVAL,LEVOPN,LEVMUL
+     +,               LEVOCC,SPEC,SSPESH,VAL
+      COMMON /DRTCOD/ NCODES,DELA(9),DELB(9),DELELE(9)
+     +,               NTYPES,VIRTUL,OCCUPD,VALOCC,RESCOR,RESVIR,FROZEN
+     +,               VALVIR,OPENSH,MULTI,SPESHL,MULTRF,VALENC
+     +,               WORDS(6,9),CODES(9)
+      COMMON /OPTION/ OPTION(16),IDENT(26),LABEL(26)
+      COMMON /DIMENS/ NBF,NSYM,NORBS,NROWSP,NROW4P,NROWS,NROWS4
+     +,               NLEVS,NREFS,NROWOC,NROW4O,NWKS,NWKSOC,NLEVOC
+     +,               ORBFRM,SYMORB,NUMIJ,NGROUP,NUMINT,NMAX,NSPC,NVREF
+     +,               NIJVIR
+      COMMON /TAPES/  OUT,ERROUT,INPUT,DRTTAP
+      COMMON /VERSIN/ VERSIN
+      common /lbl/ nlbl
+C
+      DIMENSION Z(CORTOP)
+C
+C
+C     VERSIONS WITH SAME INTEGER PART ARE COMPATIBLE,FRACTION IS DDMMYY
+      VERSIN=6.010184
+C
+CIBM  CALL TIME(START)
+      DO 1 I=1,CORTOP
+         Z(I)=0
+    1 CONTINUE
+      oldinp = .true.
+      CALL LOCATE(INPUT,'# DRT ####',IERROR)
+      IF (IERROR.NE.0) THEN
+         oldinp = .false.
+cets050191         WRITE (OUT,91)
+cets050191         WRITE (ERROUT,91)
+cets050191   91    FORMAT (' # DRT: ERROR -- NO INPUT FOUND',//)
+cets050191         CALL mabort
+      END IF
+      if(oldinp) then
+        READ (INPUT,2) LABEL
+    2   FORMAT (26A3)
+        READ (INPUT,3) OPTION
+    3   FORMAT (16I5)
+      else
+        nlbl = ' '
+        errcod = frdc('LABEL',nlbl)
+
+        option(7)=0
+
+        option(1)=0
+        errcod = frdi('IPRINT',option(1))
+
+        option(2)=2
+        errcod = frdi('EX_LVL',option(2))
+
+        option(3)=0
+        errcod = frdi('VAL_EX_LVL',option(3))
+
+        option(5)=0
+        errcod = frdi('BLOCKSIZE',option(5))
+
+        option(6)=0
+        errcod = frdboo('4_EXTERN',option(6))
+
+        option(8)=0
+        errcod = frdi('FERMILVL',option(8))
+
+        nrefs=1
+        errcod = frdi('NUM_REFS',nrefs)
+c       if(nrefs.ne.1) then
+c         write(6,*) ' cannot handle multireference with new input yet'
+c         call qabort
+c       endif
+
+        option(4)=0
+        if(nrefs.gt.1) option(4)=1
+
+        intspc=' '
+        errcod = frdc('INT_SPC',intspc)
+
+        if(intspc.eq.'ON      ') option(4)=0
+        if(intspc.eq.'OFF     ') option(4)=1
+        if(intspc.eq.'SYM     ') option(4)=2
+        if(intspc.eq.'FULLSPIN') option(4)=3
+
+        nbf=0
+        errcod = frdi('NBASIS',nbf)
+
+        nsym=0
+        errcod = frdi('NIRREPS',nsym)
+
+        if(nsym.eq.0) then
+          call rfile(30)
+          call wreadw(30,nsym,1,128,junk)
+          call rclose(30,3)
+        endif
+
+        if(nbf.eq.0) then
+          call rfile(30)
+          call wreadw(30,nbf,1,118,junk)
+          call rclose(30,3)
+          if(nbf.eq.0) then
+            write(6,*) ' how many basis functions?'
+            write(6,*) ' run INPUT or add NBASIS to your input'
+          endif
+        endif
+      endif
+cets050191
+      IF (OPTION(7).GT.0) OUT=OPTION(7)
+C
+C     ----- OPEN OUTPUT FILE IN APPEND ONLY MODE -----
+C
+C     OPEN (UNIT=OUT,OPENMODE='A')
+C
+      if(oldinp) READ (INPUT,3) NSYM,NBF,NREFS
+      VER=VERSIN
+      DAY=(VERSIN-VER)*100
+      MO=((VERSIN-VER)*100-DAY)*100
+      YR=(((VERSIN-VER)*100-DAY)*100-MO)*100+0.5
+      if(oldinp) then
+      WRITE (OUT,30) VER,DAY,MO,YR,LABEL,(OPTION(I),I=1,6),NSYM,NBF
+     +,              NREFS
+      else
+      WRITE (OUT,31) VER,DAY,MO,YR,nlbl,(OPTION(I),I=1,6),NSYM,NBF
+     +,              NREFS
+      endif
+   30 FORMAT (' ',79(' '),/,T30,'DISTINCT ROW TABLE PROGRAM VERSION'
+     +,        I2,/,T40,I2,'/',I2,'/',I2,//,1X,26A3,//
+     +,       '   PRNT   X  VALX  INT  BLK  OUT ',/,1X,6I5,//,T10
+     +,       'NUMBER OF SYMMETRIES, OF BASIS FUNCTIONS, OF REFERENCES'
+     +, /,T10,'          ----------     ---------------     ----------'
+     +,     /,T25,I1,T38,I4,T57,I4)
+   31 FORMAT (' ',79(' '),/,T30,'DISTINCT ROW TABLE PROGRAM VERSION'
+     +,        I2,/,T40,I2,'/',I2,'/',I2,//,1X,a80,//
+     +,       '   PRNT   X  VALX  INT  BLK  OUT ',/,1X,6I5,//,T10
+     +,       'NUMBER OF SYMMETRIES, OF BASIS FUNCTIONS, OF REFERENCES'
+     +, /,T10,'          ----------     ---------------     ----------'
+     +,     /,T25,I1,T38,I4,T57,I4)
+      IF (NREFS.EQ.0) NREFS=1
+C
+C     ----- 4TH OPTION OF 1 TO IGNORE INTERACTING SPACE -----
+C
+      NTYPE=1
+      BFNUM=NTYPE+NTYPES
+      NUMSYM=BFNUM+NBF*NTYPES
+      BFSYM=NUMSYM+NTYPES*NSYM
+CIBM  BFKEY=BFSYM+NBF
+      BFCODE=BFSYM+NBF
+      TOP=BFCODE+NREFS*NBF
+      IF (TOP.LE.CORTOP) GO TO 5
+      WRITE (OUT,4)
+      WRITE (ERROUT,4)
+    4 FORMAT (//,' NOT ENOUGH CORE SPACE TO EVEN READ IN ORBITAL ',/
+     +,          ' INFORMATION -- SOMETHING IS VERY WRONG',//)
+      CALL mabort
+    5 CONTINUE
+      if(oldinp) then
+        CALL SCAN(Z(NTYPE),Z(BFNUM),Z(NUMSYM),Z(BFSYM),Z(BFCODE))
+      else
+        call scancj(z(ntype),z(bfnum),z(bfsym),z(bfcode))
+      endif
+      ORBTBF=TOP
+      IOUT=ORBTBF+NORBS
+      ORBSYM=IOUT+NBF
+      TOP=ORBSYM+NORBS
+      IF (TOP.LE.CORTOP) GO TO 7
+      WRITE (OUT,6)
+      WRITE (ERROUT,6)
+    6 FORMAT (//,' NOT ENOUGH CORE SPACE TO REORDER ORBITALS -- ',/
+     +,          '    SOMETHING IS VERY WRONG',//)
+      CALL mabort
+    7 CONTINUE
+      CALL REORDR(Z(NTYPE),Z(BFNUM),Z(NUMSYM),Z(BFSYM)
+     +,           Z(BFCODE),Z(ORBTBF),Z(IOUT),Z(ORBSYM))
+C
+C     ----- SET FERMI-LEVEL IF DESIRED -----
+C
+      IF (OPTION(8).NE.0) LEVFRM=OPTION(8)
+      IF (OPTION(8).NE.0) ORBFRM=LEVFRM-1
+C
+C
+C
+      NSPC=0
+      IF (SPEC.GT.0) NSPC=4**SPEC
+      NLEVS=NORBS+1
+      NLEVOC=NLEVS-LEVFRM+1
+      LEVPT=TOP
+      LEVNR=LEVPT+NLEVS
+      NELECS=LEVNR+NLEVS
+      SPC=NELECS+NREFS
+      TOP=SPC+NSPC
+      NROWSP=(CORTOP-TOP)/(8+NREFS)
+      NROW4P=NROWSP*4
+      A=TOP
+      BP=A+NROWSP
+      SP=BP+NROWSP
+      ARCP=SP+NROWSP
+      NLWKSP=ARCP+NROW4P
+      X=NLWKSP+NROWSP
+      IF (TOP.LE.CORTOP) GO TO 9
+      WRITE (OUT,8)
+      WRITE (ERROUT,8)
+    8 FORMAT (//,' NOT ENOUGH CORE TO TRY TO MAKE DRT -- SOMETHING',/
+     +,          ' IS QUITE WRONG',//)
+      CALL mabort
+    9 CONTINUE
+      IF(SPEC.GT.0) CALL GETSPE(Z(SPC),oldinp)
+      SPCFLG=0
+      IF(NSPC.EQ.0) THEN
+      NSPC=1
+      SPCFLG=1
+      END IF
+      CALL PALDUS(Z(BFSYM),Z(BFCODE),Z(ORBTBF)
+     +,           Z(A),Z(BP),Z(SP),Z(LEVPT),Z(LEVNR),Z(ARCP)
+     +,           Z(NLWKSP),Z(X),Z(NELECS),Z(SPC))
+      IF(NSPC.EQ.1.AND.SPCFLG.EQ.1) NSPC=0
+      B=A+NROWS
+      S=B+NROWS
+      ARC=S+NROWS
+      NLWKS=ARC+NROWS4
+      TOP=NLWKS+NROWS
+      CALL SQUEEZ(Z(BP),Z(SP),Z(ARCP),Z(NLWKSP),Z(B),Z(S),Z(ARC)
+     +,           Z(NLWKS))
+      WGHT=TOP
+      WTAB=WGHT+NROWS4
+      WTW=WTAB+ORBFRM
+      WTX=WTW+NSYM*ORBFRM
+      WTY=WTX+NSYM*ORBFRM
+      TOP=WTY+ORBFRM
+      IF (TOP.LE.CORTOP) GO TO 11
+      WRITE (OUT,10) TOP,CORTOP
+      WRITE (ERROUT,10) TOP,CORTOP
+   10 FORMAT (//,' NOT ENOUGH CORE TO RUN WEIGHT, NEED',I7,' AND HAVE'
+     +,           I7,' WORDS OF CORE AVAILABLE',//)
+      CALL mabort
+   11 CONTINUE
+      CALL WEIGHT(Z(A),Z(B),Z(S),Z(ARC),Z(LEVNR),Z(LEVPT),Z(NLWKS)
+     +,           Z(WTAB),Z(WTW),Z(WTX),Z(WTY),Z(WGHT))
+      SYMORB=NSYM*NORBS
+      NUMIJ=NORBS*(NORBS+1)/2
+      NIJVIR=ORBFRM*(ORBFRM+1)/2
+      KADD=TOP
+      LADD=KADD+SYMORB
+      IJADD=LADD+SYMORB
+      IJGRP=IJADD+NUMIJ
+      ININT=IJGRP+NUMIJ
+      INEXT=ININT+NORBS
+      JMNNXT=INEXT+NORBS
+      JMXNXT=JMNNXT+NORBS
+      IJXX=JMXNXT+NORBS
+C     IJXX=NINGRP+NORBS
+      KLXX=IJXX+NUMIJ
+      NKLXX=KLXX+NIJVIR
+      IJWW=NKLXX+NSYM*ORBFRM
+      KLWW=IJWW+NUMIJ
+      NKLWW=KLWW+NIJVIR
+      NINGRP=NKLWW+NSYM*ORBFRM
+      TOP=NINGRP
+      IF (TOP.LE.CORTOP) GO TO 15
+      WRITE (OUT,14) TOP,CORTOP
+      WRITE (ERROUT,14) TOP,CORTOP
+   14 FORMAT (//,' NOT ENOUGH CORE TO COMPLETE CALCULATION -- NEED',I7
+     +,          ' AND HAVE',I7,' WORDS OF CORE',//)
+      CALL mabort
+   15 CONTINUE
+      DO 16 I=KADD,TOP
+         Z(I)=0
+   16 CONTINUE
+      CALL INTGRL(Z(BFSYM),Z(ORBTBF),Z(KADD),Z(LADD),Z(IJADD),Z(IJGRP)
+     +,           Z(ININT),Z(INEXT),Z(JMNNXT),Z(JMXNXT),Z(NINGRP)
+     +,           Z(IJXX),Z(KLXX),Z(NKLXX),Z(IJWW),Z(KLWW),Z(NKLWW))
+      CSAV=NINGRP+NGROUP
+      ROWSV=CSAV+NLEVS
+      WTSAV=ROWSV+NLEVS
+      REFWT=WTSAV+NLEVS
+      TOP=REFWT+NREFS
+      MXREF=CORTOP-REFWT+1
+      IF (TOP.LE.CORTOP) GO TO 20
+      WRITE (OUT,19) TOP,CORTOP
+      WRITE (ERROUT,19) TOP,CORTOP
+   19 FORMAT (//,' NOT QUITE ENOUGH CORE -- NEED',I7,' AND HAVE'
+     +,           I7,' WORDS OF CORE',//)
+      CALL mabort
+   20 CONTINUE
+      CALL REF(Z(ARC),Z(WGHT),Z(LEVNR),Z(LEVPT),Z(ORBTBF),Z(BFCODE),
+     + Z(CSAV),Z(ROWSV),Z(WTSAV),Z(REFWT),MXREF)
+C
+C
+      TOP=REFWT+NVREF
+C
+      CALL PRIN(Z(A),Z(B),Z(S),Z(ARC),Z(NLWKS),Z(WGHT),Z(WTAB),Z(WTW)
+     +,          Z(WTX),Z(WTY),Z(LEVNR),Z(LEVPT),Z(KADD),Z(LADD)
+     +,          Z(ININT),Z(IJGRP),Z(IJADD),Z(ORBTBF),Z(BFCODE)
+     +,          Z(BFSYM))
+      CALL RENUMB(Z(LEVPT),Z(LEVNR),Z(ARC))
+C
+C
+C
+      CALL PUTDRT(Z(BFSYM),Z(BFCODE),Z(ORBTBF),Z(IOUT),Z(LEVPT),Z(LEVNR)
+     +,           Z(A),Z(B),Z(S),Z(ARC),Z(NLWKS),Z(WGHT),Z(WTAB),Z(WTW)
+     +,           Z(WTX),Z(WTY),Z(KADD),Z(LADD),Z(IJADD),Z(IJGRP)
+     +,           Z(ININT),Z(INEXT),Z(JMNNXT),Z(JMXNXT),Z(NINGRP)
+     +,           Z(ORBSYM),Z(IJXX),Z(KLXX),Z(NKLXX),Z(IJWW),Z(KLWW)
+     +,           Z(NKLWW),Z(REFWT))
+CIBM  CALL CPUTIM(RSECS)
+CIBM  MINS=RSECS/60
+CIBM  RSECS=RSECS-60*MINS
+CIBM  WRITE (OUT,18) MINS,RSECS
+CI 18 FORMAT (/,T31,'RUN TIME',I2,':',F6.3)
+      WRITE (OUT,17) TOP,CORTOP
+   17 FORMAT(/,15X,5('>'),' USED',I8,' OF',
+     1  I8,' WORDS OF CORE ',5('<'))
+C     CALL mabort
+      RETURN
+      END

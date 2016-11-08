@@ -1,0 +1,26 @@
+      SUBROUTINE SQTOTR(TRIANG,SQUARE,NUM,NNP)
+C
+C***PURPOSE: TO TRANSFER A SYMMETRIC SQUARE MATRIX TO A LOWER
+C            TRIANGULAR MATRIX.
+C
+C PAUL SAXE              27 NOVEMBER 1984            UCB
+C
+      REAL*8 TRIANG(NNP),SQUARE(NUM,NUM)
+      COMMON /TAPES/ NIN,IR,IOUT,ICHECK,IFLAG3,ITAPE,I30
+C
+      IJ=0
+      DO 2 I=1,NUM
+         DO 1 J=1,I
+            IJ=IJ+1
+            IF (ABS(SQUARE(I,J)-SQUARE(J,I)).GT.1.0D-06) THEN
+               WRITE (IOUT,9) I,J,SQUARE(I,J),SQUARE(J,I)
+               WRITE (ICHECK,9) I,J,SQUARE(I,J),SQUARE(J,I)
+    9          FORMAT(//,' ###### SQTOTR: ERROR..',2I5,2E15.6,//)
+               STOP 10
+            END IF
+            TRIANG(IJ)=SQUARE(I,J)
+    1    CONTINUE
+    2 CONTINUE
+C
+      RETURN
+      END

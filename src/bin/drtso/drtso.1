@@ -1,0 +1,64 @@
+.TH drtso 1 "2 Febuary, 1995" "\*(]W" "\*(]D"
+.SH NAME
+drtso \- MO Integeral and Two-PDM Reordering Program for 
+MCSCF Wavefunctions
+
+.SH DESCRIPTION
+.LP
+The command
+.B drtso
+will rearrange 
+the MO integrals and Two-PDM's in DRT (Distinct Row Table)
+order back into
+SCF order for use in the 
+.B casscf
+program.  Use of this program is required only when attempting
+to perform a CAS (Complete Active Space) SCF calculation.
+
+.sL
+.pN INPUT  
+.pN FILE40  "  (Master File)"
+.pN FILE52  "  (MO integrals in DRT order)"
+.pN FILE53  "  (TWO PDMs in DRT order)"
+.pN FILE58  "  (DRT information)"
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE35  "  (MO integrals in SO-SCF order)"
+.pN FILE56  "  (TWO PDMs in SO-SCF order)"
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B drtso
+program
+searches through the default keyword path (first
+.B DRTSO
+and then
+.BR DEFAULT )
+for the following keywords:
+
+
+.IP "\fBPRINT =\fP \fIinteger\fP"
+The program will give additional output.  The higher the value of
+.BR PRINT
+the more output provided.  The default is 0 and gives minimal output.
+
+.SH EXAMPLE
+.LP
+Usually, no input need be provided.  However, if for some reason
+you wish for more output from
+.B drtso
+, then the following input can be given:
+
+.DS
+  drtso: (
+    print = 0
+    )
+.DE

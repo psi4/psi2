@@ -1,0 +1,80 @@
+ 
+.PHONY:	default all install depend clean targetclean
+
+subdirs = \
+inputth intsth psi cscf deriv bmat rgeom ugeom \
+cczv          form15        normco        scfrg         fd_hess3 \
+ciprop        gradconv      onepdm        scfth         fd_grad3  \
+cisort        gugaci        oscc          scfx          energy_pot3 \
+contour       oscc3         trans         add_file11    analy_pot3  \
+anharm        contour3d     intder        oscc4         twopdm \
+backtr        cphf          intdif        proper        roll_file11 \
+cphfci        viblrg        fd_int3       pot_int3      roll_file61 \
+bondex        lag           ramanc        writ17        select_pot3 \
+cceg          lagzbak       ramang        writ20        sort_pot3 \
+ccprop        dipder        lcceg         ramint        writ24 \
+ccqg          dipderth      local         read30th      zmat \
+ccsr          drt           makepk        read34 \
+cctr          fcceg         master        vib3 \
+cctransl2     filesname     muder         rrkm		gradtol \
+mastux        traniux       stgrmo        intder95 \
+casscf        drtso         derivth \
+fd_cart       mk1517        scpropy
+
+
+all: default
+
+default:
+	for dir in $(subdirs); \
+          do \
+            (cd $${dir}; echo ... Making in $${dir} ...; $(MAKE) default); \
+          done
+
+install:
+	for dir in $(subdirs); \
+          do \
+            (cd $${dir}; echo ... Making install in $${dir} ...; $(MAKE) install); \
+          done
+
+install_inc:
+	for dir in $(subdirs); \
+          do \
+            (cd $${dir}; echo ... Making install in $${dir} ...; $(MAKE) install_inc); \
+          done
+
+install_man:
+	for dir in $(subdirs); \
+          do \
+            (cd $${dir}; echo ... Making install in $${dir} ...; $(MAKE) install_man); \
+          done
+
+depend:
+	for dir in $(subdirs); \
+          do \
+            (cd $${dir}; echo ... Making depend in $${dir} ...; $(MAKE) depend); \
+          done
+
+clean:
+	for dir in $(subdirs); \
+          do \
+            (cd $${dir}; echo ... Making clean in $${dir} ...; $(MAKE) clean); \
+          done
+
+targetclean:
+	for dir in $(subdirs); \
+          do \
+            (cd $${dir}; echo ... Making clean in $${dir} ...; $(MAKE) targetclean); \
+          done
+
+top_srcdir = @top_srcdir@
+srcdir = @srcdir@
+top_objdir = @top_objdir@
+
+$(top_srcdir)/configure: $(top_srcdir)/configure.in $(top_srcdir)/aclocal.m4
+	cd $(top_srcdir) && autoconf
+
+$(top_objdir)/config.status: $(top_srcdir)/configure
+	cd $(top_objdir) && ./config.status --recheck
+
+Makefile: $(srcdir)/Makefile.in $(top_objdir)/config.status
+	cd $(top_objdir) && CONFIG_FILES=src/bin/Makefile ./config.status

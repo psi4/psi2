@@ -1,0 +1,84 @@
+
+SHELL = /bin/sh
+
+#
+# Initialize variables that have been figured out by configure.
+#
+
+target = @target@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+manext = 1
+mandir = @mandir@
+datadir = @datadir@
+incdir = @incdir@
+top_srcdir = @top_srcdir@
+top_objdir = @top_objdir@
+objincdir = @objincdir@
+
+RANLIB = @RANLIB@
+YACC = @YACC@
+CC = @CC@
+CCDEPEND = @CCDEPEND@
+DODEPEND = @DODEPEND@
+FC = @FC@
+LD = @FC@
+MKDIRS = @MKDIRS@
+INSTALL = @INSTALL@
+INSTALL_INCLUDE = @INSTALL_INCLUDE@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+PSIPP = @PSIPP@
+TMPL = @TMPL@
+
+CDEF = @CDEF@ @DEFS@
+COPT = @COPT@
+COTH = @COTH@
+CDBG = @CDBG@
+CINC = @CINC@
+
+FDEF = @FDEF@
+FOPT = @FOPT@
+FOTH = @FOTH@
+FDBG = @FDBG@
+FINC = @FINC@
+FSTATIC = @FSTATIC@
+
+# flags to be passed to compilers
+CFLAGS = @CFLAGS@
+FFLAGS = @FFLAGS@
+FFLAGS_NOSTATIC = $(FOPT) $(FOTH) $(FDBG)
+
+# set up suffixes needed for various files
+F77SUF = @F77SUF@
+OBJSUF = @OBJSUF@
+LIBSUF = @LIBSUF@
+
+FLIBS = @FLIBS@ -lciomr
+CLIBS = @CLIBS@
+
+# where to find main for fortran programs
+ALLOC = allocate.o
+vpath allocate.o $(top_objdir)/lib:$(libdir)
+
+# we are mostly compiling fortran programs here
+LDFLAGS = $(FFLAGS)
+LDLIBS = $(FLIBS)
+
+# these are the most commonly used libraries
+PSILIBS = io.a alloc.a libparse.a libcoallc.a iomr.a libciomr.a
+
+vpath %.a $(top_objdir)/lib:$(libdir)
+
+#
+# have target default to the name of the directory we're in
+#
+TARGET = $(shell basename `pwd`)
+
+#
+# Initialize other variables.
+#

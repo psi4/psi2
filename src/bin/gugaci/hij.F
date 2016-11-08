@@ -1,0 +1,71 @@
+      SUBROUTINE hij(h1,isym,jsym,numi,numj,INT,IJADD,KADD,LADD)
+C
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+      INTEGER SYMORB,ARR,ORBFRM,ASM,OS,BMAX
+      REAL*8 INT
+C
+      COMMON /COEFS/  A,B,INTAL,INTAU,INTB,INTAD,INTBD
+      COMMON /INTS/   NMAX,NMAX2,NGROUP,NBLKOC,NUMIJ,SYMORB,INTSRT
+      COMMON /DIMS/   NBF,NSYM,NORBS,NROWS,NROWS4,NWKS,NWKS2,NLEVS
+     #,               NROWOC,LEVFRM
+     #,               NWKSMX,NLWKMX,NUWKMX,BMAX,NROOTS,ORBFRM
+      COMMON /ALL/    VAL1,VAL2,VAL3,ARR,ITR1,ITR2,IA,JA,ITYPE,ISEGT
+     #,               LVFRM1,NLWKI,NLWKJ,IMAX,IMIN
+      COMMON /SYMM/   ASM,JS,IS,MX(8),MN(8),OS(8),NUMSYM(8)
+C
+      DIMENSION INT(NMAX),IJADD(NUMIJ),KADD(SYMORB),LADD(SYMORB)
+C     DIMENSION HIIM (1),HIISM(1),HIJM (1),HIM(1),HSM(1)
+      DIMENSION H1(1)
+C
+      DATA ACRCY /1.0D-09/
+C
+cets110990      RETURN
+C
+C********************************** HIJ ********************************
+C
+cets110990      ENTRY HIJ(H1,ISYM,JSYM,NUMI,NUMJ)
+C
+      LAD=ARR+KADD(OS(ASM+1)+MN(ISYM+1))
+C
+      IF (ABS(A).LT.ACRCY) GO TO 310
+      IF (ABS(B).LT.ACRCY) GO TO 320
+C
+      DO 302 I=1,NUMI
+         IJ=I
+         DO 301 J=1,NUMJ
+            H1(IJ)=A*INT(LAD+INTAL)+B*INT(LAD+INTB)
+            IJ=IJ+NUMI
+            LAD=LAD+3
+  301    CONTINUE
+  302 CONTINUE
+C
+      RETURN
+C
+  310 CONTINUE
+      LAD=LAD+INTB
+      DO 312 I=1,NUMI
+         IJ=I
+         DO 311 J=1,NUMJ
+            H1(IJ)=B*INT(LAD)
+            IJ=IJ+NUMI
+            LAD=LAD+3
+  311    CONTINUE
+  312 CONTINUE
+C
+      RETURN
+C
+  320 CONTINUE
+      LAD=LAD+INTAL
+      DO 322 I=1,NUMI
+         IJ=I
+         DO 321 J=1,NUMJ
+            H1(IJ)=A*INT(LAD)
+            IJ=IJ+NUMI
+            LAD=LAD+3
+  321    CONTINUE
+  322 CONTINUE
+      RETURN
+C
+      END

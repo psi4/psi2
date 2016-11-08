@@ -1,0 +1,263 @@
+      SUBROUTINE MOMENT(UX,EE)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION UX(N3N,N3N),EE(N3N,N3N)
+      DIMENSION T(6),PT(3),EG(3,3),FV1(3),FV2(3)
+      CHARACTER*1 RAXIS
+      CHARACTER*25 RTYPE
+      COMMON/VIB101/NATOM,N3N,NATRI,ILIN,NVIB
+      COMMON/VIB103/PARA,WAVE,CONST,CYCL,CONV
+      COMMON/VIB104/AIXX,AIYY,AIZZ,SUMW
+      COMMON/VIB106/ROTAA(3),ROTGC(3),ROTCM(3),ROTMH(3)
+      COMMON/VIB107/ITOP,IVSGL,IVDBL,IVTRP
+      COMMON/VIB108/IAXIS(3),NDEG(150),NDAB(150,5),IMAG(150)
+      COMMON/VIB201/CHG(50),X(50),Y(50),Z(50),W(50)
+      COMMON/VIB206/RAXIS(3),RTYPE(6)
+      DATA A00,ONE,TWO / 0.0D+00 , 1.0D+00 , 2.0D+00 /
+      DATA A0 / 0.52917706D+00 /
+      DATA DLIMIT / 1.0D-02 /
+      DATA RLIMIT / 1.0D-05 /
+    1 FORMAT(//,2X,' CENTER OF MASS'/2X,' CMX',11X,' CMY',11X,' CMZ'//
+     1 2X,3(5X,F10.7)/)
+    2 FORMAT(//,2X,' CARTESIAN COORDINATES W.R.T. CENTER OF MASS (IN A)'
+     1/5X,4H NO.,11X,2H X,18X,2H Y,18X,2H Z,18X,2H W/)
+    3 FORMAT(2X,I7,5X,4F20.10)
+    4 FORMAT(//,2X,' INERTIA TENSOR'/)
+    5 FORMAT(//,2X,' PRINCIPAL MOMENTS OF INERTIA AT EQUILIBRIUM GEOMETR
+     1Y'/
+     2 4X,5H AXIS,9X,11H IN AMU.A+2,9X,10H IN G.CM+2,10X,
+     3 8H IN CM-1,15X,7H IN MHZ/38X,8H (*D+39)/)
+    6 FORMAT(8X,A1,3X,3F20.10,F20.5)
+    7 FORMAT(//,2X,' EIGENVECTOR OF INERTIA TENSOR'/)
+    8 FORMAT(//,2X,' THE ROTATIONAL TYPE OF THIS ISOTOPIC MOLECULE  = ',
+     1 2X,A25/)
+    9 FORMAT(/,2X,' ASYMMETRY PARAMETERS'/
+     1 2X,' B(P)    = ',F10.5/
+     2 2X,' B(O)    = ',F10.5/
+     3 2X,' KAPPA   = ',F10.5/)
+   10 FORMAT(//,2X,' UX MATRIX'/)
+   11 FORMAT(//,2X,' UX * UX(T) = E '/)
+   12 FORMAT(//,2X,' CARTESIAN COORDINATES W.R.T. PRINCIPAL AXIS (IN BOH
+     1R)'/5X,4H NO.,11X,2H X,18X,2H Y,18X,2H Z,18X,2H W/)
+   13 FORMAT(//,2X,' CARTESIAN COORDINATES W.R.T. PRINCIPAL AXIS (IN A)'
+     1/5X,4H NO.,11X,2H X,18X,2H Y,18X,2H Z,18X,2H W/)
+C
+C   THE CALCULATION OF CENTER OF MASS
+      SUMW=A00
+      SUMWX=A00
+      SUMWY=A00
+      SUMWZ=A00
+      DO 101 I=1,NATOM
+      SUMW=SUMW+W(I)
+      SUMWX=SUMWX+W(I)*X(I)
+      SUMWY=SUMWY+W(I)*Y(I)
+      SUMWZ=SUMWZ+W(I)*Z(I)
+  101 CONTINUE
+      CMX=SUMWX/SUMW
+      CMY=SUMWY/SUMW
+      CMZ=SUMWZ/SUMW
+      WRITE(6,1) CMX,CMY,CMZ
+C   THE CARTESIAN COORDINATES W.R.T. CENTER OF MASS
+      WRITE(6,2)
+      DO 102 I=1,NATOM
+      X(I)=X(I)-CMX
+      Y(I)=Y(I)-CMY
+      Z(I)=Z(I)-CMZ
+      WRITE(6,3) I,X(I),Y(I),Z(I),W(I)
+  102 CONTINUE
+C
+C   THE CALCULATION OF INERTIA TENSOR
+      CALL ZERO(T,6)
+      DO 104 I=1,NATOM
+      T(1)=T(1)+W(I)*(Y(I)**2+Z(I)**2)
+      T(3)=T(3)+W(I)*(Z(I)**2+X(I)**2)
+      T(6)=T(6)+W(I)*(X(I)**2+Y(I)**2)
+      T(2)=T(2)-W(I)*X(I)*Y(I)
+      T(4)=T(4)-W(I)*Z(I)*X(I)
+      T(5)=T(5)-W(I)*Y(I)*Z(I)
+  104 CONTINUE
+      AIXX=T(1)
+      AIYY=T(3)
+      AIZZ=T(6)
+      ILIN=0
+      IF(AIXX.LE.DLIMIT) ILIN=1
+      IF(AIYY.LE.DLIMIT) ILIN=1
+      IF(AIZZ.LE.DLIMIT) ILIN=1
+      WRITE(6,4)
+      CALL PRINT(T,6,3,6)
+      NVIB=N3N-6+ILIN
+C
+C   THE CALCULATION OF PRINCIPAL MOMENTS OF INERTIA
+      CALL RSP(3,3,6,T,PT,1,EG,FV1,FV2)
+      CALL ZERO(ROTAA,3)
+      CALL ZERO(ROTGC,3)
+      CALL ZERO(ROTCM,3)
+      CALL ZERO(ROTMH,3)
+      WRITE(6,5)
+      II=0
+      DO 106 I=1,3
+      PA=A00
+      PB=A00
+      PC=A00
+      IF(DABS(PT(I)).LE.DLIMIT) GO TO 201
+      II=II+1
+      PA=PT(I)*PARA
+      PB=CONST/PT(I)
+      PC=CYCL/PT(I)
+      ROTAA(II)=PT(I)
+      ROTGC(II)=PA
+      ROTCM(II)=PB
+      ROTMH(II)=PC
+  201 CONTINUE
+      WRITE(6,6) RAXIS(I),PT(I),PA,PB,PC
+  106 CONTINUE
+      WRITE(6,7)
+      CALL MATOUT(EG,3,3,3,3,6)
+C
+C%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+C%  ASSIGN THE ROTATIONAL TYPE OF THE ISOTOPIC MOLECULE  %
+C%  ITOP IS A PARAMETER FOR ROTATIONAL TOP               %
+C%  ITOP  = 1  : DIATOMIC MOLECULE                       %
+C%  ITOP  = 2  : LINEAR POLYATOMIC MOLECULE              %
+C%  ITOP  = 3  : ASYMMETRIC TOP                          %
+C%  ITOP  = 4  : SYMMETRIC TOP (PROLATE)                 %
+C%  ITOP  = 5  : SYMMETRIC TOP (OBLATE)                  %
+C%  ITOP  = 6  : SPHERICAL TOP                           %
+C%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      ITOP=3
+      IF(DABS(ROTAA(2)-ROTAA(3)).LE.RLIMIT) ITOP=4
+      IF(DABS(ROTAA(1)-ROTAA(2)).LE.RLIMIT) ITOP=5
+      IF(DABS(ROTAA(1)-ROTAA(2)).LE.RLIMIT.AND.
+     *   DABS(ROTAA(2)-ROTAA(3)).LE.RLIMIT) ITOP=6
+      IF(ILIN.NE.0) ITOP=2
+      IF(NATOM.EQ.2) ITOP=1
+      WRITE(6,8) RTYPE(ITOP)
+C
+C   ASSIGN PRINCIPAL AXIS
+      IAXIS(1)=1
+      IAXIS(2)=2
+      IAXIS(3)=3
+C
+C   FORM UX MATRIX
+      CALL ZERO(UX,N3N*N3N)
+C
+C%%%%%%%%%%%%%%%%%%
+C%  FOR DIATOMIC  %
+C%%%%%%%%%%%%%%%%%%
+      IF(ITOP.EQ.1) THEN
+        CALL ZERO(EG,9)
+        EG(1,1)=ONE
+        EG(2,2)=ONE
+        EG(3,3)=ONE
+      END IF
+C
+C   FOR LINEAR POLYATOMIC
+      IF(ITOP.EQ.2) THEN
+        DO 108 I=1,3
+        TG=EG(I,1)
+        EG(I,1)=EG(I,3)
+        EG(I,3)=TG
+  108 CONTINUE
+      END IF
+C
+C%%%%%%%%%%%%%%%%%%%%%%%%
+C%  FOR ASYMMETRIC TOP  %
+C%%%%%%%%%%%%%%%%%%%%%%%%
+C     FOR PROLATE TOP RAY'S KAPPA = -1
+C     FOR OBLATE  TOP RAY'S KAPPA = +1
+      IF(ITOP.EQ.3) THEN
+        BP=(ROTCM(3)-ROTCM(2))/(ROTCM(1)*TWO-ROTCM(2)-ROTCM(3))
+        BO=(ROTCM(1)-ROTCM(2))/(ROTCM(3)*TWO-ROTCM(2)-ROTCM(1))
+        RAYK=(ROTCM(2)*TWO-ROTCM(1)-ROTCM(3))/(ROTCM(1)-ROTCM(3))
+        WRITE(6,9) BP,BO,RAYK
+C     FOR AN ASYMMETRIC TOP THE COORDINATE SYSTEM WILL BE ROTATED
+C     TO SATISFY THE FOLLOWING RELATIONSHIPS
+C       I(X)<I(Y)<I(Z)
+C       I(A)<I(B)<I(C)
+C         A >  B >  C
+C
+        IAXIS(1)=1
+        IAXIS(2)=2
+        IAXIS(3)=3
+      END IF
+C
+C%%%%%%%%%%%%%%%%%%%%%%%
+C%  FOR SYMMETRIC TOP  %
+C%%%%%%%%%%%%%%%%%%%%%%%
+C     FOR A SYMMETRIC TOP THE MOLECULAR AXIS IS ALONG THE Z AXIS
+      IF(ITOP.EQ.4.OR.ITOP.EQ.5) THEN
+        CALL ZERO(EG,9)
+        EG(1,1)=ONE
+        EG(2,2)=ONE
+        EG(3,3)=ONE
+      END IF
+C     FOR A PROLATE TOP
+C        I(X)<I(Y)=I(Z)
+C        I(A)<I(B)=I(C)
+C          A >  B =  C
+      IF(ITOP.EQ.4) THEN
+        IAXIS(1)=3
+        IAXIS(2)=2
+        IAXIS(3)=1
+      END IF
+C
+C     FOR AN OBLATE TOP
+C        I(X)=I(Y)<I(Z)
+C        I(A)=I(B)<I(C)
+C          A =  B >  C
+      IF(ITOP.EQ.5) THEN
+        IAXIS(1)=1
+        IAXIS(2)=2
+        IAXIS(3)=3
+      END IF
+C
+C%%%%%%%%%%%%%%%%%%%%%%%
+C%  FOR SPHERICAL TOP  %
+C%%%%%%%%%%%%%%%%%%%%%%%
+      IF(ITOP.EQ.6) THEN
+        CALL ZERO(EG,9)
+        EG(1,1)=ONE
+        EG(2,2)=ONE
+        EG(3,3)=ONE
+        IAXIS(1)=1
+        IAXIS(2)=2
+        IAXIS(3)=3
+      END IF
+C
+C   FORM THE UX MATRIX
+      DO 111 IABC=1,NATOM
+      IPOS=(IABC-1)*3
+      DO 110 I=1,3
+      DO 110 J=1,3
+      II=IPOS+I
+      JJ=IPOS+J
+      UX(II,JJ)=EG(I,J)
+  110 CONTINUE
+  111 CONTINUE
+      WRITE(6,10)
+      CALL MATOUT(UX,N3N,N3N,N3N,N3N,6)
+C
+C   CHECK UNITARITY OF UX MATRIX
+      CALL MTXMPY(UX,N3N,UX,N3N,EE,N3N,EE,N3N,N3N,3)
+      WRITE(6,11)
+      CALL MATOUT(EE,N3N,N3N,N3N,N3N,6)
+C
+C   THE CARTESIAN COORDINATES W.R.T. PRINCIPAL AXIS
+      WRITE(6,12)
+      DO 112 I=1,NATOM
+      XT=EG(1,1)*X(I)+EG(2,1)*Y(I)+EG(3,1)*Z(I)
+      YT=EG(1,2)*X(I)+EG(2,2)*Y(I)+EG(3,2)*Z(I)
+      ZT=EG(1,3)*X(I)+EG(2,3)*Y(I)+EG(3,3)*Z(I)
+      X(I)=XT
+      Y(I)=YT
+      Z(I)=ZT
+      XT=XT/A0
+      YT=YT/A0
+      ZT=ZT/A0
+      WRITE(6,3) I,XT,YT,ZT,W(I)
+  112 CONTINUE
+      WRITE(6,13)
+      DO 113 I=1,NATOM
+  113 WRITE(6,3) I,X(I),Y(I),Z(I),W(I)
+C
+      RETURN
+      END

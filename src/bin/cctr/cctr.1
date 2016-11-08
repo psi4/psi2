@@ -1,0 +1,82 @@
+.TH cctr 1 "22 March, 1991" "\*(]W" "\*(]D"
+.SH NAME
+cctr \- transforms integrals from the SO to MO basis
+
+.SH DESCRIPTION
+.LP
+The program
+.B cctr
+is used to transform the integrals from the SO to the MO basis
+for their subsequent use in coupled cluster calculations.
+
+.sL
+.pN INPUT
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B cctr
+program
+searches through the default keyword path (first
+.B CCTR
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBSYMMETRY =\fP \fIstring\fP"
+The point group of the molecule as is described in the \fBinput\fP program
+manual pages.  There is no default.
+
+.IP "\fBDELETE34 =\fP \fIboolean\fP"
+The program will delete the SO basis two electron integrals in
+.pN FILE34
+after the
+transformation is complete if \fIboolean\fP is true.
+Possible values for this parameter are
+.BR TRUE ,
+.BR YES ,
+.BR 1 ,
+.BR FALSE ,
+.BR NO ,
+and
+.BR 0 .
+The default is true.
+
+.IP "\fBLARGE_CORE =\fP \fIboolean\fP"
+.B cctr
+rarely needs more than 6 megabytes of memory, and on the rs6000s will
+run very slowly if more than 8 mb of core has been specified with MEMORY.
+Thus, by default, 
+.B cctr
+will use less than 8mb of core, regardless of what is specified with the
+MEMORY keyword.  If more memory is needed, then set LARGE_CORE to TRUE.
+The default is false.
+
+
+.SH EXAMPLE
+.LP
+Usually, no extra input need be provided.  However, if for some reason
+the two electron integrals should be kept after
+.B cctr
+completes, then the following input can be given: 
+
+.DS
+  default: (
+    symmetry = c2v
+    )
+
+  cctr: (
+    delete34 = no
+    )
+.DE
+

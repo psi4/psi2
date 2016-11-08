@@ -1,0 +1,385 @@
+      SUBROUTINE CENTAS(F3Q,EE)
+C   THE CALCULATION OF CENTRIFUGAL DISTORTION CONSTANTS
+C   FOR AN ASYMMETRIC TOP MOLECULE
+      IMPLICIT REAL*8 (A-H,O-Z)
+      CHARACTER*1 RAXIS
+      CHARACTER*25 RTYPE
+      DIMENSION RCENT(3),RTOTC(3),RTOTM(3)
+      DIMENSION F3Q(N3N,N3N,N3N),EE(N3N,N3N)
+      COMMON/VIB101/NATOM,N3N,NATRI,ILIN,NVIB
+      COMMON/VIB102/ITHREE,IFOUR,N3TOT,N4TOT
+      COMMON/VIB103/PARA,WAVE,CONST,CYCL,CONV
+      COMMON/VIB106/ROTAA(3),ROTGC(3),ROTCM(3),ROTMH(3)
+      COMMON/VIB108/IAXIS(3),NDEG(150),NDAB(150,5),IMAG(150)
+      COMMON/VIB110/ISIGMA
+      COMMON/VIB203/IOFF(150),IPRNT
+      COMMON/VIB205/IFREQ,NFRQ(150)
+      COMMON/VIB206/RAXIS(3),RTYPE(6)
+      COMMON/VIB207/TABCD(3,3,3,3),PABC(3,3,3)
+      COMMON/VIB208/TAABB(3,3),TABAB(3,3)
+      COMMON/VIB209/SALP(3)
+      DATA CL / 2.99792458D+00 /
+      DATA A00,HALF,ONE,TWO / 0.0D+00 , 0.5D+00 , 1.0D+00 , 2.0D+00 /
+    1 FORMAT(//,2X,' ******************************************'/
+     1          2X,' ***THE CENTRIFUGAL DISTORTION CONSTANTS***'/
+     2          2X,' ******************************************')
+    2 FORMAT(//,2X,' F3(QI*QJ*QK) MATRIX (IN CM-1), IVIB = ',I5/)
+    3 FORMAT(//,2X,' TAABB MATRIX FROM BXY MATRICES (IN CM-1)'/)
+    4 FORMAT(//,2X,' TABAB MATRIX FROM BXY MATRICES (IN CM-1)'/)
+    5 FORMAT(//,2X,' FOR AN ASYMMETRIC TOP MOLECULE'/
+     1          2X,' DJ       = ',F20.10,' D-06 CM-1',
+     2         10X,' DJ       = ',F20.10,' MHZ'/
+     3          2X,' DK       = ',F20.10,' D-06 CM-1',
+     4         10X,' DK       = ',F20.10,' MHZ'/
+     5          2X,' DJK      = ',F20.10,' D-06 CM-1',
+     6         10X,' DJK      = ',F20.10,' MHZ'/
+     7          2X,' R5       = ',F20.10,' D-06 CM-1',
+     8         10X,' R5       = ',F20.10,' MHZ'/
+     9          2X,' R6       = ',F20.10,' D-06 CM-1',
+     A         10X,' R6       = ',F20.10,' MHZ'/
+     B          2X,' DELJ     = ',F20.10,' D-06 CM-1',
+     C         10X,' DELJ     = ',F20.10,' MHZ'/)
+    6 FORMAT(//,2X,' PRINCIPAL MOMENTS OF INERTIA AT EQUILIBRIUM GEOMETR
+     1Y'/
+     2 4X,5H AXIS,9X,11H IN AMU.A+2,9X,10H IN G.CM+2,10X,
+     3 8H IN CM-1,15X,7H IN MHZ/38X,8H (*D+39)/)
+    7 FORMAT(8X,A1,3X,3F20.10,F20.5)
+    8 FORMAT(//,2X,' PRINCIPAL MOMENTS OF INERTIA WITH ZERO-POINT VIBRAT
+     1IONAL CORRECTION'/
+     2 4X,5H AXIS,9X,11H IN AMU.A+2,9X,10H IN G.CM+2,10X,
+     3 8H IN CM-1,15X,7H IN MHZ/38X,8H (*D+39)/)
+    9 FORMAT(//,2X,' PRINCIPAL MOMENTS OF INERTIA WITH ZERO-POINT VIBRAT
+     1IONAL AND CENTRIFUGAL DISTORTION CORRECTIONS'/
+     2 4X,5H AXIS,9X,11H IN AMU.A+2,9X,10H IN G.CM+2,10X,
+     3 8H IN CM-1,15X,7H IN MHZ/38X,8H (*D+39)/)
+   10 FORMAT(/,2X,' SIGMA (0'') = ',F20.10/
+     1         2X,' SIGMA (E)  = ',F20.10/)
+   11 FORMAT(/,2X,' SIGMA (0'') WILL BE USED TO CALCULATE CENTRIFUGAL DI
+     1STORTION CONSTANTS'/)
+   12 FORMAT(/,2X,' SIGMA (E) WILL BE USED TO CALCULATE CENTRIFUGAL DIST
+     1ORTION CONSTANTS'/)
+   13 FORMAT(/,2X,' A (TILDE)  = ',F20.10,' CM-1',
+     1        15X,' A (TILDE)  = ',F20.10,' MHZ'/
+     2         2X,' B (TILDE)  = ',F20.10,' CM-1',
+     3        15X,' B (TILDE)  = ',F20.10,' MHZ'/
+     4         2X,' C (TILDE)  = ',F20.10,' CM-1',
+     5        15X,' C (TILDE)  = ',F20.10,' MHZ'/)
+   14 FORMAT(//,2X,' FOR AN ASYMMETRIC TOP MOLECULE'/
+     1          2X,' DELTA J    = ',F20.10,' D-06 CM-1',
+     2         10X,' DELTA J    = ',F20.10,' MHZ'/
+     3          2X,' DELTA K    = ',F20.10,' D-06 CM-1',
+     4         10X,' DELTA K    = ',F20.10,' MHZ'/
+     5          2X,' DELTA JK   = ',F20.10,' D-06 CM-1',
+     6         10X,' DELTA JK   = ',F20.10,' MHZ'/
+     7          2X,' DELK       = ',F20.10,' D-06 CM-1',
+     8         10X,' DELK       = ',F20.10,' MHZ'/
+     9          2X,' DELJ       = ',F20.10,' D-06 CM-1',
+     A         10X,' DELJ       = ',F20.10,' MHZ'/)
+   15 FORMAT(//,2X,' FOR AN ASYMMETRIC TOP MOLECULE'/
+     1          2X,' DDJ        = ',F20.10,' D-06 CM-1',
+     2         10X,' DDJ        = ',F20.10,' MHZ'/
+     3          2X,' DDK        = ',F20.10,' D-06 CM-1',
+     4         10X,' DDK        = ',F20.10,' MHZ'/
+     5          2X,' DDJK       = ',F20.10,' D-06 CM-1',
+     6         10X,' DDJK       = ',F20.10,' MHZ'/
+     7          2X,' DDWJ       = ',F20.10,' D-06'/
+     8          2X,' DDWK       = ',F20.10,' D-06'/)
+   16 FORMAT(//,2X,' FOR AN ASYMMETRIC TOP MOLECULE (S111=0)'/
+     1          2X,' HJ         = ',F20.10,' D-06 CM-1',
+     2         10X,' HJ         = ',F20.10,' MHZ'/
+     3          2X,' HJK        = ',F20.10,' D-06 CM-1',
+     4         10X,' HJK        = ',F20.10,' MHZ'/
+     5          2X,' HKJ        = ',F20.10,' D-06 CM-1',
+     6         10X,' HKJ        = ',F20.10,' MHZ'/
+     7          2X,' HK         = ',F20.10,' D-06 CM-1',
+     8         10X,' HK         = ',F20.10,' MHZ'/
+     9          2X,' HHJ        = ',F20.10,' D-06 CM-1',
+     A         10X,' HHJ        = ',F20.10,' MHZ'/
+     B          2X,' HHJK       = ',F20.10,' D-06 CM-1',
+     C         10X,' HHJK       = ',F20.10,' MHZ'/
+     D          2X,' HHK        = ',F20.10,' D-06 CM-1',
+     E         10X,' HHK        = ',F20.10,' MHZ'/)
+   17 FORMAT(//,2X,' FOR AN ASYMMETRIC TOP MOLECULE (S111=-4*R6/(B-C))'/
+     1          2X,' HJ         = ',F20.10,' D-06 CM-1',
+     2         10X,' HJ         = ',F20.10,' MHZ'/
+     3          2X,' HJK        = ',F20.10,' D-06 CM-1',
+     4         10X,' HJK        = ',F20.10,' MHZ'/
+     5          2X,' HKJ        = ',F20.10,' D-06 CM-1',
+     6         10X,' HKJ        = ',F20.10,' MHZ'/
+     7          2X,' HK         = ',F20.10,' D-06 CM-1',
+     8         10X,' HK         = ',F20.10,' MHZ'/
+     9          2X,' HHJ        = ',F20.10,' D-06 CM-1',
+     A         10X,' HHJ        = ',F20.10,' MHZ'/
+     B          2X,' HHJK       = ',F20.10,' D-06 CM-1',
+     C         10X,' HHJK       = ',F20.10,' MHZ'/
+     D          2X,' HHK        = ',F20.10,' D-06 CM-1',
+     E         10X,' HHK        = ',F20.10,' MHZ'/)
+C
+      WRITE(6,1)
+C   ELEMENTS OF F3Q ARE IN CM-1
+      IF(IPRNT.LE.2) GO TO 201
+      DO 102 III=1,NVIB
+      IVIB=NFRQ(III)
+      WRITE(6,2) IVIB
+      DO 101 I=1,NVIB
+      II=NFRQ(I)
+      DO 101 J=1,NVIB
+      JJ=NFRQ(J)
+      EE(I,J)=F3Q(II,JJ,IVIB)
+  101 CONTINUE
+      CALL ANHOUT(EE,N3N,N3N,NVIB,NVIB,6)
+  102 CONTINUE
+C
+  201 CONTINUE
+      DO 103 I=1,3
+      DO 103 J=1,3
+      TAABB(I,J)=TABCD(I,I,J,J)
+      TABAB(I,J)=TABCD(I,J,I,J)
+  103 CONTINUE
+      IF(IPRNT.LE.2) GO TO 202
+      WRITE(6,3)
+      CALL MATOUT(TAABB,3,3,3,3,6)
+      WRITE(6,4)
+      CALL MATOUT(TABAB,3,3,3,3,6)
+C
+C   FOR AN ASYMMETRIC TOP MOLECULE
+  202 CONTINUE
+      IAA=IAXIS(1)
+      IBB=IAXIS(2)
+      ICC=IAXIS(3)
+C
+      DJ=-(TAABB(IBB,IBB)*3.0D+00+TAABB(ICC,ICC)*3.0D+00
+     1    +TAABB(IBB,ICC)*2.0D+00+TABAB(IBB,ICC)*4.0D+00)/32.0D+00
+      DK=DJ-(TAABB(IAA,IAA)-TAABB(IAA,IBB)-TAABB(ICC,IAA)
+     1      -TABAB(IAA,IBB)*2.0D+00-TABAB(ICC,IAA)*2.0D+00)/4.0D+00
+      DJK=-DJ-DK-TAABB(IAA,IAA)/4.0D+00
+      R5=-(TAABB(IBB,IBB)-TAABB(ICC,ICC)
+     1    -TAABB(IAA,IBB)*2.0D+00-TABAB(IAA,IBB)*4.0D+00
+     2    +TAABB(ICC,IAA)*2.0D+00+TABAB(ICC,IAA)*4.0D+00)/32.0D+00
+      R6=(TAABB(IBB,IBB)+TAABB(ICC,ICC)
+     1   -TAABB(IBB,ICC)*2.0D+00-TABAB(IBB,ICC)*4.0D+00)/64.0D+00
+      DELJ=-(TAABB(IBB,IBB)-TAABB(ICC,ICC))/16.0D+00
+      DJCM=DJ*1.0D+06
+      DKCM=DK*1.0D+06
+      DJKCM=DJK*1.0D+06
+      R5CM=R5*1.0D+06
+      R6CM=R6*1.0D+06
+      DELJCM=DELJ*1.0D+06
+      DJMH=DJ*CL*1.0D+04
+      DKMH=DK*CL*1.0D+04
+      DJKMH=DJK*CL*1.0D+04
+      R5MH=R5*CL*1.0D+04
+      R6MH=R6*CL*1.0D+04
+      DELJMH=DELJ*CL*1.0D+04
+      WRITE(6,5) DJCM,DJMH,DKCM,DKMH,DJKCM,DJKMH,R5CM,R5MH,R6CM,R6MH,
+     1           DELJCM,DELJMH
+C
+C   ROTATIONAL CONSTANTS WITH CENTRIFUGAL DISTORTION CORRECTIONS
+      WRITE(6,6)
+      DO 105 I=1,3
+      PB=ROTCM(I)
+      PT=CONST/PB
+      PA=PT*PARA
+      PC=CYCL/PT
+      WRITE(6,7) RAXIS(I),PT,PA,PB,PC
+  105 CONTINUE
+      WRITE(6,8)
+      DO 106 I=1,3
+      PB=ROTCM(I)-SALP(I)*HALF
+      PT=CONST/PB
+      PA=PT*PARA
+      PC=CYCL/PT
+      WRITE(6,7) RAXIS(I),PT,PA,PB,PC
+  106 CONTINUE
+      WRITE(6,9)
+      RCENT(1)=(TABAB(IBB,ICC)*3.0D+00-TABAB(ICC,IAA)*TWO
+     1                                -TABAB(IAA,IBB)*TWO)/4.0D+00
+      RCENT(2)=(TABAB(ICC,IAA)*3.0D+00-TABAB(IAA,IBB)*TWO
+     1                                -TABAB(IBB,ICC)*TWO)/4.0D+00
+      RCENT(3)=(TABAB(IAA,IBB)*3.0D+00-TABAB(IBB,ICC)*TWO
+     1                                -TABAB(ICC,IAA)*TWO)/4.0D+00
+C
+      DO 107 I=1,3
+      PB=ROTCM(I)-SALP(I)*HALF+RCENT(I)
+      RTOTC(I)=PB
+      PT=CONST/PB
+      PA=PT*PARA
+      PC=CYCL/PT
+      RTOTM(I)=PC
+      WRITE(6,7) RAXIS(I),PT,PA,PB,PC
+  107 CONTINUE
+C
+C   ASYMMETRY PARAMETER
+C####################################################
+C#  NOTE :                                         ##
+C#       IF(ISIGMA.EQ.0) THEN SIGMA IS CALCULATED  ##
+C#       USING A(0') , B(0') AND C(0') CONSTANTS   ##
+C#                                                 ##
+C#       IF(ISIGMA.NE.0) THEN SIGMA IS CALCULATED  ##
+C#       USING A(E) , B(E) AND C(E) CONSTANTS      ##
+C#                                                 ##
+C####################################################
+      SIGMA=(RTOTC(IAA)*TWO-RTOTC(IBB)-RTOTC(ICC))
+     1     /(RTOTC(IBB)-RTOTC(ICC))
+      SIGMB=(ROTCM(IAA)*TWO-ROTCM(IBB)-ROTCM(ICC))
+     1     /(ROTCM(IBB)-ROTCM(ICC))
+      WRITE(6,10) SIGMA,SIGMB
+      IF(ISIGMA.EQ.0) THEN
+        WRITE(6,11)
+      ELSE
+        SIGMA=SIGMB
+        WRITE(6,12)
+      END IF
+C
+C   DEFINE ATILDE , BTILDE AND CTILDE
+      ATILDE=RTOTC(IAA)+16.0D+00*R6
+      BTILDE=RTOTC(IBB)-8.0D+00*R6*(SIGMA+1.0D+00)
+      CTILDE=RTOTC(ICC)+8.0D+00*R6*(SIGMA-1.0D+00)
+C*************************
+C*  NOTE :  ISIGMA.NE.0 **
+C*************************
+      IF(ISIGMA.NE.0) THEN
+        ATILDE=ROTCM(IAA)+16.0D+00*R6
+        BTILDE=ROTCM(IBB)-8.0D+00*R6*(SIGMA+1.0D+00)
+        CTILDE=ROTCM(ICC)+8.0D+00*R6*(SIGMA-1.0D+00)
+      END IF
+      ATILDM=ATILDE*CL*1.0D+04
+      BTILDM=BTILDE*CL*1.0D+04
+      CTILDM=CTILDE*CL*1.0D+04
+      WRITE(6,13) ATILDE,ATILDM,BTILDE,BTILDM,CTILDE,CTILDM
+C
+C   DEFINE CETRIFUGAL CONSTANTS (DELTA ETC.)
+      DLTJCM=DJCM-R6CM*2.0D+00
+      DLTKCM=DKCM-R6CM*10.0D+00
+      DLTJKC=DJKCM+R6CM*12.0D+00
+      DELK=-R5*2.0D+00-4.0D+00*R6*SIGMA
+      DELKCM=DELK*1.0D+06
+      DLTJMH=DJMH-R6MH*2.0D+00
+      DLTKMH=DKMH-R6MH*10.0D+00
+      DLTJKM=DJKMH+R6MH*12.0D+00
+      DELKMH=DELK*CL*1.0D+04
+      WRITE(6,14) DLTJCM,DLTJMH,DLTKCM,DLTKMH,DLTJKC,DLTJKM,
+     1            DELKCM,DELKMH,DELJCM,DELJMH
+C
+C   CALCULATE D(J) , D(JK) , D(K) , D(WJ) , AND D(WK)
+      TILMM=BTILDE-CTILDE
+      TILBC=(BTILDE+CTILDE)/TILMM
+      TILAA=(2.0D+00*ATILDE-BTILDE-CTILDE)/TILMM
+      DDJCM=DLTJCM-DELJCM*2.0D+00*TILBC
+      DDKCM=DLTKCM-DELKCM*2.0D+00*TILAA
+      DDJKCM=DLTJKC-DELKCM*2.0D+00*TILBC-DELJCM*2.0D+00*TILAA
+      DDWJ=(DELJ*4.0D+00*1.0D+06)/TILMM
+      DDWK=(DELK*4.0D+00*1.0D+06)/TILMM
+      DDJMH=DLTJMH-DELJMH*2.0D+00*TILBC
+      DDKMH=DLTKMH-DELKMH*2.0D+00*TILAA
+      DDJKMH=DLTJKM-DELKMH*2.0D+00*TILBC-DELJMH*2.0D+00*TILAA
+      WRITE(6,15) DDJCM,DDJMH,DDKCM,DDKMH,DDJKCM,DDJKMH,
+     1            DDWJ,DDWK
+C
+C   CALCULATE THE SEXTIC DISTIRTION CONSTANTS
+      P600=(PABC(IBB,IBB,IBB)+PABC(ICC,ICC,ICC))*(5.0D+00/16.0D+00)
+     1    +(PABC(IBB,IBB,ICC)+PABC(ICC,ICC,IBB))/8.0D+00
+      P420=(PABC(IAA,IBB,IBB)+PABC(IAA,ICC,ICC))*(3.0D+00/4.0D+00)
+     1    +PABC(IAA,IBB,ICC)/4.0D+00-P600*3.0D+00
+      P240=PABC(IAA,IAA,IBB)+PABC(IAA,IAA,ICC)-P420*TWO-P600*3.0D+00
+      P060=PABC(IAA,IAA,IAA)-P240-P420-P600
+      P402=(PABC(IBB,IBB,IBB)-PABC(ICC,ICC,ICC))*(15.0D+00/64.0D+00)
+     1    +(PABC(IBB,IBB,ICC)-PABC(ICC,ICC,IBB))/32.0D+00
+      P222=(PABC(IAA,IBB,IBB)-PABC(IAA,ICC,ICC))*HALF-P402*TWO
+      P042=(PABC(IAA,IAA,IBB)-PABC(IAA,IAA,ICC))*HALF-P222-P402
+      P204=(PABC(IBB,IBB,IBB)+PABC(ICC,ICC,ICC))*(3.0D+00/32.0D+00)
+     1    -(PABC(IBB,IBB,ICC)+PABC(ICC,ICC,IBB))/16.0D+00
+      P024=(PABC(IAA,IBB,IBB)+PABC(IAA,ICC,ICC)-PABC(IAA,IBB,ICC))
+     1     /8.0D+00-P204
+      P006=(PABC(IBB,IBB,IBB)-PABC(ICC,ICC,ICC))/64.0D+00
+     1    -(PABC(IBB,IBB,ICC)-PABC(ICC,ICC,IBB))/32.0D+00
+C
+C   DEFINE DIFFERENCES IN ROTATIONAL CONSTANS
+      D2ABC=RTOTC(IAA)*TWO-RTOTC(IBB)-RTOTC(ICC)
+      DBC=RTOTC(IBB)-RTOTC(ICC)
+C*************************
+C*  NOTE :  ISIGMA.NE.0 **
+C*************************
+      IF(ISIGMA.NE.0) THEN
+        D2ABC=ROTCM(IAA)*TWO-ROTCM(IBB)-ROTCM(ICC)
+        DBC=ROTCM(IBB)-ROTCM(ICC)
+      END IF
+C
+C   S111=0
+      SIGMA2=SIGMA*SIGMA
+      S111=A00
+      S111SQ=S111*S111
+      HJ=P600+P204*TWO
+      HJK=P420-P204*12.0D+00+P024*TWO+P006*SIGMA*16.0D+00
+     1   -(R5-SIGMA*R6*TWO)*S111*16.0D+00
+     2   +D2ABC*S111SQ*8.0D+00
+      HKJ=P240+P420*(10.0D+00/3.0D+00)-P204*30.0D+00
+     1        -HJK*(10.0D+00/3.0D+00)
+      HK=P060-P420*(7.0D+00/3.0D+00)+P204*28.0D+00+HJK*(7.0D+00/3.0D+00)
+      HHJ=P402+P006
+      HHJK=P222-P006*10.0D+00+P204*SIGMA*4.0D+00
+     1    +(DJK-SIGMA*DELJ*TWO-R6*4.0D+00)*S111*TWO
+     2    -DBC*S111SQ*4.0D+00
+      HHK=P042+P024*(SIGMA*4.0D+00/3.0D+00)
+     1   +(9.0D+00+SIGMA2*32.0D+00/3.0D+00)*P006
+     2   +(DK-(SIGMA*R5*TWO)/3.0D+00+TWO*(ONE+8.0D+00*SIGMA2/3.0D+00)*R6
+     3    )*S111*4.0D+00+(6.0D+00+10.0D+00*SIGMA2/3.0D+00)
+     4   *DBC*S111SQ
+C
+      HJCM=HJ*1.0D+06
+      HJKCM=HJK*1.0D+06
+      HKJCM=HKJ*1.0D+06
+      HKCM=HK*1.0D+06
+      HHJCM=HHJ*1.0D+06
+      HHJKCM=HHJK*1.0D+06
+      HHKCM=HHK*1.0D+06
+      HJMH=HJ*CL*1.0D+04
+      HJKMH=HJK*CL*1.0D+04
+      HKJMH=HKJ*CL*1.0D+04
+      HKMH=HK*CL*1.0D+04
+      HHJMH=HHJ*CL*1.0D+04
+      HHJKMH=HHJK*CL*1.0D+04
+      HHKMH=HHK*CL*1.0D+04
+      WRITE(6,16) HJCM,HJMH,HJKCM,HJKMH,HKJCM,HKJMH,HKCM,HKMH,
+     1            HHJCM,HHJMH,HHJKCM,HHJKMH,HHKCM,HHKMH
+C
+C   S111=-(4*R6)/(B-C)
+      SIGMA2=SIGMA*SIGMA
+      S111=-(4.0D+00*R6)/DBC
+      S111SQ=S111*S111
+      HJ=P600+P204*TWO
+      HJK=P420-P204*12.0D+00+P024*TWO+P006*SIGMA*16.0D+00
+     1   -(R5-SIGMA*R6*TWO)*S111*16.0D+00
+     2   +D2ABC*S111SQ*8.0D+00
+      HKJ=P240+P420*(10.0D+00/3.0D+00)-P204*30.0D+00
+     1        -HJK*(10.0D+00/3.0D+00)
+      HK=P060-P420*(7.0D+00/3.0D+00)+P204*28.0D+00+HJK*(7.0D+00/3.0D+00)
+      HHJ=P402+P006
+      HHJK=P222-P006*10.0D+00+P204*SIGMA*4.0D+00
+     1    +(DJK-SIGMA*DELJ*TWO-R6*4.0D+00)*S111*TWO
+     2    -DBC*S111SQ*4.0D+00
+      HHK=P042+P024*(SIGMA*4.0D+00/3.0D+00)
+     1   +(9.0D+00+SIGMA2*32.0D+00/3.0D+00)*P006
+     2   +(DK-(SIGMA*R5*TWO)/3.0D+00+TWO*(ONE+8.0D+00*SIGMA2/3.0D+00)*R6
+     3    )*S111*4.0D+00+(6.0D+00+10.0D+00*SIGMA2/3.0D+00)
+     4   *DBC*S111SQ
+C
+      HJCM=HJ*1.0D+06
+      HJKCM=HJK*1.0D+06
+      HKJCM=HKJ*1.0D+06
+      HKCM=HK*1.0D+06
+      HHJCM=HHJ*1.0D+06
+      HHJKCM=HHJK*1.0D+06
+      HHKCM=HHK*1.0D+06
+      HJMH=HJ*CL*1.0D+04
+      HJKMH=HJK*CL*1.0D+04
+      HKJMH=HKJ*CL*1.0D+04
+      HKMH=HK*CL*1.0D+04
+      HHJMH=HHJ*CL*1.0D+04
+      HHJKMH=HHJK*CL*1.0D+04
+      HHKMH=HHK*CL*1.0D+04
+      WRITE(6,17) HJCM,HJMH,HJKCM,HJKMH,HKJCM,HKJMH,HKCM,HKMH,
+     1            HHJCM,HHJMH,HHJKCM,HHJKMH,HHKCM,HHKMH
+C
+      RETURN
+      END

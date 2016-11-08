@@ -1,0 +1,111 @@
+C
+C----------------------------------------------------------------------
+C
+      SUBROUTINE SORTI(BKT,IBKT,BUF,IBUF,LENGTH,LTYP,IBKTSP,INTBUF,NBF,
+     .                 NO,ITAP60,ITAP61,ITAP62,ITAP63,ITAP64,ITAP65,
+     .                 ITAP66,ITAP78,JOUT,ONEI)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION BKT(IBKTSP),BUF(INTBUF),IBKT(IBKTSP*2),
+     .          IBUF(INTBUF*2),ONEI(*)
+      DATA ITEMP /255/
+   19 FORMAT (4I3,F20.12,3X,I3)
+C
+      CALL ZERO(BKT,IBKTSP)
+C
+      INTLEN=(INTOWP(LENGTH)-2)/INTOWP(1)
+      MAXVAL=INTOWP(INTLEN)/(1+INTOWP(1))
+      IVOFF=(MAXVAL+3)/INTOWP(1)
+C
+      IBFLEN=(INTOWP(INTBUF)-2)/INTOWP(1)
+      MAXBUF=INTOWP(IBFLEN)/(1+INTOWP(1))
+      IBOFF=(MAXBUF+3)/INTOWP(1)
+C
+  111 CONTINUE
+      CALL ZERO (BUF,INTBUF)
+      CALL SREAD(ITAP78,IBUF,INTOWP(INTBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+C     WRITE(6,*)'READING TAPE 78, MBUF =',MBUF
+      DO 101 II=1,MBUF
+         IJKL=IBUF(2+II)
+         I=ISHFT(IJKL,-24)
+         J=IAND(ITEMP,ISHFT(IJKL,-16))
+         K=IAND(ITEMP,ISHFT(IJKL,-8))
+         L=IAND(ITEMP,IJKL)
+         RINT=BUF(IBOFF+II)
+C        WRITE (6,19) I,J,K,L,RINT
+         IF (L.GT.NO) THEN
+            IF (J.GT.NO) THEN
+               NTYP=1
+            ELSE
+               NTYP=6
+            END IF
+         ELSE IF (K.GT.NO) THEN
+            IF (J.GT.NO) THEN
+               NTYP=5
+            ELSE
+               NTYP=3
+            END IF
+         ELSE IF (I.LE.NO) THEN
+            NTYP=0
+         ELSE IF (J.GT.NO) THEN
+            NTYP=2
+         ELSE
+            NTYP=4
+         END IF
+C
+C        WRITE (6,19) I,J,K,L,RINT,NTYP
+C
+         ITAP=60+NTYP
+         NOFF=NTYP*LENGTH
+         IFILL=IBKT(INTOWP(NOFF)+2)+1
+         IF (IFILL.GT.MAXVAL) THEN
+            CALL BKTDMP(BKT(NOFF+1),LENGTH,ITAP)
+            CALL ZERO(BKT(NOFF+1),LENGTH)
+            IFILL=1
+         END IF
+         IBKT(INTOWP(NOFF)+2+IFILL)=IJKL
+         BKT(IVOFF+NOFF+IFILL)=RINT
+         IBKT(INTOWP(NOFF)+2)=IFILL
+  101 CONTINUE
+      IF (IFLG.EQ.0) GOTO 111
+C
+C >>> WRITE OUT LAST BUCKET
+C
+      DO 22 JTYP=1,LTYP
+         ITAP=59+JTYP
+         NOFF=(JTYP-1)*LENGTH
+         IBKT(INTOWP(NOFF)+1)=-1
+         CALL BKTDMP(BKT(NOFF+1),LENGTH,ITAP)
+   22 CONTINUE
+C
+C >>> READ ONE-E MO INTS IN CC ORDER AND STORE IN FILE79 FOR LATER USE
+C
+ 1111 CONTINUE
+      CALL ZERO (BUF,INTBUF)
+      CALL SREAD(ITAP78,IBUF,INTOWP(INTBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 112 II=1,MBUF
+         IJKL=IBUF(2+II)
+         I  = ISHFT(IJKL,-8)
+         L  = IAND(ITEMP,IJKL)
+         VAL = BUF(II+IBOFF)
+C        WRITE(6,*)'I,L,VAL',I,L,VAL
+         IL = I*(I-1)/2+L
+         ONEI(IL)=VAL
+  112 CONTINUE
+      IF (IFLG.EQ.0) GOTO 1111
+C
+      NBF2=NBF*(NBF+1)/2
+      ITAP79=79
+      CALL RFILE(ITAP79)
+      CALL WWRITW(ITAP79,ONEI,INTOWP(NBF2),1,IDUM)
+      CALL RCLOSE(ITAP79,3)
+C
+C     WRITE(6,*)
+C     WRITE(6,*)' ONE-E MO INTS IN CC ORDERING'
+C     CALL PRINT(ONEI,NBF2,NBF,6)
+C
+      RETURN
+      END

@@ -1,0 +1,11 @@
+       SUBROUTINE PRINFO(N,H,X,U)
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       DIMENSION H(N,N),X(N),U(N,N)
+       DO 10 I=1,N
+       WRITE(6,1)I,H(I,I),X(I)
+ 1     FORMAT(//,' MODE ',I2,4X,'FORCE CONSTANT',F9.5,7X,'VIBRATIONAL FR
+     +EQUENCY',F8.2)
+ 10    WRITE(6,2)(U(J,I),J=1,N)
+ 2     FORMAT(3(10X,10F10.6/))
+       RETURN
+       END

@@ -1,0 +1,24 @@
+C     /////////////////////////////////////////////////
+      REAL*8 FUNCTION ARCOS(X)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DOUBLE PRECISION ZERO,ONE,PI,PIH,X,Y,X1,S
+      PARAMETER(ZERO=0.0D0,ONE=1.0D0,PI=3.14159265358979D0)
+      PARAMETER(PIH=1.57079632679490D0,XTOL=1.0D-12)
+      Y=DABS(ONE-X)
+      IF (X.GE.ONE.OR.Y.LE.XTOL) GO TO 10
+      Y=DABS(ONE+X)
+      IF(X.LE.-ONE.OR.Y.LE.XTOL) GO TO 20
+      Y=ONE-X*X
+      X1= DSQRT(Y)
+      IF(DABS(X).LT.1.0D-11) GO TO 30
+      S=DATAN(X1/X)
+      IF (X.LT.ZERO) S=S+PI
+      ARCOS=S
+      RETURN
+   10 ARCOS=ZERO
+      RETURN
+   20 ARCOS=PI
+      RETURN
+   30 ARCOS=PIH
+      RETURN
+      END

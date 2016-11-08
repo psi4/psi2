@@ -1,0 +1,122 @@
+      SUBROUTINE VECS(DVEC,XVEC,WVEC,IREWR,NBF,NBFAO,it30)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      INTEGER NLAMDA(8),CHK
+      REAL*8 DVEC(NBFAO,NBF),XVEC(*),WVEC(NBFAO,NBF),ACRCY
+      CHARACTER * 4 IREWR
+      DIMENSION I30(200)
+C
+C     DVEC IS THE SO TO MO EIGENVECTOR
+C     WVEC IS THE AO TO MO EIGENVECTOR
+C     XVEC IS THE SO TO AO TRANSFORMATION MATRIX
+C
+C >>> OPEN TAPE30 AND GET CONSTANTS AND POINTERS
+C
+cges may 23 90     IT30=30
+      CALL RFILE(IT30)
+      CALL WREADW(IT30,I30,200,101,JUNK)
+      MPOINT = I30( 2)
+      MCONST = I30( 3)
+      MCALCS = I30( 4)
+      NCALCS = I30( 5)
+      MSFRU  = I30(18)
+      NUM    = I30(22)
+      NSYMHF = I30(41)
+      MXCF   = I30(42)
+C
+      JUNK=101+MCONST+MPOINT
+      CALL WREADW(IT30,I30,MCALCS,JUNK,JUNK)
+C
+      LOCCAL=I30(NCALCS)
+      JUNK=LOCCAL+60
+      CALL WREADW(IT30,LOCVEC,1,JUNK,JUNK)
+C
+C >>> READ OR WRITE VECTOR
+C
+      IF(IREWR.EQ.'WRIT')THEN
+c     write(6,*)'in vecs option = write'
+C
+C >>> PACK SO TO MO SCF EIGENVECTOR
+C
+      LOCLAM=LOCVEC+INTOWP(MXCF)+INTOWP(NBF)+NSYMHF
+      CALL WREADW(IT30,NLAMDA,NSYMHF,LOCLAM,JUNK)
+         IOF=0
+         IJ=0
+         DO 110 ISYM=1,NSYMHF
+            N=NLAMDA(ISYM)
+c           write(6,*)'isym,nlamda(isym)',isym,n
+            DO 109 J=1,N
+               DO 108 I=1,N
+                  IJ=IJ+1
+                  XVEC(IJ)=DVEC(IOF+I,IOF+J)
+  108          CONTINUE
+  109       CONTINUE
+            IOF=IOF+N
+  110    CONTINUE
+c     WRITE(6,*)
+c     WRITE(6,*)' PACKED EIGENVECTOR written to TAPE 30'
+c     write(6,621)(xvec(i),i=1,mxcf)
+  621 format(8f10.6)
+c     write(6,*)' writing vector at address',locvec
+         CALL WWRITW(IT30,XVEC,INTOWP(MXCF),LOCVEC,LOCVEC)
+         CALL RCLOSE(IT30,3)
+c        WRITE(6,*)
+c        WRITE(6,*)' unpacked SO TO MO VECTOR written to FILE 30'
+c        CALL MATOUT(DVEC,NBF,NBF,NBF,NBF,6)
+         RETURN
+      ENDIF
+C
+C ......................................................
+C
+c     write(6,*)'in vecs option = read'
+c     write(6,*)' reading vector at address',locvec
+      CALL WREADW(IT30,XVEC,INTOWP(MXCF),LOCVEC,LOCVEC)
+c     WRITE(6,*)
+c     WRITE(6,*)' PACKED EIGENVECTOR FROM TAPE 30'
+c     write(6,621)(xvec(i),i=1,mxcf)
+C
+      LOCVEC=LOCVEC+INTOWP(NBF)+NSYMHF
+      CALL WREADW(IT30,NLAMDA,NSYMHF,LOCVEC,LOCVEC)
+C
+      ACRCY=1.D-15
+      DO 123 I=1,MXCF
+         IF (ABS(XVEC(I)).LT.ACRCY) XVEC(I)=0.0D+00
+  123 CONTINUE
+C
+C >>> UNPACK SO TO MO SCF EIGENVECTOR
+C
+      CALL ZERO (DVEC,NBF*NBF)
+      IOF=0
+      IJ=0
+      DO 210 ISYM=1,NSYMHF
+         N=NLAMDA(ISYM)
+         DO 209 J=1,N
+            DO 208 I=1,N
+               IJ=IJ+1
+               DVEC(IOF+I,IOF+J)=XVEC(IJ)
+  208       CONTINUE
+  209    CONTINUE
+         IOF=IOF+N
+  210 CONTINUE
+c     WRITE(6,*)
+c     WRITE(6,*)' UNPACKED SO TO MO EIGENVECTOR FROM TAPE 30'
+c     CALL MATOUT(DVEC,NBF,NBF,NBF,NBF,6)
+C
+C     JUNK=101+MCONST
+C     CALL WREADW(IT30,I30,MPOINT,JUNK,JUNK)
+C
+C     LAOTSO=I30(29)
+C     CALL WREADW(IT30,XVEC,INTOWP(NUM*MSFRU),LAOTSO,LAOTSO)
+C     WRITE(6,*)
+C     WRITE(6,*) ' SO TO AO TRANSFORMATION MATRIX '
+C     CALL MATOUT(XVEC,NBFAO,NBF,NBFAO,NBF,6)
+C
+C     CALL ZERO(WVEC,NBFAO*NBFAO)
+C     CALL MXMB(XVEC,1,NBFAO,DVEC,1,NBF,WVEC,1,NBFAO,NBFAO,NBF,NBF)
+C     WRITE(6,*)
+C     WRITE(6,*) ' AO TO MO EIGENVECTOR FROM TAPE 30 '
+C     CALL MATOUT(WVEC,NBFAO,NBF,NBFAO,NBF,6)
+C
+      CALL RCLOSE(IT30,3)
+C
+      RETURN
+      END

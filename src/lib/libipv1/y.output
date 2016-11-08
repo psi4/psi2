@@ -1,0 +1,254 @@
+Grammar
+
+  Number, Line, Rule
+    1  19 input -> group_defs
+    2  22 group_defs -> group_defs group_def
+    3  23 group_defs -> /* empty */
+    4  26 group_def -> keyword ':' '(' group_defs ')'
+    5  28 group_def -> keyword ':' group_def
+    6  30 group_def -> keyword '=' value
+    7  35 keyword -> T_STRING
+    8  39 value -> array
+    9  41 value -> scalar
+   10  45 array -> '(' values ')'
+   11  49 values -> values value
+   12  51 values -> /* empty */
+   13  55 scalar -> T_STRING
+
+
+Terminals, with rules where they appear
+
+$ (-1)
+'(' (40) 4 10
+')' (41) 4 10
+':' (58) 4 5
+'=' (61) 6
+error (256)
+T_STRING (257) 7 13
+
+
+Nonterminals, with rules where they appear
+
+input (8)
+    on left: 1
+group_defs (9)
+    on left: 2 3, on right: 1 2 4
+group_def (10)
+    on left: 4 5 6, on right: 2 5
+keyword (11)
+    on left: 7, on right: 4 5 6
+value (12)
+    on left: 8 9, on right: 6 11
+array (13)
+    on left: 10, on right: 8
+values (14)
+    on left: 11 12, on right: 10 11
+scalar (15)
+    on left: 13, on right: 9
+
+
+state 0
+
+    $default	reduce using rule 3 (group_defs)
+
+    input	go to state 19
+    group_defs	go to state 1
+
+
+
+state 1
+
+    input  ->  group_defs .   (rule 1)
+    group_defs  ->  group_defs . group_def   (rule 2)
+
+    T_STRING	shift, and go to state 2
+
+    $default	reduce using rule 1 (input)
+
+    group_def	go to state 3
+    keyword	go to state 4
+
+
+
+state 2
+
+    keyword  ->  T_STRING .   (rule 7)
+
+    $default	reduce using rule 7 (keyword)
+
+
+
+state 3
+
+    group_defs  ->  group_defs group_def .   (rule 2)
+
+    $default	reduce using rule 2 (group_defs)
+
+
+
+state 4
+
+    group_def  ->  keyword . ':' '(' group_defs ')'   (rule 4)
+    group_def  ->  keyword . ':' group_def   (rule 5)
+    group_def  ->  keyword . '=' value   (rule 6)
+
+    ':' 	shift, and go to state 5
+    '=' 	shift, and go to state 6
+
+
+
+state 5
+
+    group_def  ->  keyword ':' . '(' group_defs ')'   (rule 4)
+    group_def  ->  keyword ':' . group_def   (rule 5)
+
+    T_STRING	shift, and go to state 2
+    '(' 	shift, and go to state 7
+
+    group_def	go to state 8
+    keyword	go to state 4
+
+
+
+state 6
+
+    group_def  ->  keyword '=' . value   (rule 6)
+
+    T_STRING	shift, and go to state 9
+    '(' 	shift, and go to state 10
+
+    value	go to state 11
+    array	go to state 12
+    scalar	go to state 13
+
+
+
+state 7
+
+    group_def  ->  keyword ':' '(' . group_defs ')'   (rule 4)
+
+    $default	reduce using rule 3 (group_defs)
+
+    group_defs	go to state 14
+
+
+
+state 8
+
+    group_def  ->  keyword ':' group_def .   (rule 5)
+
+    $default	reduce using rule 5 (group_def)
+
+
+
+state 9
+
+    scalar  ->  T_STRING .   (rule 13)
+
+    $default	reduce using rule 13 (scalar)
+
+
+
+state 10
+
+    array  ->  '(' . values ')'   (rule 10)
+
+    $default	reduce using rule 12 (values)
+
+    values	go to state 15
+
+
+
+state 11
+
+    group_def  ->  keyword '=' value .   (rule 6)
+
+    $default	reduce using rule 6 (group_def)
+
+
+
+state 12
+
+    value  ->  array .   (rule 8)
+
+    $default	reduce using rule 8 (value)
+
+
+
+state 13
+
+    value  ->  scalar .   (rule 9)
+
+    $default	reduce using rule 9 (value)
+
+
+
+state 14
+
+    group_defs  ->  group_defs . group_def   (rule 2)
+    group_def  ->  keyword ':' '(' group_defs . ')'   (rule 4)
+
+    T_STRING	shift, and go to state 2
+    ')' 	shift, and go to state 16
+
+    group_def	go to state 3
+    keyword	go to state 4
+
+
+
+state 15
+
+    array  ->  '(' values . ')'   (rule 10)
+    values  ->  values . value   (rule 11)
+
+    T_STRING	shift, and go to state 9
+    '(' 	shift, and go to state 10
+    ')' 	shift, and go to state 17
+
+    value	go to state 18
+    array	go to state 12
+    scalar	go to state 13
+
+
+
+state 16
+
+    group_def  ->  keyword ':' '(' group_defs ')' .   (rule 4)
+
+    $default	reduce using rule 4 (group_def)
+
+
+
+state 17
+
+    array  ->  '(' values ')' .   (rule 10)
+
+    $default	reduce using rule 10 (array)
+
+
+
+state 18
+
+    values  ->  values value .   (rule 11)
+
+    $default	reduce using rule 11 (values)
+
+
+
+state 19
+
+    $   	go to state 20
+
+
+
+state 20
+
+    $   	go to state 21
+
+
+
+state 21
+
+    $default	accept
+
+

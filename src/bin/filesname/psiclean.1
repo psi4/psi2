@@ -1,0 +1,104 @@
+.TH psiclean 1 "11 April, 1991" "Psi Version 2.0"
+.de DS
+.RS .5i
+.nf
+..
+.de DE
+.RS -.5i
+.fi
+..
+.SH NAME
+psiclean \- delete files in the psi temporary directories
+.SH SYNOPSIS
+.B psiclean
+.SH DESCRIPTION
+The
+.B psiclean
+command finds a keyword assignment of the form
+.nf
+   \fBDEFAULT:FILES:DEFAULT:NAME\fP = \fIstring\fP
+.fi
+in the
+.pN INPUT
+file.
+It then goes through all of the
+machines temporary directories and the temporary
+subdirectories which have the same name as the userid of the
+invoker and deletes files beginning with a period appended to
+value of \fIstring\fP.
+.PP
+It is essential that users see to the removal of their scratch
+files as soon as their job completes,
+because the Psi temporary directories are a shared resource and there
+is not necessarily an automatic way for files to be deleted from these
+areas.
+Thus, the last command run after
+a job has finished
+should be the
+.B psiclean
+command.
+.PP
+The user must take care to follow certain conventions when choosing filenames.
+Any files which are to be kept after a job completes should not be kept
+in the temporary directories.  The \fBFILES\fP
+input must be used to specify other
+locations for these files.  Also, files which are not needed after the run
+must be placed in appropiately named subdirectories of the temporary
+directories.  Otherwise, these files will remain on the system and will impede
+other jobs.
+.SH EXAMPLE
+Suppose the PSI temporary directories contained the following subdirectories
+and files:
+.DS
+
+/tmp1/cpuhog:
+-rw-r--r--  1 cpuhog      14492 Jun 11 16:48 dicubane.30
+-rw-r--r--  1 cpuhog     187320 Jun  8 17:20 diketene.34
+-rw-r--r--  1 cpuhog      16384 Jun  7 19:17 o4big.30
+-rw-r--r--  1 cpuhog      16384 Jun  7 19:17 o4.30
+-rw-r--r--  1 cpuhog     974848 Jun  7 18:41 o4.34
+
+/tmp2/cpuhog:
+-rw-r--r--  1 cpuhog      14492 Jun 11 16:48 dicubane.30
+-rw-r--r--  1 cpuhog     187320 Jun  8 17:20 diketene.34
+-rw-r--r--  1 cpuhog      10904 Jun  7 18:50 o4big.30
+-rw-r--r--  1 cpuhog      10904 Jun  7 18:50 o4.30
+-rw-r--r--  1 cpuhog     973752 Jun  7 18:41 o4.34
+
+/tmp3/cpuhog:
+-rw-r--r--  1 cpuhog      14492 Jun 11 16:48 dicubane.30
+-rw-r--r--  1 cpuhog     187320 Jun  8 17:20 diketene.34
+-rw-r--r--  1 cpuhog       8192 Jun  7 19:17 o4big.30
+-rw-r--r--  1 cpuhog       8192 Jun  7 19:17 o4.30
+-rw-r--r--  1 cpuhog     966656 Jun  7 18:41 o4.34
+
+.DE
+Let's also say that the user cpuhog is in a directory which contains
+an input file which has the following line in it:
+.DS
+
+\fBDEFAULT:FILES:DEFAULT:NAME = "o4"\fP
+
+.DE
+If the user cpuhog now executes the
+.B psiclean
+command, then the o4 files in the temporary directories would be
+deleted, leaving the following files:
+
+.DS
+/tmp1/cpuhog:
+-rw-r--r--  1 cpuhog      14492 Jun 11 16:48 dicubane.30
+-rw-r--r--  1 cpuhog     187320 Jun  8 17:20 diketene.34
+-rw-r--r--  1 cpuhog      16384 Jun  7 19:17 o4big.30
+
+/tmp2/cpuhog:
+-rw-r--r--  1 cpuhog      14492 Jun 11 16:48 dicubane.30
+-rw-r--r--  1 cpuhog     187320 Jun  8 17:20 diketene.34
+-rw-r--r--  1 cpuhog      10904 Jun  7 18:50 o4big.30
+
+/tmp3/cpuhog:
+-rw-r--r--  1 cpuhog      14492 Jun 11 16:48 dicubane.30
+-rw-r--r--  1 cpuhog     187320 Jun  8 17:20 diketene.34
+-rw-r--r--  1 cpuhog       8192 Jun  7 19:17 o4big.30
+
+.DE

@@ -1,0 +1,403 @@
+
+psi: (
+
+  % Default iteration counts
+  ndisp = 1
+  nopt = 1
+  ncasiter = 1
+
+  % The basic programs
+  input      = "inputth"
+  init       = $input
+  done       = ("psiclean" "/bin/rm -f tape3.dat")
+  scfdone    = ("/bin/rm -f tape3.dat")
+  ints       = "intsth"
+  scf        = "cscf"
+  deriv      = "deriv"
+  dipder     = "dipderth"
+  cphf       = "cphf"
+  makepk     = "makepk"
+  cpgrao     = "cpgraoth"
+  bondex     = "bondex"
+  normco     = "normco"
+  proper     = "proper"
+% crawdad: changing default gradconv to gradtol 
+%  gradconv   = "gradconv"
+  gradconv   = "gradtol"
+  bmat       = "bmat"
+  ugeom      = "ugeom"
+  rgeom      = "rgeom"
+  geomupdate = ($gradconv $bmat $ugeom)
+
+  % SCF Stability specific programs
+  mastux     = "mastux"
+  traniux    = "traniux"
+  stgrmo     = "stgrmo"
+
+  % CASSCF specific programs
+  drtso      = "drtso"
+  casscf     = "casscf"
+
+  % CI specific programs
+  drt     = "drt"
+  master  = "master"
+  trans   = "trans"
+  cisort  = "cisort"
+  gugaci  = "gugaci"
+  onepdm  = ("onepdm" "/bin/rm -f file51.dat")
+  twopdm  = "twopdm"
+  lag     = "lag"
+  backtr  = "backtr"
+  ciprop  = "ciprop"
+  cphfci  = "cphfci"
+
+  % CC specific programs
+  cctr     = "cctr"
+  cctransl2= "cctransl2"
+  ccsr     = "ccsr"
+  nccsort2 = "nccsort2"
+  cceg     = "cceg"
+  lcceg    = "lcceg"
+  fcceg    = "fcceg"
+  oscc     = "oscc"
+  oscc3    = "oscc3"
+  cczv     = "cczv"
+  ccqg     = "ccqg"
+  lagzbak  = "lagzbak"
+  ccprop   = "ccprop"
+
+  ooccman  = "ooccman"
+
+  % Determinant CI specific programs
+  detci    = "detci"
+  clag     = "clag"
+
+  % Determinant CI based Orbital Optimization
+  detcasman = "detcasman"
+  detcas   = "detcas"
+
+  % New General-Use Programs
+  transqt  = "transqt"
+  backtransqt = "transqt -backtr"
+  oeprop = "oeprop"
+
+  % -------------------------------- SCF Procedures
+  % Procedures for the SCF energy
+  SCFEnergy = ($ints $scf $scfdone)
+  SCFClosedShellEnergy = $SCFEnergy
+  SCFHighSpinEnergy = $SCFEnergy
+  SCFSingletEnergy = $SCFEnergy
+  SCFTwoConEnergy = $SCFEnergy
+  SCFSpecialEnergy = $SCFEnergy
+
+  % Procedures for the SCF gradients
+  SCFFirst = ($ints $scf $deriv $scfdone)
+  SCFClosedShellFirst = $SCFFirst
+  SCFHighSpinFirst = $SCFFirst
+  SCFSingletFirst = $SCFFirst
+  SCFTwoConFirst = $SCFFirst
+  SCFSpecialFirst = ERROR
+
+  % Procedures for the SCF Second Derivatives
+  SCFSecond =
+    ($ints $scf $makepk $deriv $cphf $normco $proper $bondex $scfdone)
+  SCFClosedShellSecond = $SCFSecond
+  SCFHighSpinSecond = $SCFSecond
+  SCFSingletSecond = $SCFSecond
+  SCFTwoConSecond = $SCFSecond
+  SCFSpecialSecond = ERROR
+
+  % Procedures for the SCF Stability Calculations
+  SCFStability = ($ints $scf $mastux $traniux $stgrmo $done)
+  SCFClosedShellSecondStability = $SCFStability
+  SCFHighSpinSecondStability = $SCFStability
+  SCFSingletSecondStability = $SCFStability
+  SCFTwoConSecondStability = ERROR
+  SCFSpecialSecondStability = ERROR
+
+  % Procedures for the CASSCF Calculations
+  CASSCFEnergy = 
+    ($drt $mastux $trans $cisort $gugaci $onepdm $twopdm $drtso $casscf)
+  CASSCFClosedShellEnergy = ($ints repeat $ncasiter $CASSCFEnergy end $done)
+  CASSCFHighSpinEnergy = ($ints repeat $ncasiter $CASSCFEnergy end $done)
+  CASSCFSingletEnergy = ($ints repeat $ncasiter $CASSCFEnergy end $done)
+  CASSCFSpecialEnergy = ($ints repeat $ncasiter $CASSCFEnergy end $done)
+  CASSCFTwoConEnergy = ERROR
+
+  % Procedures for the optimizing geomtries with SCF gradients
+  SCFFirstOpt = (repeat $nopt $SCFFirst $geomupdate end $done)
+  SCFClosedShellFirstOpt  = $SCFFirstOpt
+  SCFHighSpinFirstOpt  = $SCFFirstOpt
+  SCFSingletFirstOpt  = $SCFFirstOpt
+  SCFTwoConFirstOpt  = $SCFFirstOpt
+  SCFSpecialFirstOpt  = ERROR
+
+  % Procedures for the finite displacements of SCF gradients
+  SCFFirstDisp  = (repeat $ndisp $ugeom $SCFFirst $rgeom end $done)
+  SCFClosedShellFirstDisp  = $SCFFirstDisp
+  SCFHighSpinFirstDisp  = $SCFFirstDisp
+  SCFSingletFirstDisp  = $SCFFirstDisp
+  SCFTwoConFirstDisp  = $SCFFirstDisp
+  SCFSpecialFirstDisp  = ERROR
+
+  % Testing procedure for optimizing geometries with SCF finite displacements
+  SCFHighSpinEnergyDisp =
+    (repeat $ndisp $ugeom $SCFHighSpinEnergy $rgeom end $done)
+
+
+  % -------------------------------- CI Procedures
+  % Procedures for the CI energy and wavefunction
+  CIEnergy = ($ints $scf $drt $makepk $trans $cisort $gugaci $onepdm $done)
+  CIClosedShellEnergy = $CIEnergy
+  CIHighSpinEnergy = $CIEnergy
+  CISingletEnergy = $CIEnergy
+  CITwoConEnergy = $CIEnergy
+  CISpecialEnergy = $CIEnergy
+
+  % Procedures for the CI gradient
+  CIFirst = 
+    ($ints $scf $drt $makepk $trans $cisort $gugaci $onepdm
+     $twopdm $lag $backtr $ciprop $deriv $cphfci $done)
+  CIClosedShellFirst = $CIFirst
+  CIHighSpinFirst = $CIFirst
+  CISingletFirst = $CIFirst
+  CITwoConFirst = $CIFirst
+  CISpecialFirst = ERROR
+
+  % Procedures for the optimizing geomtries with CI gradients
+  CIFirstOpt = (repeat $nopt $CIFirst $geomupdate end $done)
+  CIClosedShellFirstOpt  = $CIFirstOpt
+  CISingletFirstOpt  = $CIFirstOpt
+  CIHighSpinFirstOpt  = $CIFirstOpt
+  CITwoConFirstOpt  = $CIFirstOpt
+  CISpecialFirstOpt  = ERROR
+
+  % Procedures for the finite displacements of CI gradients
+  CIFirstDisp  = (repeat $ndisp $ugeom $CIFirst $rgeom end $done)
+  CIClosedShellFirstDisp  = $CIFirstDisp
+  CISingletFirstDisp  = $CIFirstDisp
+  CIHighSpinFirstDisp  = $CIFirstDisp
+  CITwoConFirstDisp  = $CIFirstDisp
+  CISpecialFirstDisp  = ERROR
+
+  % -------------------------------- CCSD Procedures
+  % Procedures for the CCSD energy
+  CCSDClosedShellEnergy = ($ints $scf $cctr $ccsr $cceg $done)
+  CCSDHighSpinEnergy = ($ints $scf $cctr $ccsr $oscc $done)
+  CCSDSingletEnergy = ERROR
+  CCSDTwoConEnergy = ERROR
+  CCSDSpecialEnergy = ERROR
+  LargeCCSDClosedShellEnergy = ($ints $scf $cctransl2 $nccsort2 $lcceg $done)
+  LargeCCSDHighSpinEnergy = ($ints $scf $cctr $ccsr $oscc3 $done)
+  LargeCCSDSingletEnergy = ERROR
+  LargeCCSDTwoConEnergy = ERROR
+  LargeCCSDSpecialEnergy = ERROR
+
+  % Procedures for the CCSD gradient
+  CCSDClosedShellFirst =
+    ($ints $scf $cctr $ccsr $cceg $cczv $ccqg $lagzbak $deriv $ccprop $done)
+  CCSDHighSpinFirst = ERROR
+  CCSDSingletFirst = ERROR
+  CCSDTwoConFirst = ERROR
+  CCSDSpecialFirst = ERROR
+
+  % Testing procedure for optimizing geometries with CCSD finite displacements
+  CCSDHighSpinEnergyDisp = 
+    (repeat $ndisp $ugeom $CCSDHighSpinEnergy $rgeom end $done)
+
+  % Procedures for the optimizing geomtries with CCSD gradients
+  CCSDClosedShellFirstOpt =
+    (repeat $nopt $CCSDClosedShellFirst $geomupdate end $done)
+  CCSDHighSpinFirstOpt = ERROR
+  CCSDSingletFirstOpt  = ERROR
+  CCSDTwoConFirstOpt  = ERROR
+  CCSDSpecialFirstOpt  = ERROR
+
+  % Procedures for the finite displacements of CCSD gradients
+  CCSDClosedShellFirstDisp =
+    (repeat $ndisp $ugeom $CCSDClosedShellFirst $rgeom end $done)
+  CCSDHighSpinFirstDisp = ERROR
+  CCSDSingletFirstDisp  = ERROR
+  CCSDTwoConFirstDisp  = ERROR
+  CCSDSpecialFirstDisp  = ERROR
+
+
+  % -------------------------------- CCSD_T Procedures
+  % Procedures for the CCSD energy
+  CCSD_TClosedShellEnergy = ($ints $scf $cctr $ccsr $cceg $done)
+  CCSD_THighSpinEnergy = ($ints $scf $cctr $ccsr $oscc $done)
+  CCSD_TSingletEnergy = ERROR
+  CCSD_TTwoConEnergy = ERROR
+  CCSD_TSpecialEnergy = ERROR
+  LargeCCSD_TClosedShellEnergy = ERROR
+  LargeCCSD_THighSpinEnergy = $LargeCCSDHighSpinEnergy
+  LargeCCSD_TSingletEnergy = ERROR
+  LargeCCSD_TTwoConEnergy = ERROR
+  LargeCCSD_TSpecialEnergy = ERROR
+
+  % Procedures for the CCSD_T gradient
+  CCSD_TClosedShellFirst =
+    ($ints $scf $cctr $ccsr $cceg $cczv $ccqg $lagzbak $deriv $ccprop $done)
+  CCSD_THighSpinFirst = ERROR
+  CCSD_TSingletFirst = ERROR
+  CCSD_TTwoConFirst = ERROR
+  CCSD_TSpecialFirst = ERROR
+
+  % Procedures for the optimizing geomtries with CCSD_T gradients
+  CCSD_TClosedShellFirstOpt =
+    (repeat $nopt $CCSD_TClosedShellFirst $geomupdate end $done)
+  CCSD_THighSpinFirstOpt = ERROR
+  CCSD_TSingletFirstOpt  = ERROR
+  CCSD_TTwoConFirstOpt  = ERROR
+  CCSD_TSpecialFirstOpt  = ERROR
+
+  % Testing procedure for optimizing geometries with CCSD_T finite disps
+  CCSD_THighSpinEnergyDisp = 
+    (repeat $ndisp $ugeom $CCSD_THighSpinEnergy $rgeom end $done)
+
+  % Procedures for the finite displacements of CCSD_T gradients
+  CCSD_TClosedShellFirstDisp =
+    (repeat $ndisp $ugeom $CCSD_TClosedShellFirst $rgeom end $done)
+  CCSD_THighSpinFirstDisp = ERROR
+  CCSD_TSingletFirstDisp  = ERROR
+  CCSD_TTwoConFirstDisp  = ERROR
+  CCSD_TSpecialFirstDisp  = ERROR
+
+  % -------------------------------- CCSDT Procedures
+  % Procedures for the CCSDT energy
+  CCSDTClosedShellEnergy = ($ints $scf $cctr $ccsr $fcceg $done)
+  CCSDTHighSpinEnergy = ERROR
+  CCSDTSingletEnergy = ERROR
+  CCSDTTwoConEnergy = ERROR
+  CCSDTSpecialEnergy = ERROR
+  LargeCCSDTClosedShellEnergy = ERROR
+  LargeCCSDTHighSpinEnergy = ERROR 
+  LargeCCSDTSingletEnergy = ERROR
+  LargeCCSDTTwoConEnergy = ERROR
+  LargeCCSDTSpecialEnergy = ERROR
+
+  % Procedures for the CCSDT gradient
+  CCSDTClosedShellFirst = ERROR
+  CCSDTHighSpinFirst = ERROR
+  CCSDTSingletFirst = ERROR
+  CCSDTTwoConFirst = ERROR
+  CCSDTSpecialFirst = ERROR
+
+  % Procedures for the optimizing geomtries with CCSDT gradients
+  CCSDTClosedShellFirstOpt = ERROR
+  CCSDTHighSpinFirstOpt = ERROR
+  CCSDTSingletFirstOpt  = ERROR
+  CCSDTTwoConFirstOpt  = ERROR
+  CCSDTSpecialFirstOpt  = ERROR
+
+  % Procedures for the finite displacements of CCSDT gradients
+  CCSDTClosedShellFirstDisp = ERROR
+  CCSDTHighSpinFirstDisp = ERROR
+  CCSDTSingletFirstDisp  = ERROR
+  CCSDTTwoConFirstDisp  = ERROR
+  CCSDTSpecialFirstDisp  = ERROR
+
+  % -------------------------------- OOCCD Procedures
+  % Procedures for the OOCCD energy
+  OOCCDClosedShellEnergy = ($ints $scf $ooccman $done)
+  OOCCDHighSpinEnergy = ERROR
+  OOCCDSingletEnergy = ERROR
+  OOCCDTwoConEnergy = ERROR
+  OOCCDSpecialEnergy = ERROR
+
+  % Procedures for the OOCCD gradient
+  OOCCDFirst =
+    ($ints $scf $makepk $ooccman $backtransqt $oeprop "bksort" "deriv97")
+  OOCCDClosedShellFirst = ($OOCCDFirst $done)
+  OOCCDHighSpinFirst = ERROR
+  OOCCDSingletFirst = ERROR
+  OOCCDTwoConFirst = ERROR
+  OOCCDSpecialFirst = ERROR
+
+  % Procedures for the optimizing geomtries with OOCCD gradients
+  OOCCDFirstOpt =
+    (repeat $nopt $OOCCDFirst $geomupdate end $done)
+  OOCCDClosedShellFirstOpt = $OOCCDFirstOpt
+  OOCCDHighSpinFirstOpt = ERROR
+  OOCCDSingletFirstOpt  = ERROR
+  OOCCDTwoConFirstOpt  = ERROR
+  OOCCDSpecialFirstOpt  = ERROR
+
+  % Procedures for the finite displacements of OOCCD gradients
+  OOCCDFirstDisp  = (repeat $ndisp $ugeom $OOCCDFirst $rgeom end $done)
+  OOCCDClosedShellFirstDisp  = $OOCCDFirstDisp
+  OOCCDSingletFirstDisp  = ERROR
+  OOCCDHighSpinFirstDisp  = ERROR
+  OOCCDTwoConFirstDisp  = ERROR
+  OOCCDSpecialFirstDisp  = ERROR
+
+  % -------------------------------- DETCI Procedures
+  % Procedures for the DETCI energy
+  DETCIEnergy = ($ints $scf $transqt $detci $done)
+  DETCIClosedShellEnergy = $DETCIEnergy
+  DETCIHighSpinEnergy = $DETCIEnergy
+  DETCISingletEnergy = $DETCIEnergy
+  DETCITwoConEnergy = ERROR
+  DETCISpecialEnergy = ERROR
+
+  % Procedures for the DETCI gradient: not yet impl, need orb response
+  DETCIFirst = ERROR
+  DETCIClosedShellFirst = ERROR
+  DETCIHighSpinFirst = ERROR
+  DETCISingletFirst = ERROR
+  DETCITwoConFirst = ERROR
+  DETCISpecialFirst = ERROR
+
+  % Procedures for the optimizing geomtries with DETCI gradients
+  DETCIFirstOpt =
+    (repeat $nopt $DETCIFirst $geomupdate end $done)
+  DETCIClosedShellFirstOpt = $DETCIFirstOpt
+  DETCIHighSpinFirstOpt = ERROR
+  DETCISingletFirstOpt  = ERROR
+  DETCITwoConFirstOpt  = ERROR
+  DETCISpecialFirstOpt  = ERROR
+
+  % Procedures for the finite displacements of DETCI gradients
+  DETCIFirstDisp  = (repeat $ndisp $ugeom $DETCIFirst $rgeom end $done)
+  DETCIClosedShellFirstDisp  = $DETCIFirstDisp
+  DETCISingletFirstDisp  = ERROR
+  DETCIHighSpinFirstDisp  = ERROR
+  DETCITwoConFirstDisp  = ERROR
+  DETCISpecialFirstDisp  = ERROR
+
+  % -------------------------------- DETCAS Procedures
+  % Procedures for the DETCAS energy
+  DETCASEnergy = ($ints $scf $detcasman $done)
+  DETCASClosedShellEnergy = $DETCASEnergy
+  DETCASHighSpinEnergy = $DETCASEnergy
+  DETCASSingletEnergy = $DETCASEnergy
+  DETCASTwoConEnergy = ERROR
+  DETCASSpecialEnergy = ERROR
+
+  % Procedures for the DETCAS gradient
+  DETCASFirst = 
+  ($ints $scf $makepk $detcasman $backtransqt $oeprop "bksort" "deriv97")
+  DETCASClosedShellFirst = ($DETCASFirst $done)
+  DETCASHighSpinFirst = ($DETCASFirst $done)
+  DETCASSingletFirst = ($DETCASFirst $done)
+  DETCASTwoConFirst = ERROR
+  DETCASSpecialFirst = ERROR
+
+  % Procedures for the optimizing geomtries with DETCAS gradients
+  DETCASFirstOpt =
+    (repeat $nopt $DETCASFirst $geomupdate end $done)
+  DETCASClosedShellFirstOpt = $DETCASFirstOpt
+  DETCASHighSpinFirstOpt = $DETCASFirstOpt
+  DETCASSingletFirstOpt  = $DETCASFirstOpt
+  DETCASTwoConFirstOpt  = ERROR
+  DETCASSpecialFirstOpt  = ERROR
+
+  % Procedures for the finite displacements of DETCAS gradients
+  DETCASFirstDisp  = (repeat $ndisp $ugeom $DETCASFirst $rgeom end $done)
+  DETCASClosedShellFirstDisp  = $DETCASFirstDisp
+  DETCASSingletFirstDisp  = $DETCASFirstDisp
+  DETCASHighSpinFirstDisp  = $DETCASFirstDisp
+  DETCASTwoConFirstDisp  = ERROR
+  DETCASSpecialFirstDisp  = ERROR
+
+) 

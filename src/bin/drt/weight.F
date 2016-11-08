@@ -1,0 +1,98 @@
+      SUBROUTINE WEIGHT(A,B,S,ARC,LEVNR,LEVPT,NLWKS,WTAB,WTW,WTX,WTY
+     #,                 WGHT)
+C
+C***********************************************************************
+C   COMPUTE THE ARC-WEIGHT ARRAY, STARTING FROM THE BOTTOM OF THE      *
+C   GRAPH AND WORKING UP. THE ALGORITHM IS SIMPLE -- THE WEIGHT OF AN  *
+C   ARC IS THE SUM OF THE WEIGHT OF THE FIRST ARC TO ITS LEFT FROM THE *
+C   SAME--SAME--UPPER POINT AND THE WEIGHT (NUMBER OF LOWER WALKS) OF  *
+C   THE POINT THAT NEXT ARC TO THE LEFT ENDS AT AS A LOWER POINT. THUS *
+C   ALL VERTICAL ARCS (CASE=1) HAVE A WEIGHT OF ZERO. THEN THE WEIGHTS *
+C   OF ARCS IN THE EXTERNAL SPACE ARE TRANSFERRED TO EXTERNAL-WEIGHT-  *
+C   ARRAYS FOR USE IN THE EXTERNAL PORTION OF THE CALCULATION. THESE   *
+C   ARRAYS ARE:                                                        *
+C       WTAB(N)    WT OF DOUBLY OCCUPIED ARC FROM W POINT AT LEVEL N   *
+C                  (CASE=4)                                            *
+C       WTW(N,SYM) WT OF BETA WALK (CASE=3) FROM W POINT OF SYMMETRY   *
+C                  SYM AT LEVEL N OF GRAPH                             *
+C       WTX(N,SYM) WT OF ALPHA WALK (CASE=2) FROM X POINT OF SYMMETRY  *
+C                  SYM AT LEVEL N .                                    *
+C       WTY(N)     WT OF ALPHA WALK (CASE=2) FROM Y POINT AT LEVEL N   *
+C***********************************************************************
+C
+      IMPLICIT INTEGER (A-Z)
+      INTEGER NUMINT
+C
+      COMMON /DIMENS/ NBF,NSYM,NORBS,NROWSP,NROW4P,NROWS,NROWS4
+     #,               NLEVS,NREFS,NROWOC,NROW4O,NWKS,NWKSOC,NLEVOC
+     #,               ORBFRM,SYMORB,NUMIJ,NGROUP,NUMINT,NMAX,NSPC,NVREF
+     #,               NIJVIR
+      COMMON /DRTINF/ NA,NB,NS,NESPEC,MAXB,LEVFRM,LEVVAL,LEVOPN,LEVMUL
+     #,               LEVOCC,SPEC,SSPESH,VAL
+      COMMON /TAPES/  OUT,ERROUT,INPUT,DRTTAP
+C
+      DIMENSION A(NROWS),B(NROWS),S(NROWS),NLWKS(NROWS)
+      DIMENSION ARC(NROWS4),LEVPT(NROWS),LEVNR(NROWS)
+      DIMENSION WTAB(ORBFRM),WTW(ORBFRM,NSYM),WTX(ORBFRM,NSYM)
+      DIMENSION WTY(ORBFRM),WGHT(NROWS4)
+C
+C
+C     ----- GENERATE THE ARC-WEIGHT ARRAY -----
+C
+      DO 32 LEV=2,NLEVS
+         LEVM1=LEV-1
+         PONTM1=LEVPT(LEVM1)
+         DO 31 ROW=LEVPT(LEV)+1,LEVPT(LEV)+LEVNR(LEV)
+            WT=0
+            DO 30 CASE=1,4
+               ROWM1=ARC((ROW-1)*4+CASE)
+               IF (ROWM1.GT.0) GO TO 28
+               GO TO 29
+   28          CONTINUE
+               WGHT((ROW-1)*4+CASE)=WT
+               WT=WT+NLWKS(PONTM1+ROWM1)
+   29          CONTINUE
+   30       CONTINUE
+   31    CONTINUE
+   32 CONTINUE
+C
+C     ----- GENERATE EXTERNAL-SPACE WEIGHT ARRAYS -----
+C
+      DO 72 LEV=1,ORBFRM
+         WTAB(LEV)=-999999
+         WTY(LEV)=-999999
+         DO 72 SYM=1,NSYM
+            WTW(LEV,SYM)=-999999
+            WTX(LEV,SYM)=-999999
+   72 CONTINUE
+C
+      IF (LEV.LT.2) GO TO 18
+      DO 17 LEV=2,LEVFRM
+         LEVM1=LEV-1
+         PONTM1=LEVPT(LEVM1)
+         DO 16 ROW=LEVPT(LEV)+1,LEVPT(LEV)+LEVNR(LEV)
+         IA=A(ROW)
+         IB=B(ROW)
+Clj Invalid Fortran 77 statement:
+Clj      IF (2*IA+IB.GT.2) GO TO 14
+         IF (2*IA+IB.GT.2) GO TO 16
+         IS=S(ROW)+1
+         DO 15 CASE=1,4
+            ROWM1=ARC((ROW-1)*4+CASE)
+            IF (ROWM1.GT.0) GO TO 13
+            GO TO 14
+   13       CONTINUE
+            IF (IA.EQ.1.AND.CASE.EQ.4) WTAB(LEVM1)=WGHT((ROW-1)*4+CASE)
+            IF (IA.EQ.1.AND.CASE.EQ.3) WTW(LEVM1,IS)=WGHT((ROW-1)*4+CASE
+     *      )
+            IF (IB.EQ.2.AND.CASE.EQ.2) WTX(LEVM1,IS)=WGHT((ROW-1)*4+CASE
+     *      )
+            IF (IB.EQ.1.AND.CASE.EQ.2) WTY(LEVM1)=WGHT((ROW-1)*4+CASE)
+   14       CONTINUE
+   15    CONTINUE
+   16    CONTINUE
+   17 CONTINUE
+C
+   18 CONTINUE
+      RETURN
+      END

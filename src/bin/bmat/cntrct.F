@@ -1,0 +1,15 @@
+      SUBROUTINE CNTRCT(A,B,N)
+      REAL*8 A(1),B(50,1)
+C
+C  CONTRACTS A FULL MATRIX B INTO A SINGLE SUBSCRIPT
+C  LOWER TRIANGLE ARRAY A
+C
+      DO 10 I=1,N
+      II=(I*(I-1))/2
+      DO 10 J=1,I
+      IJ=II+J
+      A(IJ)=B(I,J)
+   10 CONTINUE
+C
+      RETURN
+      END

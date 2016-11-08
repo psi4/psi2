@@ -1,0 +1,118 @@
+cets121890      SUBROUTINE GETA(aa,EPS,ZETA,ALPHA,BETA,DOFF,DADD,IDIM,IDIMA)
+      subroutine ga1(IJND,KLND,IL,JL,IK,JK,VAL2,VAL1,VAL3,
+     1 aa,eps,zeta,alpha,beta,doff,dadd,idim,idima,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      INTEGER DOFF(IDIM),DADD(IDIM)
+      REAL*8 aa(IDIMA),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ)
+      REAL*8 A2,VAL1,VAL2,VAL3
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+C INITIALIZATION OF SUROUTINE GETA.
+C
+cets121890      RETURN
+C
+cets121890      ENTRY GA1(IJND,KLND,IL,JL,IK,JK,VAL2,VAL1,VAL3)
+C
+      IJKL=DOFF(IJND)+DADD(KLND)
+      aa(IJKL) = A2*(ALPHA(IL)-ALPHA(JL)-ALPHA(IK)+ALPHA(JK))*
+     1  VAL2 + (BETA(IL)-BETA(JL)-BETA(IK)+BETA(JK))*(VAL3+VAL1)
+      KLIJ=DOFF(KLND)+DADD(IJND)
+      aa(KLIJ) = aa(IJKL)
+      RETURN
+      end
+C
+      subroutine GA2(IJND,JLND,IL,JL,IJ,JJ,VAL1,VAL2,JOR,
+     1 aa,eps,zeta,alpha,beta,doff,dadd,idim,idima,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      INTEGER DOFF(IDIM),DADD(IDIM)
+      REAL*8 aa(IDIMA),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ)
+      REAL*8 A2,VAL1,VAL2
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      IJJL=DOFF(IJND)+DADD(JLND)
+      aa(IJJL) = A2*(ALPHA(IL)-ALPHA(JL)-ALPHA(IJ)+ALPHA(JJ))*
+     1  VAL1 + (BETA(IL)-BETA(JL)-BETA(IJ)+BETA(JJ))*(VAL2+VAL1)
+     2  -EPS(IL) + zeta(motyp(jor),il)
+cets121890     2  -EPS(IL) + ZETA(IL,JOR)
+      JLIJ=DOFF(JLND)+DADD(IJND)
+      aa(JLIJ) = aa(IJJL)
+      RETURN
+      end
+C
+      subroutine GA3(IKND,ILND,IL,KL,II,IK,VAL1,VAL2,IOR,
+     1 aa,eps,zeta,alpha,beta,doff,dadd,idim,idima,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      INTEGER DOFF(IDIM),DADD(IDIM)
+      REAL*8 aa(IDIMA),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ)
+      REAL*8 A2,VAL1,VAL2
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      IKIL=DOFF(IKND)+DADD(ILND)
+      aa(IKIL) = A2*(ALPHA(IL)-ALPHA(KL)-ALPHA(II)+ALPHA(IK))*
+     1  VAL1 + (BETA(IL)-BETA(KL)-BETA(II)+BETA(IK))*(VAL2+VAL1)
+     2  +EPS(KL) - zeta(motyp(ior),kl)
+cets     2  +EPS(KL) - ZETA(KL,IOR)
+      ILIK=DOFF(ILND)+DADD(IKND)
+      aa(ILIK) = aa(IKIL)
+      RETURN
+      end
+C
+      subroutine GA4(IKND,JKND,IK,KK,IJ,JK,VAL1,VAL2,KOR,
+     1 aa,eps,zeta,alpha,beta,doff,dadd,idim,idima,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      INTEGER DOFF(IDIM),DADD(IDIM)
+      REAL*8 aa(IDIMA),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ)
+      REAL*8 A2,VAL1,VAL2
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      IKJK=DOFF(IKND)+DADD(JKND)
+      aa(IKJK) = A2*(ALPHA(IK)-ALPHA(KK)-ALPHA(IJ)+ALPHA(JK))*
+     1  VAL1 + (BETA(IK)-BETA(KK)-BETA(IJ)+BETA(JK))*(VAL2+VAL1)
+     2  +EPS(IJ) - zeta(motyp(kor),ij)
+cets     2  +EPS(IJ) - ZETA(IJ,KOR)
+      JKIK=DOFF(JKND)+DADD(IKND)
+      aa(JKIK) = aa(IKJK)
+      RETURN
+      end
+C
+      subroutine GA6(IKND,IK,KK,II,VAL1,VAL2,IOR,KOR,
+     1 aa,eps,zeta,alpha,beta,doff,dadd,idim,idima,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      INTEGER DOFF(IDIM),DADD(IDIM)
+      REAL*8 aa(IDIMA),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ)
+      REAL*8 A2,VAL1,VAL2
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      IKIK=DOFF(IKND)+DADD(IKND)
+      aa(IKIK) = A2*(ALPHA(IK)-ALPHA(KK)-ALPHA(II)+ALPHA(IK))*
+     1  VAL1 + (BETA(IK)-BETA(KK)-BETA(II)+BETA(IK))*(VAL2+VAL1)
+     2  +EPS(II) - ZETA(motyp(kor),ii) + EPS(KK) - ZETA(motyp(ior),kk)
+cets     2  +EPS(II) - ZETA(II,KOR) + EPS(KK) - ZETA(KK,IOR)
+      RETURN
+C
+      END

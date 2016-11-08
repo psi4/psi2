@@ -1,0 +1,21 @@
+#!/bin/csh -f
+
+set whoiam = `whoami`
+
+#set name = `/usr/local/bin/filesname`
+set name = `filesname`
+
+if ($name == '') then
+  echo 'psiclean could not find a # FILES ### name entry'
+  echo 'aborting'
+  exit
+  endif
+
+echo Running psiclean for the name $name and userid $whoiam.
+
+echo The files to be deleted are:
+ls -l /tmp[0-9]*/$whoiam/$name.*
+
+/bin/rm -f /tmp[0-9]*/$whoiam/$name.*
+
+exit 0

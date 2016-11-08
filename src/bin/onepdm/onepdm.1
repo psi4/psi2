@@ -1,0 +1,116 @@
+.TH onepdm 1 "5 March, 1991" "Psi Release 2.0" "\*(]D"
+.SH NAME
+onepdm \- constructs the CI one particle density matrix
+
+.SH DESCRIPTION
+.LP
+The program
+.B onepdm
+may be used to construct the CI one particle density matrix,
+to form the CI natural orbitals, and to perform an analysis of the
+CI wavefunction.
+
+.sL
+.pN INPUT
+.pN FILE30
+.pN FILE40       "	(if \fBWRTOPDM = YES\fP)"
+.pN FILE54
+.pN FILE58
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.pN FILE30       "	(if \fBWRTNOS = YES\fP)"
+.pN FILE40       "	(if \fBWRTOPDM = YES\fP)"
+.eL "FILES UPDATED"
+
+.sL
+.pN FILE50
+.pN OPDM48
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B onepdm
+program
+searches through the default keyword path (first
+.B ONEPDM
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBNCSF =\fP \fIinteger\fP"
+This specifies how many configurations state functions are to be
+listed in the output.  The default is 20.
+
+.IP "\fBROOT1 =\fP \fIinteger\fP"
+The number of the first CI root for which \fBonepdm\fP is to be run.
+The default is 1.
+
+.IP "\fBNUMROOTS =\fP \fIinteger\fP"
+The number of CI roots for which \fBonepdm\fP is to
+be run.  The default is 1.
+
+.IP "\fBMK_OPDM =\fP \fIboolean\fP"
+If true, the one particle density matrix will be formed and written to
+.pN OUTPUT.
+The default is FALSE, unless either WRTNOS or WRTOPM are TRUE, in which case
+MK_OPDM defaults to TRUE.
+
+.IP "\fBWRTNOS =\fP \fIboolean\fP"
+If this is true, the symmetry orbital to approximate natural orbital
+transformation matrix is written to
+.pN FILE30 .
+This file is where the coupled cluster and configuration interaction
+transformation programs read the molecular orbital coefficients, so
+if a transformation routine is run after
+.B onepdm
+with \fBWRTNOS = YES\fP is run, then the approximate
+natural orbitals will be used instead of the SCF orbitals.
+The default is false.
+
+.IP "\fBWRTOPDM =\fP \fIboolean\fP"
+If this is true, then the one particle density matrix is writen to
+.pN FILE40 .
+In this case, the \fBmaster\fP program must be run before \fBonepdm\fP.
+This option must be true if the
+.B lag
+program is not run for the \fBciprop\fP program to work properly.
+The default is FALSE, unless WRTNOS = TRUE, in which case the default is TRUE.
+
+.SH PRINT CONTROL
+The following print control options are recognized by \fBonepdm\fP:
+
+.IP \fBNOMO\fP
+Prints out the natural orbital to molecular orbital transformation matrix.
+
+.IP \fBNOSO\fP
+Prints out the natural orbital to symmetry orbital transformation matrix.
+
+.IP \fBOPDMSO\fP
+Prints out the one particle density matrix in the symmetry orbital basis.
+
+.IP \fBOPDMMO\fP
+Prints out the one particle density matrix in the molecular orbital basis.
+
+.SH EXAMPLES
+.LP
+The following example will write the approximate natural orbitals
+over the SCF orbitals in
+.pN FILE30
+, print the natural orbitals in terms of the symmetry orbitals to
+the output, but will not print the one-particle density matrix in the
+MO basis to the output:
+
+.DS
+  onepdm: (
+    wrtnos = yes
+    print = ((on noso)(off opdmmo))
+    )
+.DE

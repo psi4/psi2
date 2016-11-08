@@ -1,0 +1,30 @@
+# Generated automatically from Makefile.in by configure.
+srcdir = /home/usrb/b3/longhorn/psi/src/bin/derivth
+VPATH = /home/usrb/b3/longhorn/psi/src/bin/derivth
+
+include ../MakeVars
+
+ifneq (,$(findstring dec-ultrix,$(target)))
+  COTH =
+endif
+
+PSILIBS = io.a alloc.a libparse.a libcoallc.a iomrth.a iomr.a
+
+TRUESRC = \
+bftoat.F blkdta000.F dab.F dens30.F dens40.F derfk1.F fentry.F fold.F forme2.F formeg.F frmi.F frmij.F frmijk.F frmik.F getbas.F gprgid.F isoout.F jk2der.F limits.F makeb.F makgrd.F maki.F makij.F makijk.F makik.F makone.F mbmat.F mbmat2.F mbmatc.F mcdens.F mcscf.F mcsci.F mk2i.F mk2ij.F mk2ijk.F mk2ik.F nuctwo.F prnone.F prntwo.F rdfr.F readmf.F redun2.F scfder.F scfmat.F setnos.F symd.F symf1.F symh.F tder2.F twoi.F twoij.F twoij1.F twoijk.F twoik.F twoik1.F vadd.F vder2.F wrder.F xyzi.F xyzij.F xyzijk.F xyzik.F ysoout.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+
+ifneq (,$(findstring ibm-aix,$(target)))
+ifeq ($(FC),xlf)
+jk2der.o: jk2der.f
+	$(FC) -c $< -o $@
+endif
+endif
+
+install_man:: deriv.1
+	$(MKDIRS) $(mandir)/man1
+	cat $(top_srcdir)/lib/macro.psi $< | sed "s OS_NAME_HERE UNIX " > \
+           $(mandir)/man1/deriv.1

@@ -1,0 +1,879 @@
+      SUBROUTINE LOOPYD(NABC,NLWKS,IWGHT,NABCA,IJADD,ijgrp,kadd
+     *,                 LADD,INEXT,IARC,JMNNXT,JMXNXT,nabcs,isym
+     *,                 ISEGM,JSEGM,IMAIN,isub,iuwkmn,iuwksb
+     *,                 ITRACK,LMIN,ACOEF,BCOEF,hdwgt,hdseg,hdpnt
+     *,                 IMXGRP,IMNGRP,JMXGRP,JMNGRP,dm,vector
+     *,                 s,wtw,wtx,wty,wab)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C     EXTENDED DUMMY DM
+      DIMENSION NLCSMN(22),LCOND(8),COEFFS(20,21),CFS(420)
+      DIMENSION A01(20),A01MI(20),A01T(20),A01TMI(20),
+     1 A10(20),A10MI(20),A10T(20),A10TMI(20),
+     2 A20T(20),A20TMI(20),A02T(20),A02TMI(20),
+     3 B0(20),C0(20),C0MI(20),D0(20),D0MI(20),
+     4 E0(20),ONEOB(20),ONEOBM(20),SQ2OBM(20)
+      EQUIVALENCE (A01,COEFFS(1,1)),(A01MI,COEFFS(1,2))
+     1 ,(A01T,COEFFS(1,3)),(A01TMI,COEFFS(1,4)),
+     2 (A10,COEFFS(1,5)),(A10MI,COEFFS(1,6)),
+     3 (A10T,COEFFS(1,7)),(A10TMI,COEFFS(1,8)),
+     4 (A20T,COEFFS(1,9)),(A20TMI,COEFFS(1,10)),
+     5 (A02T,COEFFS(1,11)),(A02TMI,COEFFS(1,12)),
+     6 (B0,COEFFS(1,13)),(C0,COEFFS(1,14)),
+     7 (C0MI,COEFFS(1,15)),(D0,COEFFS(1,16)),
+     8 (D0MI,COEFFS(1,17)),(E0,COEFFS(1,18)),
+     9 (ONEOB,COEFFS(1,19)),(ONEOBM,COEFFS(1,20)),
+     * (SQ2OBM,COEFFS(1,21))
+      INTEGER PUWK,PUWKT,REFWLK,SYMORB,BMAX,ORBFRM
+      INTEGER HPT,HSEG,HSEGMX,HDWGT,HDSEG,HDPNT,SEGWGT,HARPT
+      integer nlevs,nrows,norbs,nrows4,nmax
+      integer numij,ngroup
+      LOGICAL PAGEIN,STORE
+      REAL*8 DM(NMAX),ACF,D,CCF
+C   LEVEL CHARACTERISTICS
+      DIMENSION ISEGM(NLEVS),JSEGM(NLEVS),IMAIN(NLEVS),ISUB(NLEVS)
+      DIMENSION IUWKMN(NLEVS),IUWKSB(NLEVS),ITRACK(NLEVS),ISYM(NORBS)
+      DIMENSION ACOEF(NLEVS),BCOEF(NLEVS),LMIN(NLEVS)
+      DIMENSION HDSEG(NLEVS),HDPNT(NLEVS),HDWGT(NLEVS)
+C     DIMENSION LEVPT(NLEVS),LEVNR(NLEVS)
+      DIMENSION IFCB20(16)
+C   GRAPH DESCRIPTION ARRAYS
+      DIMENSION NABC(NROWS ),NLWKS(NROWS)              ,NABCS(NROWS )
+      DIMENSION              IWGHT(NROWS4),IARC(NROWS4),NABCA(NROWS )
+C   INTEGRAL ADDRESSING ARRAYS
+      DIMENSION INEXT(NORBS),JMNNXT(NORBS),JMXNXT(NORBS)
+      DIMENSION IJADD(NUMIJ),IJGRP(NUMIJ),KADD(SYMORB),LADD(SYMORB)
+      DIMENSION IMNGRP(NGROUP),IMXGRP(NGROUP),JMNGRP(NGROUP)
+      DIMENSION JMXGRP(NGROUP)
+C
+      COMMON /LEVEL/ LEVI
+C
+      COMMON /SYMM/ JSMT,JFSYM,IFSYM,MAXSYM(8),MINSYM(8),ISMOFF(8)
+     #,             NUMSYM(8)
+      COMMON /DIMS/ NBF,NSYM,NORBS,NROWS,NROWS4,NWKS,NWKS2,NLEVS
+     *,             NROWOC,NROW4O,NWKSOC,NLEVOC,NORBOC,LEVFRM
+     *,             NWKSMX,NLWKMX,NUWKMX,BMAX,NROOTS,ORBFRM
+      COMMON /INTS/ NMAX,NMAX2,NGROUP,NBLKOC,NUMIJ,SYMORB,INTSRT
+      COMMON /DIAG/ REP,FZCORE,EGUESS,ECI,REFWLK,MXITER,CNVERG,ICNVG
+     *,             ITER,SQCDIF,CZERO,NROOT
+      COMMON /TAPES/ITAP52,ITAPE5,ITAPE6,ITAP58,ITAP54,ITAP03,ITAP04
+     *,             ITAPE3,ITAP05,ITAP06,ITAP56,IT53
+      COMMON /OPS/  IGUESS,IRSTRT,IROOTI,IROOTF,IPRINT
+      COMMON/LOOPS/ NUWK,PUWKT,IUWK,JUWK,ITRAK,IPT1,IPT2
+      COMMON/ALL/   ACF,D,CCF,LADT,ITR1,ITR2,IA,JA,ITYPE,ISEGT,LVFRM1
+     *,             NLWKI,NLWKJ,IMAX,IMIN
+      COMMON /PAGE/ IWORD3,IWORD4,PAGEIN,NOFFI,NOFFJ,NPASS,NWORDL,IWORD6
+      COMMON /RSTRT/IBLCK1,INXT,LOWTRI,NDVDIT,IBLOCK
+      COMMON /TABLES/ JSEGNR(22),JSEGPT(22),IARCMN(228),IARCSB(228)
+     *,ITRK(228),JCOND(228),KCOND(228),NXTSEG(228),JSEGPX(3)
+      COMMON /MINMAX/ IMING,IMAXG,JMIN,JMAX
+C
+      EQUIVALENCE (COEFFS,CFS)
+       DATA NLCSMN/6*1,0,1,14*0/
+C
+      WRITE(ITAPE3,*) ' WE JUST ENTERED LOOPYD '
+C***********************************************************************
+      LOPOPT = 0
+C***********************************************************************
+      CRITE = 1.0D-09
+      ROOT2 = DSQRT(2.0D+00)
+      ROOTN2 = -ROOT2
+      TOOR2 = 1.0D+00/ ROOT2
+      TOORN2 = -TOOR2
+      JSEGPT(1)=0
+      HSEGMX=4
+      DO 125 I=1,NORBS
+  125 ISYM(I)=ISYM(I)-1
+      DO 130 J=1,21
+      JSEGPT(J+1)=JSEGNR(J)
+      DO 130 I=1,2
+ 130  COEFFS(I,J)=0.0D+00
+      DO 140 I=3,20
+      A = dble(I-2)
+      COEFFS(I,1) = DSQRT(A/(A+1.0D+00))
+      COEFFS(I,2) = -COEFFS(I,1)
+      COEFFS(I,3) = COEFFS(I,1)/DSQRT(2.0D+00)
+      COEFFS(I,4) = -COEFFS(I,3)
+      COEFFS(I,5) = DSQRT((A+1.0D+00)/A)
+      COEFFS(I,6) = -COEFFS(I,5)
+      COEFFS(I,7) = COEFFS(I,5)/DSQRT(2.0D+00)
+      COEFFS(I,8) = -COEFFS(I,7)
+      COEFFS(I,9) = DSQRT((A+2.0D+00)/(A*2.0D+00))
+      COEFFS(I,10) = -COEFFS(I,9)
+      COEFFS(I,11) = DSQRT(A/(2.0D+00*(A+2.0D+00)))
+      COEFFS(I,12) = -COEFFS(I,11)
+      COEFFS(I,13) = DSQRT(2.0D+00/(A*(A+1.0D+00)))
+      COEFFS(I,14) = DSQRT(A*(A+2.0D+00))/(A+1.0D+00)
+      COEFFS(I,15) = -DSQRT(A*(A+2.0D+00))/(A+1.0D+00)
+      COEFFS(I,16) = DSQRT((A-1.0D+00)*(A+2.0D+00)/(A*(A+1.0D+00)))
+      COEFFS(I,17) = -COEFFS(I,16)
+      COEFFS(I,18)=-DSQRT(2.0D+00/(A*(A+2.0D+00)))
+      COEFFS(I,19) = 1.0D+00/A
+      COEFFS(I,20) = -1.0D+00/A
+      COEFFS(I,21) = -DSQRT(2.0D+00)/A
+ 140  CONTINUE
+      DO 160 I=1,NSYM
+      ISMOFF(I)=(I-1)*NORBS
+ 160  LCOND(I)=0
+      I=ISYM(1)+1
+      LCOND(I)=1
+      LCOND(1)=1
+      NSM=0
+      DO 170 IORB=2,NORBS
+      DO 165 I=1,NSYM
+      IF(LCOND(I).EQ.0) GO TO 165
+      ISM=I-1
+      J=IEOR(ISM,ISYM(IORB))+1
+      IF(LCOND(J).GT.0) GO TO 165
+      LCOND(J)=IORB
+      NSM=NSM+1
+      IF(NSM.EQ.NSYM) GO TO 175
+ 165  CONTINUE
+ 170  CONTINUE
+ 175  CONTINUE
+      DO 180 I=1,NSYM
+      IF(LCOND(I).EQ.0) LCOND(I)=NORBS+1
+ 180  CONTINUE
+      INTSRT=((NUMIJ+111)/112)*224+((SYMORB+111)/112)*224+112+1
+CTJL  IT53=53
+      CALL RFILE(IT53)
+CZ    CALL RSETDA(IT53,INTSRT)
+CTJL  CALL SREW(IT53)    RFILE REWINDS THE FILE
+      DO 182 III=1,NMAX
+      DM(III)=0.0D+00
+  182 CONTINUE
+      entry LOOPY(NABC,NLWKS,IWGHT,NABCA,IJADD,ijgrp,kadd
+     *,                 LADD,INEXT,IARC,JMNNXT,JMXNXT,nabcs,isym
+     *,                 ISEGM,JSEGM,IMAIN,isub,iuwkmn,iuwksb
+     *,                 ITRACK,LMIN,ACOEF,BCOEF,hdwgt,hdseg,hdpnt
+     *,                 IMXGRP,IMNGRP,JMXGRP,JMNGRP,dm,vector
+     *,                 s,wtw,wtx,wty,wab)
+      DO 500 IBLOCK=1,NGROUP
+C:
+C GF  IF (IBLOCK.GT.1) CALL NXTBLK
+      IF (IBLOCK .GT. 1) THEN
+          IF(IPRINT .GT. 0)  WRITE(ITAPE6,183) NMAX
+  183 FORMAT(/,' ABOUT TO WRITE ',I10,' DENSITY MATRIX ELEMENTS ')
+      CALL SWRIT(IT53,DM,INTOWP(NMAX))
+      DO 185 III=1,NMAX
+      DM(III)=0.0D+00
+  185 CONTINUE
+      END IF
+C:
+      IF(IPRINT .GT. 0) THEN
+      WRITE(ITAPE6,187)IBLOCK,IMXGRP(IBLOCK),IMNGRP(IBLOCK)
+      END IF
+ 187  FORMAT(' PROCESS INTEGRALS FROM GROUP',I4,' FIRST LEVEL',I4
+     #,      ' LAST',I4)
+      IMAXG=IMXGRP(IBLOCK)
+      IMING=IMNGRP(IBLOCK)
+      I=IMAXG
+ 190  CONTINUE
+C**********************************************************************
+CTJL  IF(I.NE.6) GO TO 480
+      LEVI=I+1
+      NPT=1
+      PUWKT=1
+      JMAX=I
+      JMIN=1
+      IF (I.EQ.IMAXG) JMAX=JMXGRP(IBLOCK)
+      IF (I.EQ.IMING) JMIN=JMNGRP(IBLOCK)
+      JSM=ISYM(I)
+      IAD=(I*(I-1))/2
+      IJ=IAD+JMAX
+      NOFFI=0
+      NOFFJ=0
+      LEVV=NLEVS
+      HSEG=4
+      LEVH=NLEVS
+      PAGEIN=.FALSE.
+      IF(NWKS.LE.NWKSMX) PAGEIN=.TRUE.
+C:    IF(IBLOCK.NE.IJGRP(IJ)) GO TO 490
+C*
+C     CALL NXT4X(I)
+C     IF (I.LE.ORBFRM) CALL NXT4X(I)
+C*
+      IF(LEVI.EQ.NLEVS) GO TO 1070
+C   GENERATE HEAD SEGMENTS TO LOOPS
+      LEVH=NLEVS+1
+      NPT=1
+      HDWGT(NLEVS)=0
+      HDPNT(NLEVS)=1
+ 1000 LEVH=LEVH-1
+      SEGWGT=0
+      HSEG=0
+      HPT=NPT
+ 1010 HSEG=HSEG+1
+      IF(HSEG.LE.HSEGMX) GO TO 1030
+ 1020 LEVH=LEVH+1
+      IF(LEVH.GT.NLEVS) GO TO 480
+      PUWKT=PUWKT-HDWGT(LEVH)
+      HSEG=HDSEG(LEVH)
+      HPT=HDPNT(LEVH)
+      GO TO 1010
+ 1030 CONTINUE
+      HARPT=(HPT-1)*4+HSEG
+      NPT=IARC(HARPT)
+      IF(NPT.EQ.0) GO TO 1010
+      PUWKT=PUWKT-SEGWGT
+      SEGWGT=IWGHT(HARPT)
+      PUWKT=PUWKT+SEGWGT
+      HDWGT(LEVH)=SEGWGT
+      HDSEG(LEVH)=HSEG
+      LEV=LEVH-1
+      HDPNT(LEV)=NPT
+      IUWK=0
+      JUWK=0
+      NLWKI=NLWKS(NPT)
+      IF(PAGEIN) GO TO 1035
+      CALL PAGED(vector)
+      IF(PAGEIN) LEVV=LEV
+      GO TO 1040
+ 1035 CONTINUE
+      IF(LEVV.GT.LEV) GO TO 1040
+      CALL PAGEOU(vector)
+      CALL PAGED(vector)
+      LEVV=NLEVS
+      IF(PAGEIN) LEVV=LEV
+ 1040 CONTINUE
+C***********************************************************************
+      IF(LOPOPT.EQ.1) GO TO 9393
+      IF(LEV.GT.LEVFRM) GO TO 1050
+      IF((NABCA(NPT)*2+NABC(NPT)).LE.2) GO TO 1060
+ 9393 CONTINUE
+C***********************************************************************
+ 1050 IF(LEV.GT.LEVI) GO TO 1000
+      GO TO 1070
+ 1060 CONTINUE
+C   LOOPS WITH FOUR EXTERNAL INDICES
+C     IF(NDVDIT.EQ.1.AND.IGUESS.EQ.0) GO TO 480
+      ITYPE=3*NABCA(NPT)+NABC(NPT)
+      IF(ITYPE.EQ.0) GO TO 1010
+      IFSYM=NABCS(NPT)
+      JFSYM=IFSYM
+      LVFRM1=LEV-1
+      IMAX=LEVI-1
+      IMIN=LEVI-1
+      IF(.NOT.PAGEIN) STOP
+      CALL ALLEXT(dm,vector,s,ijadd,kadd,ladd,wtw,wtx,wty,wab,isym)
+      GO TO 1010
+ 1070 LEV=LEVI
+      LEVM=LEV-1
+      ISEGM(LEV)=1
+      ISEG=1
+      IMN=NPT
+      ISB=NPT
+      KSEG=0
+      KSEGMX=JSEGNR(ISEG)
+      LMIN(LEV)=LCOND(JSM+1)
+      IUWKMN(LEV)=0
+      IUWKSB(LEV)=0
+      IMAIN(LEV)=NPT
+      ISUB(LEV)=NPT
+      ACOEF(LEV)=1.0D+00
+C  TEST NEXT SEGMENT OF GROUP
+200   KSEG=KSEG+1
+      IF(KSEG.GT.KSEGMX) GO TO 440
+      KSB=IARCSB(KSEG)
+      JARPT=4*(ISB-1)+KSB
+      KSB=IARC(JARPT)
+      IF(KSB.EQ.0) GO TO 200
+      KMN=IARCMN(KSEG)
+      IARPT=4*(IMN-1)+KMN
+      KMN=IARC(IARPT)
+      IF(KMN.EQ.0) GO TO 200
+ 210  CONTINUE
+      JSEGM(LEV)=KSEG
+      IUWKMN(LEVM)=IUWKMN(LEV)+IWGHT(IARPT)
+      IUWKSB(LEVM)=IUWKSB(LEV)+IWGHT(JARPT)
+      LMIN(LEVM)=LMIN(LEV)
+      IF(JCOND(KSEG))220,240,230
+ 220  CONTINUE
+      IF(LEVM.LE.JMIN)GOTO 200
+      GOTO 240
+ 230  CONTINUE
+      IF (LEVM.GT.JMAX) GO TO 200
+C**********************************************************************
+CTJL  IF(LEVM.NE.5) GO TO 200
+      IJ=IAD+LEVM
+      JAD=IJADD(IJ)
+      KSM=IEOR(JSM,ISYM(LEVM))
+      LMIN(LEVM)=LCOND(KSM+1)
+      KSMPTX=ISMOFF(KSM+1)
+ 240  CONTINUE
+      IF(KCOND(KSEG).EQ.0)GOTO 260
+C**********************************************************************
+CC    ITJLOP = 1
+CC    IF(ITJLOP.EQ.1) GO TO 200
+      KSMPT=LEVM+KSMPTX
+      KAD=JAD+KADD(KSMPT)
+      LSM=IEOR(KSM,ISYM(LEVM))
+      LMIN(LEVM)=LCOND(LSM+1)
+      LSMPTX=ISMOFF(LSM+1)
+ 260  CONTINUE
+      IF(ITRK(KSEG))280,280,270
+270   ITRACK(LEVM)=ITRK(KSEG)
+      GOTO 290
+280   ITRACK(LEVM)=ITRACK(LEV)
+290   CONTINUE
+      GO TO( 1, 1, 1, 1, 1, 1,44, 1, 3, 3, 1,45, 4, 4,50,51, 1,40, 1, 1
+     A ,     6, 6, 7,46, 9,54, 2,52,41, 5,47, 8, 2,53, 1, 1,42,48, 2,52
+     B ,    36,55,43, 1,11,11,12,10,13,49, 2,53, 1,77,77,77, 1,79,77, 1
+     C ,    80,78, 1,71,67,68,87,75,83,69,68,76,70,82,71,71,67,68,67,87
+     D ,    75,83,69,68,83,68,76,70,69,70,82,71, 1, 6,16, 6, 6,17,16,74
+     E ,     8, 1, 1,18,19,18,18,22,24,20,19,24,19,23,21,20,21, 1, 1,11
+     F ,    11,27,11,28,81,27,13, 1, 1, 3, 2, 4, 2, 1, 2, 2, 1,71,63,72
+     G ,    84,65,85,73,29,66,64,71, 1,30,56,86, 1,57, 1, 1,56, 1,32,31
+     H ,    58, 1, 1,59,33,34,61,35,88,62,60, 1, 1, 6, 1, 9, 2, 5, 2, 1
+     I ,     1, 2,36,11,10, 2, 1, 6, 1, 9, 2, 5, 2, 1, 1, 2,36,11,10, 2
+     J ,     1, 1,37,38, 4, 2, 2, 1, 1, 2,39,37, 3, 2, 1, 6, 1, 9, 2, 5
+     L ,     2, 1, 1, 2,36,11,10, 2) KSEG
+  1   ACOEF(LEVM)=ACOEF(LEV)
+      GOTO 120
+  2   ACOEF(LEVM)=-ACOEF(LEV)
+      GOTO 120
+   3  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * A01(IA)
+      GO TO 120
+   4  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * A10(IA)
+      GO TO 120
+   5  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * A10(IA)
+      GO TO 120
+   6  IA = NABC(IMN) + 1
+      ACOEF(LEVM) = ACOEF(LEV) * C0(IA)
+      GO TO 120
+   7  IA = NABC(IMN) + 1
+      ACOEF(LEVM) = ACOEF(LEV) * A01(IA)
+      GO TO 120
+   8  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * A10MI(IA)
+      GO TO 120
+   9  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * ONEOB(IA)
+      GO TO 120
+  10  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * A01(IA)
+      GO TO 120
+  11  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * C0(IA)
+      GO TO 120
+  12  IA = NABC(IMN) + 4
+      ACOEF(LEVM) = ACOEF(LEV) * A10(IA)
+      GO TO 120
+  13  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * A01MI(IA)
+      GO TO 120
+  16  IA = NABC(IMN) + 1
+      ACOEF(LEVM) = ACOEF(LEV) * C0MI(IA)
+      GO TO 120
+  17  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * SQ2OBM(IA)
+      GO TO 120
+  18  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * A20T(IA)
+      GO TO 120
+  19  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * A02TMI(IA)
+      GO TO 120
+  20  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * A10TMI(IA)
+      GO TO 120
+  21  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * A01T(IA)
+      GO TO 120
+  22  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * D0(IA)
+      GO TO 120
+  23  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * D0(IA)
+      GO TO 120
+  24  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * E0(IA)
+      GO TO 120
+  27  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * C0MI(IA)
+      GO TO 120
+  28  IA=NABC(IMN)+4
+      ACOEF(LEVM)=ACOEF(LEV)*SQ2OBM(IA)
+      GO TO 120
+  29  ACOEF(LEVM) = ACOEF(LEV) * ROOT2
+      GO TO 120
+  30  IA = NABC(IMN) + 1
+      ACOEF(LEVM) = ACOEF(LEV) * D0(IA)
+      GO TO 120
+  31  IA = NABC(IMN) + 4
+      ACOEF(LEVM) = ACOEF(LEV) * D0(IA)
+      GO TO 120
+  32  IA = NABC(IMN) + 4
+      ACOEF(LEVM) = ACOEF(LEV) * B0(IA)
+      GO TO 120
+  33  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * D0MI(IA)
+      GO TO 120
+  34  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * B0(IA)
+      GO TO 120
+  35  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * B0(IA)
+      GO TO 120
+  36  IA = NABC(IMN) + 4
+      ACOEF(LEVM) = ACOEF(LEV) * ONEOBM(IA)
+      GO TO 120
+  37  IA = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * C0(IA)
+      GO TO 120
+  38  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * ONEOB(IA)
+      GO TO 120
+  39  IA = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * ONEOBM(IA)
+      GO TO 120
+  86  IA = NABC(IMN) + 1
+      ACOEF(LEVM) = ACOEF(LEV) * B0(IA)
+      GO TO 120
+  40  IA = NABC(IMN) + 2
+      IB=IA-1
+      ACOEF(LEVM) = ACOEF(LEV) * A10T(IA)
+      BCOEF(LEVM) = ACOEF(LEV) * A01TMI(IB)
+      GO TO 120
+  41  IB = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * TOORN2
+      BCOEF(LEVM) = ACOEF(LEV) * A20T(IB)
+      GO TO 120
+  42  IA = NABC(IMN) + 3
+      IB = IA + 1
+      ACOEF(LEVM) = ACOEF(LEV) * A01T(IA)
+      BCOEF(LEVM) = ACOEF(LEV) * A10T(IB)
+      GO TO 120
+  43  IB = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * TOORN2
+      BCOEF(LEVM) = ACOEF(LEV) * A02TMI(IB)
+      GO TO 120
+  44  IB=NABC(IMN)+1
+      ACOEF(LEVM) = ACOEF(LEV) * TOOR2
+      BCOEF(LEVM) = ACOEF(LEV) * A02TMI(IB)
+      GO TO 120
+  45  IB = NABC(IMN) + 3
+      ACOEF(LEVM) = ACOEF(LEV) * TOOR2
+      BCOEF(LEVM) = ACOEF(LEV) * A20T(IB)
+      GO TO 120
+  46  IB = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * TOOR2
+      BCOEF(LEVM) = ACOEF(LEV) * A20T(IB)
+      GO TO 120
+  47  IA = NABC(IMN) + 2
+      IB = IA - 1
+      ACOEF(LEVM) = ACOEF(LEV) * A10T(IA)
+      BCOEF(LEVM) = ACOEF(LEV) * A01T(IB)
+      GO TO 120
+  48  IB = NABC(IMN) + 2
+      ACOEF(LEVM) = ACOEF(LEV) * TOOR2
+      BCOEF(LEVM) = ACOEF(LEV) * A02TMI(IB)
+      GO TO 120
+  49  IA = NABC(IMN) + 3
+      IB = IA + 1
+      ACOEF(LEVM) = ACOEF(LEV) * A01T(IA)
+      BCOEF(LEVM) = ACOEF(LEV) * A10TMI(IB)
+      GO TO 120
+  50  ACOEF(LEVM) = ACOEF(LEV) + ACOEF(LEV)
+      D=0.5D+00
+      GO TO 120
+  51  ACOEF(LEVM)=ACOEF(LEV)*ROOT2
+      GO TO 120
+  52  ACOEF(LEVM) = -ACOEF(LEV)
+       D= -1.0D+00
+       GO TO 120
+  53   ACOEF(LEVM) = -ACOEF(LEV) - ACOEF(LEV)
+       D = -0.5D+00
+       GO TO 120
+  54   IA=NABC(IMN)+2
+       D=1.0D+00/ONEOB(IA)
+       ACOEF(LEVM) = ACOEF(LEV) * ONEOB(IA)
+       GO TO 120
+  55   IA = NABC(IMN) + 4
+       D=1.0D+00/ONEOBM(IA)
+       ACOEF(LEVM) = ACOEF(LEV) * ONEOBM(IA)
+       GO TO 120
+  56   ACOEF(LEVM) = ACOEF(LEV)
+       D = -1.0D+00
+       GO TO 120
+  57   IA = NABC(IMN) + 2
+       ACOEF(LEVM) = ACOEF(LEV) * A10(IA)
+       D=-1.0D+00
+       GO TO 120
+  58   IA = NABC(IMN) + 3
+       ACOEF(LEVM) = ACOEF(LEV) * A01(IA)
+       D=-1.0D+00
+       GO TO 120
+  59   IA = NABC(IMN) + 3
+       ACOEF(LEVM) = ACOEF(LEV) * A10T(IA)
+       D=-1.0D+00
+       GO TO 120
+  60   IA = NABC(IMN) + 2
+       ACOEF(LEVM) = ACOEF(LEV) * A02TMI(IA)
+       D=-1.0D+00
+       GO TO 120
+  61   IA = NABC(IMN) + 2
+       ACOEF(LEVM) = ACOEF(LEV) * A01TMI(IA)
+       D=-1.0D+00
+       GO TO 120
+  62   IA = NABC(IMN) + 2
+       ACOEF(LEVM) = ACOEF(LEV) * A20T(IA)
+       D=-1.0D+00
+       GO TO 120
+  63   IA = NABC(IMN) + 2
+       IB = IA + 1
+       ACOF = ACOEF(LEV) * A01T(IA)
+       BCOF = BCOEF(LEV) * A10T(IB)
+       D = ACOF + BCOF
+       IF(DABS(D).LT.CRITE) GO TO 110
+       ACOEF(LEVM) = D
+       D = (ACOF - BCOF) / D
+       GO TO 120
+  64   IB = NABC(IMN) + 2
+       ACOF = ACOEF(LEV) * TOORN2
+       BCOF = BCOEF(LEV) * A02TMI(IB)
+       D = ACOF + BCOF
+       IF(DABS(D).LT.CRITE) GO TO 110
+       ACOEF(LEVM) = D
+       D = (ACOF - BCOF) / D
+       GO TO 120
+  65   IA = NABC(IMN) + 3
+       IB = IA - 1
+       ACOF = ACOEF(LEV) * A10T(IA)
+       BCOF = BCOEF(LEV) * A01TMI(IB)
+       D = ACOF + BCOF
+       IF(DABS(D).LT.CRITE) GO TO 110
+       ACOEF(LEVM) = D
+       D = (ACOF - BCOF) / D
+       GO TO 120
+  66   IB = NABC(IMN) + 2
+       ACOF = ACOEF(LEV) * TOORN2
+       BCOF = BCOEF(LEV) * A20T(IB)
+       D = ACOF + BCOF
+       IF(DABS(D).LT.CRITE) GO TO 110
+       ACOEF(LEVM) = D
+       D = (ACOF - BCOF) / D
+       GO TO 120
+  67   IB = NABC(IMN) + 2
+       DX=ACOEF(LEV)*TOORN2
+       D=DX+BCOEF(LEV)*A20T(IB)
+       IF(DABS(D).LT.CRITE) GO TO 111
+       ACOEF(LEVM) = D
+       D=-(DX+DX)/D
+       GO TO 120
+  68   IB = NABC(IMN) + 2
+       DX=ACOEF(LEV)*TOORN2
+       D=DX+BCOEF(LEV)*A02TMI(IB)
+       IF(DABS(D).LT.CRITE) GO TO 111
+       ACOEF(LEVM) = D
+       D=-(DX+DX)/D
+       GO TO 120
+  69   IA = NABC(IMN) + 2
+       IB = IA + 1
+       DX=ACOEF(LEV)*A01TMI(IA)
+       D=DX+BCOEF(LEV)*A10TMI(IB)
+       IF(DABS(D).LT.CRITE) GO TO 111
+       ACOEF(LEVM) = D
+       D=-(DX+DX)/D
+       GO TO 120
+  70   IA = NABC(IMN) + 3
+       IB = IA - 1
+       DX=ACOEF(LEV)*A10TMI(IA)
+       D=DX+BCOEF(LEV)*A01T(IB)
+       IF(DABS(D).LT.CRITE) GO TO 111
+       ACOEF(LEVM) = D
+       D=-(DX+DX)/D
+       GO TO 120
+  87   IB = NABC(IMN) + 2
+       DX=ACOEF(LEV)*TOORN2
+       D=DX+BCOEF(LEV)*A20T(IB)
+       IF(DABS(D).LT.CRITE) GO TO 111
+       ACOEF(LEVM)=D
+       D=-(DX+DX)/D
+       GO TO 120
+  71   ACOEF(LEVM) = ACOEF(LEV)
+       BCOEF(LEVM) = BCOEF(LEV)
+       GO TO 120
+  72   IB = NABC(IMN) + 2
+       ACOEF(LEVM) = -ACOEF(LEV)
+       BCOEF(LEVM) = BCOEF(LEV) * D0MI(IB)
+       GO TO 120
+  73   IB = NABC(IMN) + 3
+       ACOEF(LEVM) = -ACOEF(LEV)
+       BCOEF(LEVM) = BCOEF(LEV) * D0MI(IB)
+       GO TO 120
+  74   IA=NABC(IMN)+1
+       ACOEF(LEVM)=ACOEF(LEV)*A01MI(IA)
+       GO TO 120
+  75   IB = NABC(IMN) + 2
+       ACOEF(LEVM) = ACOEF(LEV)
+       BCOEF(LEVM) = BCOEF(LEV) * D0(IB)
+       GO TO 120
+  76   IB = NABC(IMN) + 3
+       ACOEF(LEVM) = ACOEF(LEV)
+       BCOEF(LEVM) = BCOEF(LEV) * D0(IB)
+       GO TO 120
+  77   ACOEF(LEVM)=ACOEF(LEV)*TOORN2
+       D=-2.0D+00
+       GO TO 120
+  78   ACOEF(LEVM)=ACOEF(LEV)*ROOTN2
+       D=-2.0D+00
+       GO TO 120
+  79   IA=NABC(IMN)+2
+       ACOEF(LEVM)=ACOEF(LEV)*A01TMI(IA)
+       D=-2.0D+00
+       GO TO 120
+  80   IA=NABC(IMN)+3
+       ACOEF(LEVM)=ACOEF(LEV)*A10TMI(IA)
+       D=-2.0D+00
+       GO TO 120
+  81  IA=NABC(IMN)+4
+       ACOEF(LEVM)=ACOEF(LEV)*A10MI(IA)
+       GO TO 120
+  82   ACOEF(LEVM) = ACOEF(LEV) * ROOTN2
+       D=-2.0D+00
+       GO TO 120
+  83   IA = NABC(IMN) + 2
+       ACOEF(LEVM) = BCOEF(LEV) * E0(IA)
+       GO TO 120
+  84   IA = NABC(IMN) + 3
+       ACOEF(LEVM) = BCOEF(LEV) * B0(IA)
+       GO TO 120
+  85   IA = NABC(IMN) + 2
+       ACOEF(LEVM) = BCOEF(LEV) * B0(IA)
+       GO TO 120
+  88   IA = NABC(IMN) + 3
+       ACOEF(LEVM) = ACOEF(LEV) * D0MI(IA)
+       GO TO 120
+ 110   ITRACK(LEVM)=3
+      ACOEF(LEVM)=ACOF-BCOF
+      GO TO 120
+111   ITRACK(LEVM) = 2
+      ACOEF(LEVM)=-(DX+DX)
+  120 CONTINUE
+C   CHECK TO SEE IF PAGE OF VECTOR IS CORRECT
+ 1100 IF(PAGEIN) GO TO 1110
+      IUWK=IUWKSB(LEVM)
+      JUWK=IUWKMN(LEVM)
+      NLWKI=NLWKS(KSB)
+      NLWKJ=NLWKS(KMN)
+      CALL PAGES(vector)
+      IF(PAGEIN) LEVV=LEVM
+      GO TO 1130
+ 1110 CONTINUE
+      IF(LEVM.LT.LEVV) GO TO 1130
+      IUWK=IUWKSB(LEVM)
+      JUWK=IUWKMN(LEVM)
+      NLWKI=NLWKS(KSB)
+      NLWKJ=NLWKS(KMN)
+      IF(LEVM.GT.LEVV) GO TO 1120
+      CALL PAGEIJ(vector)
+      LEVV=NLEVS
+      IF(PAGEIN) LEVV=LEVM
+      GO TO 1130
+ 1120 CONTINUE
+      CALL PAGEOU(vector)
+      GO TO 1100
+ 1130 CONTINUE
+      IF(NXTSEG(KSEG).GT.0) GO TO 400
+      IF(ISYM(LEVM).NE.LSM) GO TO 200
+      LSMPT=LEVM+LSMPTX
+      LAD=KAD+LADD(LSMPT)
+      IF(KMN-KSB.EQ.0) GO TO 380
+      LEVL=LEVM
+      KSEGMX=4
+310   LEV=LEVM
+      LEVM=LEV-1
+      IF(LEVM.GT.0) GO TO 315
+      WRITE(ITAPE6,313)
+ 313  FORMAT(' PROBLEMS WITH PARTIAL SPACE')
+      CALL DUMP
+ 315  CONTINUE
+      KSEG=0
+C     PRINT *,'KSEG=0 BEFORE 320'
+      IMAIN(LEV)=KMN
+      IMN=KMN
+      ISUB(LEV)=KSB
+      ISB=KSB
+320   KSEG=KSEG+1
+C     PRINT *,'AFTER 320, KSEG,KSEGMX,LEV',KSEG,KSEGMX,LEV
+      IF(KSEG.GT.KSEGMX)GOTO 360
+      JARPT=4*(ISB-1)+KSEG
+      KSB=IARC(JARPT)
+      IF(KSB.LE.0)GOTO 320
+      IARPT=4*(IMN-1)+KSEG
+      KMN=IARC(IARPT)
+      IF(KMN.LE.0)GOTO 320
+      JSEGM(LEV)=KSEG
+      IUWKMN(LEVM)=IUWKMN(LEV)+IWGHT(IARPT)
+      IUWKSB(LEVM)=IUWKSB(LEV)+IWGHT(JARPT)
+C***********************************************************************
+      IF(LOPOPT.EQ.1) GO TO 9394
+      IF(LEVM.GT.LEVFRM) GOTO 310
+ 9394 CONTINUE
+C***********************************************************************
+ 340  CONTINUE
+      IF(LOPOPT.EQ.1) THEN
+      IF(KMN-KSB.NE.0) GO TO 310
+      ELSE
+      IF(KMN-KSB.NE.0) STOP
+      END IF
+C***********************************************************************
+      NLWKI = NLWKS(KMN)
+      IUWK = IUWKSB(LEVM)
+      JUWK = IUWKMN(LEVM)
+      ITRAK = ITRACK(LEVL)
+      ACF = ACOEF(LEVL)
+      LADT=LAD
+      CALL LOOPIN(dm,vector,s,ijadd,kadd,ladd,wtw,wtx,wty,wab,isym)
+      GO TO 320
+  360 CONTINUE
+C     PRINT *,'LEV,LEVL AT 360',LEV,LEVL
+      IF(LEV.EQ.LEVL) GO TO 440
+      LEVM=LEV
+      LEV=LEVM+1
+      IMN=IMAIN(LEV)
+      ISB=ISUB(LEV)
+      KSEG=JSEGM(LEV)
+C     PRINT *,'KSEG SET TO BEFORE 380',KSEG
+      GO TO 320
+ 380  NLWKI = NLWKS(KMN)
+      IUWK = IUWKSB(LEVM)
+      JUWK = IUWKMN(LEVM)
+      ITRAK = ITRACK(LEVM)
+      ACF = ACOEF(LEVM)
+      LADT = LAD
+      CALL LOOPIN(dm,vector,s,ijadd,kadd,ladd,wtw,wtx,wty,wab,isym)
+      GO TO 200
+  400 CONTINUE
+      IF(LEVM.LE.LMIN(LEVM))GOTO 200
+      ISEG=NXTSEG(KSEG)
+      IF(NLCSMN(ISEG).GT.0.AND.(NABCA(KMN)+NABC(KMN)).EQ.0)GOTO 200
+      IAMN=NABCA(KMN)
+      IASB=NABCA(KSB)
+      IBMN=NABC(KMN)
+      IBSB=NABC(KSB)
+C***********************************************************************
+      IF(LOPOPT.EQ.1) GO TO 9395
+      IF(LEVM.LE.LEVFRM)GOTO 460
+CC    IF(LEVM.EQ.LEVFRM.AND.
+C    1 IBSB.EQ.2.AND.IBMN.EQ.2) GOTO 460
+ 9395 CONTINUE
+C***********************************************************************
+  410 LEV=LEVM
+      LEVM=LEV-1
+C     PRINT *,'AFTER 410, GOING DOWN    ,LEV=',LEV
+      ISEGM(LEV)=ISEG
+      KSEG=JSEGPT(ISEG)
+C     PRINT *,'BEFORE 420, KSEG SET TO',KSEG
+      IMN=KMN
+      IMAIN(LEV)=KMN
+      ISB=KSB
+      ISUB(LEV)=KSB
+      KSEGMX=JSEGNR(ISEG)
+      GO TO 200
+c3-24-88  the following must be debug and is commented out with cxc
+cxc  420 CONTINUE
+cxc      KSEG=JSEGPX(ISEG)
+cxcC     PRINT *,'AFTER 420, KSEG SET TO',KSEG
+cxc      GOTO 200
+440   CONTINUE
+C   PATHS EXHAUSTED AT THIS LEVEL, BACK UP AND TRY THE NEXT SEGMENT
+C     PRINT *,' AFTER 440, LEV AND LEVI',LEV,LEVI
+      IF(LEV.EQ.LEVI) GOTO 1010
+C     PRINT *,' PAST TEST, BACK UP LEVEL, LEV=',LEV+1
+      LEVM=LEV
+      LEV=LEVM+1
+      ISEG=ISEGM(LEV)
+      IMN=IMAIN(LEV)
+      ISB=ISUB(LEV)
+      KSEG=JSEGM(LEV)
+C     PRINT *,'BEFORE 460, KSEG SET TO',KSEG
+      KSEGMX=JSEGNR(ISEG)
+      GOTO 200
+460   CONTINUE
+C  FINISH LOOPS WITH 3 OR FEWER EXTERNAL INDICES
+      IAMN=NABCA(KMN)
+      IASB=NABCA(KSB)
+      IBMN=NABC(KMN)
+      IBSB=NABC(KSB)
+      IPT1=IAMN+IAMN+IBMN
+      IPT2=IASB+IASB+IBSB
+      IF(IPT1.GT.2.OR.IPT2.GT.2) GO TO 410
+      IPT1=4-IPT1-IAMN
+      IPT2=4-IPT2-IASB
+      LVFRM1=LEVM-1
+      IUWK=IUWKSB(LEVM)
+      JUWK=IUWKMN(LEVM)
+      ITRAK=ITRACK(LEVM)
+      JFSYM=NABCS(KMN)
+      IFSYM=NABCS(KSB)
+      ACF=ACOEF(LEVM)
+      CCF=BCOEF(LEVM)
+      ISEGT=ISEG
+      IF(ISEG.GT.14) GO TO 470
+      IF(ISEG.GT.3)  GO TO 465
+      JSMT=JSM
+      LADT=IAD
+      GOTO 475
+ 465  CONTINUE
+      JSMT=KSM
+      LADT=JAD
+      GO TO 475
+ 470  CONTINUE
+      LADT=KAD
+      JSMT=LSM
+ 475  CONTINUE
+C**********************************************************************
+CTJL  WRITE(*,*) '  CALL LOOPEX, IAMN,IBMN,IASB,IBSB,IUPWKM,JUPWKM,ITR'
+CTJL  WRITE(*,*) '  ACF,CCF,LADT ='
+CTJL  WRITE(*,*) IAMN,IBMN,IASB,IBSB,IUWK,JUWK,ITRAK
+CTJL  WRITE(*,*) ACF,CCF,LADT
+      CALL LOOPEX(dm,vector,s,ijadd,kadd,ladd,wtw,wtx,wty,wab,isym)
+      GOTO 200
+ 480  CONTINUE
+      IF(PAGEIN.AND.NWKS.GT.NWKSMX) CALL PAGEOU(vector)
+C:    INXT=INXT+1
+C GF  IF(IRSTRT.NE.0) CALL SAVE
+C:    IF(INXT.LE.NORBS) GO TO 190
+      I=I-1
+C     PRINT *,'I AND IMING',I,IMING
+      IF (I.GE.IMING) GO TO 190
+C:
+      GO TO 500
+c3-24-88  the following must be debug and is commented out with  cxc
+cxc 490  CONTINUE
+cxcC*
+cxcC     IF (I.GT.LVFRM1.OR.IDIAG.EQ.1) GO TO 497
+cxcC     CALL NXT4X(I)
+cxcC     GO TO 500
+cxcC497  CONTINUE
+cxcC*
+cxcC GF  CALL NXTBLK
+cxcCIBM  CALL RGETSA(IT53,IX)
+cxc      PRINT *,'  WRITING TO IT53 AT SECTOR ',IX
+cxc      CALL SWRIT(IT53,DM,INTOWP(NMAX))
+cxc      DO 495 III=1,NMAX
+cxc      DM(III)=0.0D+00
+cxc  495 CONTINUE
+ 500  CONTINUE
+CIBM  CALL RGETSA(IT53,IX)
+CGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+      IF(IPRINT.GT.0) WRITE(ITAPE6,183) NMAX
+      CALL SWRIT(IT53,DM,INTOWP(NMAX))
+CTJL  DO 510 IMIKE=1,NMAX
+CTJL  WRITE(ITAPE6,9011) IMIKE,DM(IMIKE)
+C9011 FORMAT(I5,E20.12)
+C 510 CONTINUE
+C*
+C     IDIAG=0
+C*
+C::::
+      IF (PAGEIN) CALL PAGEOU(vector)
+C::::
+      IBLCK1=1
+      INXT=1
+      RETURN
+      END

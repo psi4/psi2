@@ -1,0 +1,16 @@
+      SUBROUTINE EXPAND(A,B,N)
+      REAL*8 A(50,1),B(1)
+C
+C  EXPANDS A SINGLE SUBSCRIPT LOWER TRIANGLE ARRAY B
+C  INTO A FULL MATRIX A
+C
+      DO 10 I=1,N
+      II=(I*(I-1))/2
+      DO 10 J=1,I
+      IJ=II+J
+      A(I,J)=B(IJ)
+      A(J,I)=A(I,J)
+   10 CONTINUE
+C
+      RETURN
+      END

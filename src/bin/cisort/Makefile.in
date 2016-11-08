@@ -1,0 +1,11 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+TRUESRC = fentry.F getdrt.F getint.F gprgid.F inout.F insort.F main.F xxint.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+

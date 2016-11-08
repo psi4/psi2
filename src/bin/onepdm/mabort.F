@@ -1,0 +1,4 @@
+      SUBROUTINE MABORT
+      WRITE(6,*) ' MABORT CALLED '
+      STOP
+      END

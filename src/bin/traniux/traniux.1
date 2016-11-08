@@ -1,0 +1,64 @@
+.TH traniux 1 "14 January, 1995" "\*(]W" "\*(]D"
+.SH NAME
+traniux \- transforms integrals from SO to MO basis
+
+.SH DESCRIPTION
+.LP
+The program
+.B traniux
+carries out the transformation of integrals from the symmetry 
+adapted atomic orbital basis to the molecular orbital basis 
+for only ``Occupied'' and ``Independent Pairs'' for use in 
+.B stability
+calculations.
+
+.SH REFERENCES
+.LP
+Rotation of MO's for Independent Pairs only:
+.IP "1."
+Y. Yamaguchi, I. L. Alberts, J. D. Goddard, and H. F. Schaefer, Chem. Phys., 147, 309 (1990).
+.LP
+
+.sL
+.pN INPUT
+.pN FILE36
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN TAPE3.DAT
+.pN FILE35        "     (MO integrals DRT ordering)"
+.eL "FILES GENERATED"
+
+.SH INPUT REQUIRED
+.LP
+The
+.B trans
+program
+searches through the default keyword path (first
+.B TRANS
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBPRINT =\fP \fIinteger\fP"
+The program will give additional output.  The higher the value of
+.BR PRINT
+the more output provided.  The default is 0 and gives minimal output.
+
+.SH EXAMPLE
+.LP
+Usually, no input need be provided.  However, if for some reason
+you wish for more output from
+.B traniux 
+, then the following input can be given:
+
+.DS
+  trans: (
+    print = 0
+    )
+.DE
+

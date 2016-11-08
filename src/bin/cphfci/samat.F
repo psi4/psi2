@@ -1,0 +1,75 @@
+ctph change several numij to nbatri, nbf to nbfao
+      SUBROUTINE SAMAT(SA,NNA,SS,NNM,VEC,IOFF,U,T,JT1C)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION SA(NNA,NDF),SS(NNA),VEC(nbfao,NORBS),U(1),T(1)
+      INTEGER IOFF(NUMIJ),JT1C(1)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ ISYMRB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /FUNCS/ IOCC,JOCC,KOCC,NTYPES,NBSET,NAT
+ctph add common
+      COMMON /DIMAO/ NBFAO,NBATRI         
+      COMMON /LOC42/ IA42(100),IBF2AT(284)
+      COMMON /IEXT/ IPRINT,IGRP,ICIDIP
+      DATA ZERO,ONE / 0.0D+00 , 1.0D+00 /
+    1 FORMAT(//,2X,' SA (MO BASIS) MATRIX, IABC = ',I5,' IXYZ = ',I5/)
+C
+C   TRANSFORM SA INTEGRALS FROM AO TO MO BASIS
+      WRITE(ICHK,2222)
+ 2222 FORMAT(/'  IN SAMAT')
+CGES
+C     IPRINT=4
+      IS=1
+      KABC=0
+      IF (IAND(IPRINT,4) .NE. 0) THEN
+        DO 1010 IABC=1,3
+          WRITE(NOUT,1011) IABC
+ 1011     FORMAT(/'  THE S MATRIX AS READ FROM 42 FOR XYZ = ',I5)
+          CALL PRINT(SA(1,IABC),nbatri,nbfao,NOUT)
+ 1010   CONTINUE
+        WRITE(NOUT,1012) (IBF2AT(III), III=1,NORBS)
+ 1012   FORMAT(/'  IBF2AT:',10I5)
+      END IF
+C
+      DO 105 IABC=1,NAT
+        DO 104 IXYZ=1,3
+          KABC=KABC+1
+C
+          DO 101 I=1,nbatri
+  101     SS(I)=ZERO
+C
+          DO 103 I=1,nbfao
+            IA=IOFF(I)
+            DO 102 J=1,I
+              IF(IBF2AT(I).NE.IABC.AND.IBF2AT(J).NE.IABC)
+     *        GO TO 102
+              IJ=IA+J
+              SX=SA(IJ,IXYZ)
+              IF(IBF2AT(I).NE.IABC) SX=-SX
+              SS(IJ)=SX
+  102       CONTINUE
+  103     CONTINUE
+C
+          IF (IAND(IPRINT,4) .NE. 0) THEN
+            WRITE(NOUT,1001) KABC
+ 1001       FORMAT(/'  THE SA MATRIX FOR DEGREE OF FREEDOM',I5)
+            CALL PRINT(SS,nbatri,nbfao,NOUT)
+          END IF
+C
+ctph change first dimension to NNA
+          CALL MOCONV(SS,NNA,SS,NNM,VEC,U,T)
+          JT1C(KABC)=IS
+          CALL WWRITW(IT94,SS,INTOWP(NUMIJ),IS,IS)
+C
+          IF (IAND(IPRINT,4) .NE. 0) THEN
+            WRITE(NOUT,1002) KABC
+ 1002       FORMAT(/'  THE SM MATRIX FOR DEGREE OF FREEDOM',I5)
+            CALL PRINT(SS,NUMIJ,NORBS,NOUT)
+            WRITE(NOUT,1003) KABC,JT1C(KABC),IS
+ 1003       FORMAT(/'  MO S MATRIX ',I5,'  WRITTEN TO POSITION ',I8,'  N
+     *EXT POSITION ',I8)
+          END IF
+  104   CONTINUE
+  105 CONTINUE
+C
+      RETURN
+      END

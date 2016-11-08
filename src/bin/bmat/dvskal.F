@@ -1,0 +1,11 @@
+      SUBROUTINE DVSKAL(A,B,SCALE,N)
+      REAL*8 A(1),B(1),SCALE
+C
+C  A = B * SCALE
+C
+      DO 10 I=1,N
+      A(I)=B(I)*SCALE
+   10 CONTINUE
+C
+      RETURN
+      END

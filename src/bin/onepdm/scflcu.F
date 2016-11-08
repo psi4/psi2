@@ -1,0 +1,12 @@
+C//////////////////////////////////////////////////////////////////////
+      SUBROUTINE SCFLCU(LOCU,NUMAO)
+      INTEGER ITEMP(200)
+      COMMON /TAPES/IFILE3,IFILE5,IFILE6,ITAPE7,IFIL58,IFIL54,IFIL50
+     $,             IFIL51,IDEV,IFIL30
+      MPOINT=200
+      MCONST=200
+      CALL WREADW (IFIL30,ITEMP,MCONST,101,IEND)
+      NUMAO = ITEMP(22)
+      CALL WREADW (IFIL30,ITEMP,MPOINT,IEND,IEND)
+      LOCU = ITEMP(29)
+      END

@@ -1,0 +1,18 @@
+# Generated automatically from Makefile.in by configure.
+srcdir = /home/usrb/b3/longhorn/psi/src/bin/normco
+VPATH = /home/usrb/b3/longhorn/psi/src/bin/normco
+
+include ../MakeVars
+
+TRUESRC = \
+ampfx.F ampgf.F bendng.F deform.F dist.F fconst.F fentry.F gfmat.F gprgid.F irintr.F irintx.F linbnd.F moment.F mtxmpy.F normfx.F normgf.F ramanr.F ramanx.F strng.F symco.F thermo.F tors.F vibfx.F vibgf.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+
+install_man:: normco.1
+	$(MKDIRS) $(mandir)/man1
+	cat $(top_srcdir)/lib/macro.psi $< | sed "s OS_NAME_HERE UNIX " > \
+            $(mandir)/man1/normco.1
+

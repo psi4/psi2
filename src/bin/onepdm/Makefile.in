@@ -1,0 +1,23 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+TRUESRC = \
+densma.F fentry.F getdrt.F gprgid.F hdiag.F initdm.F initpg.F loop1.F lrgcnf.F main.F ncdlbl.F occprc.F occupy.F prinma.F scflcu.F scflcv.F setsym.F xaowrt.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+
+# Using -O for occprc.f gives an internal compiler error.
+ifeq ($(target)-$(FC),power-ibm-aix3.1-xlf)
+occprc.o: occprc.f
+	xlf -qxflag=xalias -qdpc -qfold -qmaf -c $< -o $@
+endif
+
+install_man:: onepdm.1
+	$(MKDIRS) $(mandir)/man1
+	cat $(top_srcdir)/lib/macro.psi $< | sed "s OS_NAME_HERE UNIX " > \
+            $(mandir)/man1/onepdm.1
+

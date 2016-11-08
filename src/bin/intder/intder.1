@@ -1,0 +1,435 @@
+.TH intder 1 " 22 Oct, 1992" "\*(]W" "\*(]D" 
+.  \"
+.  \" Notice of Document Modification
+.  \"
+.  \"   changed by rbr      search 12-6-91
+.  \"
+.  \"
+.SH NAME
+intder \- general curvilinear transformations
+
+.SH DESCRIPTION
+.LP
+The program
+.B intder
+performs general curvilinear transformations among higher
+order derivatives (Cartesian <---> internal) and may be used to
+calculate vibrational frequency analyses in either internal or
+Cartesian coordinates.  The internal coordinates used may be either
+simple coordinates or symmetrized combinations.
+
+.LP
+It is not necessary to use all 3N-6 internal coordinates when
+doing the transformations, but it is wise to transform
+complete symmetry blocks (i.e. work out how many normal modes
+there are of a particular symmetry and then you need to have
+the same number of non-redundant symmetry internal
+coordinates).
+
+.LP
+.B intder
+will generate a file called
+.FCONST
+which contains internal coordinate force constants in the format
+required by 
+the
+.B bmat
+program.
+
+.sL
+.pN INPUT        "	"
+.pN IDER       	 "	(if TRANS_TYPE = I_TO_C_R)"
+.pN FILE11       "	(if READ_GEOM = FALSE)"
+.pN GEOM         "	(if READ_GEOM = TRUE)"
+.pN FILE15       "	(if TRANS_TYPE = C_TO_I and DERLVL = 2)"
+.pN FILE17       "	(if TRANS_TYPE = C_TO_I and TRANS_DIPDER = TRUE or"
+.pN "\&"         "	 if FREQ_ANAL = INT_CO and IRINT_T = DO)"
+.pN FILE20       "	(if TRANS_TYPE = C_TO_I and DERLVL = 3)"
+.pN FILE24       "	(if TRANS_TYPE = C_TO_I and DERLVL = 4)"
+.pN FILE12       "	(if TRANS_TYPE = I_TO_C and DERLVL = 1)"
+.pN FILE16       "	(if TRANS_TYPE = I_TO_C and DERLVL = 2)"
+.pN FILE18       "	(if TRANS_TYPE = I_TO_C and TRANS_DIPDER = TRUE or"
+.pN "\&"         "	 if FREQ_ANAL = INT_CO and IRINT_T = DO)"
+.pN FILE21       "	(if TRANS_TYPE = I_TO_C and DERLVL = 3)"
+.pN FILE25       "	(if TRANS_TYPE = I_TO_C and DERLVL = 4)"
+.eL "FILES REQUIRED"
+
+.LP
+The files
+.pN FILE11 ,
+.pN FILE15 ,
+.pN FILE20 ,
+and
+.pN FILE24
+are the 1st, 2nd, 3rd and 4th derivatives,
+respectively, in Cartesian coordinates.
+The files
+.pN FILE12 ,
+.pN FILE16 ,
+.pN FILE21 ,
+and
+.pN FILE25
+are the 1st, 2nd, 3rd and 4th derivatives,
+respectively, in internal  coordinates.
+The file
+.pN FILE17
+is the dipole moment derivatives in Cartesian coordinates.
+The file
+.pN FILE18
+is the dipole moment derivatives in internal  coordinates.
+
+.sL
+.pN FILE91
+.pN FILE92
+.pN FILE93
+.pN FILE94
+.pN FILE95
+.pN FILE96
+.pN FILE97
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN INTDERO
+.pN FCONST
+.pN FILE11       "	(if TRANS_TYPE = I_TO_C or I_TO_C_R and "
+.pN "\&"         "	  DERLVL = 1)"
+.pN FILE15       "	(if TRANS_TYPE = I_TO_C or I_TO_C_R and "
+.pN "\&"         "	  DERLVL = 2)"
+.pN FILE17       "	(if TRANS_TYPE = I_TO_C and "
+.pN "\&"         "	  TRANS_DIPDER = DO)"
+.pN FILE20       "	(if TRANS_TYPE = I_TO_C or I_TO_C_R and "
+.pN "\&"         "	  DERLVL = 3)"
+.pN FILE24       "	(if TRANS_TYPE = I_TO_C or I_TO_C_R and "
+.pN "\&"         "	  DERLVL = 4)"
+.pN FILE12       "	(if TRANS_TYPE = C_TO_I and DERLVL = 1)"
+.pN FILE16       "	(if TRANS_TYPE = C_TO_I and DERLVL = 2)"
+.pN FILE18       "	(if TRANS_TYPE = C_TO_I and "
+.pN "\&"         "	  TRANS_DIPDER = DO)"
+.pN FILE21       "	(if TRANS_TYPE = C_TO_I and DERLVL = 3)"
+.pN FILE25       "	(if TRANS_TYPE = C_TO_I and DERLVL = 4)"
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The input for this program is read from the file
+.pN INPUT .
+The
+.B intder
+program reads the definition of internal coordinates from the
+.B INTCO
+section of the input, and then
+searches through the default keyword path (first
+.B INTDER
+and then
+.BR DEFAULT )
+The following keywords are valid:
+
+
+.IP "\fBDERLVL =\fP \fIinteger\fP"
+This gives the highest order of derivative to be transformed.  It can have
+a value from 1 to 4.  The default is 2.
+
+.IP "\fBTRANS_1DER =\fP \fIboolean\fP"
+If true, then transform first derivatives.  The default is FALSE.
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+This is a four digit number which will be explained below.  The default is
+3000.
+
+.IP "\fBTRANS_TYPE =\fP \fIstring\fP"
+This specifies what type of transformation to perform.  If equal to
+C_TO_I Cartesian derivatives are transformed to internal coordinate
+derivatives.  If equal to I_TO_C then internal coordinate derivatives are
+transformed to Cartesian derivatives.  I_TO_C_R is the same as I_TO_C 
+except the internal coordinate derivatives are read from the file
+.pN IDER
+which is produced by the
+.B intdif
+program.
+The default is C_TO_I.
+
+.IP "\fBDUMMY_ATOMS =\fP \fIreal_array\fP"
+This array specifies
+the Cartesian coordinates of a dummy atom for linear bends (LIN2).
+The \fIreal_array\fP is a vector of coordinates of each dummy atom.
+Each element of this vector is another vector in the
+form \fB(\fP\fIx\fP \fIy\fP \fIz\fP\fB)\fP.
+The numbering for the dummy atoms begins at NA+1 (NA = number of atoms).
+
+.IP "\fBREAD_GEOM =\fP \fIboolean\fP"
+If true, then the geometry is read from the top of the
+.pN GEOM
+file.  Otherwise, the last geometry in
+.pN FILE11
+is used (unless MULTI is greater than 0).  The default is FALSE.
+
+.IP "\fBFREQ_ANAL =\fP \fIstring\fP"
+This option specifies what type of frequency analysis to perform. The options
+are:
+.  iV            "= NONE"    "no frequency analysis performed"
+.  iV            "= INT_CO"  "perform a frequency analysis in internal coordinates"
+.  iV            "= CART_CO" "perform a frequency analysis in Cartesian"
+.    __                   "coordinates"
+.  iV            "= BOTH"    "do frequency analysis in both internal and Cartesian coordinates"
+.  iV            "= NONE_R"  "the same as = NONE  except that the force constants"
+.    __                   "are input from the"
+.    __                   "Q_F_CONSTS vector"
+.  iV            "= INT_CO_T"  "perform a frequency analysis in internal coordinates but without transforming any derivatives"
+.  iV            "= CART_CO_T"  "perform a frequency analysis in Cartesian coordinates but without transforming any derivatives"
+.  iV            "= BOTH_T"  "perform a frequency analysis in internal coordinates and Cartesian coordinates but without transforming any derivatives"
+.iL
+The default is INT_CO.
+
+.IP "\fBIRINT_T =\fP \fIstring\fP"
+If = NONE, then no IR intensities are computed.  If = DO then internal 
+coordinate dipole moment derivatives are read in from
+.pN FILE18 
+and IR intensities are computed.  Setting IRINT_T = DO_R does the same as
+DO except that internal coordinate dipole moment derivatives are read
+from the INT_DIPDER vector. The default is NONE.
+
+.IP "\fBTRANS_DIPDER =\fP \fIboolean\fP"
+If true then dipole moment derivatives are transformed.
+Masses are read in later so that the
+transformation is performed according to the
+Eckart conditions.
+The dipole derivatives are read from
+.pN FILE17
+or
+.pN FILE18
+(see below for a description of
+the input required).
+(also set DERLVL = 1 and TRANS_TYPE = C_TO_I or I_TO_C)
+(TRANS_DIPDER = TRUE assigns TRANS_1DER = TRUE)
+It is not possible to transform dipole moment
+derivatives at the same time as energy derivatives.
+If TRANS_DIPDER = TRUE, FREQ_ANAL and IRINT_T should be NONE.     \" 12-6-91 rbr ;
+.   \"  NONE above was FALSE ; but variables are string type not boolean --- JRT
+The default is FALSE.
+
+.IP "\fBSTOP =\fP \fIboolean\fP"
+If true
+stop after forming the SR(I,J),X(M,N),SR(I,J,K),
+and Y(M,N,P) matrices (as governed by DERLVL and TRANS_1DER).
+(no auxiliary files are required (unless READ_GEOM = TRUE)).
+The default is FALSE.
+
+
+.IP "\fBMULTI =\fP \fIinteger\fP"
+This option specifies the number of geometries to read from
+.pN FILE11 .
+If it is = 0, the last geometry in 
+.pN FILE11
+is used.  If = n, then n geometries are read from
+.pN FILE11
+from the top down.  The default is 0.
+
+
+.IP "\fBMASSES =\fP \fIreal_vector\fP"
+Atomic masses are needed if FREQ_ANAL is not NONE or TRANS_DIPDER is TRUE.
+The MASSES vector is a vector of length (# of atoms).
+Defaults to standard atomic masses.
+
+
+.IP "\fBQ_F_CONSTS =\fP \fIreal_matrix\fP"
+This matrix must be present if FREQ_ANAL = NONE_R.
+Its dimension is NSX by NSX, where NSX = the number of symmetrized
+internal coordinates, or the number of simple internal coordinates if
+no symmetrized internal coordinates are given.
+
+.IP "\fBINT_DIPDER =\fP \fIreal_matrix\fP"
+This matrix must be present if IRINT_T = DO_R.
+It is made up of NSX vectors of length 3 and contains 
+internal (symmetry) coordinate dipole moment derivatives (x, y, z) in units of
+Debye/Angstrom or Debye/radian.
+NSX is as defined for Q_F_CONSTS.
+
+.IP "\fBNTEST =\fP \fIinteger\fP"
+Numerical testing of derivatives of the internal coodinates
+with respect to the Cartesian coordinates is useful for
+debugging new types of coordinates added to the program.
+.  iV            "= \00"    "no test"
+.  iV            "= \01"    "numerically test and check the analytic"
+.    __                   "SR(I,J) and X(M,N) matrices"
+.  iV            "= -1"    "form the SR(I,J) and X(M,N) matrices"
+.    __                   "numerically and use these numerically"
+.    __                   "computed matrices in the transformation of"
+.    __                   "derivatives"
+.  iV            "= \02"    "numerically test and check the analytic"
+.    __                   "SR(I,J,K) and X(M,N,P) matrices"
+.  iV            "= -2"    "form the SR(I,J,K) and X(M,N,P) matrices"
+.    __                   "numerically and use these numerically computed"
+.    __                   "matrices in the transformation of derivatives"
+.iL
+The default is 0.
+
+.\" ---------------------------------------- Uncommonly used input here:
+.LP
+There are also a couple of less commonly used input parameters.
+If you do not understand what the following options mean, then
+make sure that they do not appear in your input.  The defaults will
+work in the overwhelming majority of cases.
+These are specified with the following keywords:
+
+.IP "\fBNVIB =\fP \fIinteger\fP"
+The number of vibrational degrees of freedom.  This is used in the
+calculation of the zero-point vibrational energy.  NVIB defaults to
+3N-5 where N is the number of atoms.  This is normally ok, since
+any mode whose frequency is below ZPVE_LIM (see below) will not be included.
+
+.IP "\fBZPVE_LIM =\fP \fIinteger\fP"
+The threshold to include frequencies in the calculation of the zero-point
+vibrational energy is set to \fIinteger\fP.  The default is 20.
+
+
+.IP
+If TRANS_TYPE = I_TO_C_R the unique internal coordinate derivatives
+which are non-zero are read in from the 
+.pN IDER
+file which is produced by the
+.B intdif
+program.
+Use units consistent with the energy in
+mdyne*Angstrom.  This line takes one or more of several forms
+given in a, b, c, and d.
+
+Format of
+.pN IDER
+
+.iL "a. FORMAT(I5,15X,F20.10)"
+This must be present if TRANS_1DER is TRUE.
+It is repeated for each nonzero first derivative and terminated with M = 0.
+.iO       "(1) M"     "This is the symmetry internal coordinate number."
+.iO       "(2) F1(M)" "The first derivatives."
+
+.iL "b. FORMAT(2I5,10X,F20.10)"
+This must be present if DERLVL >= 2.
+It is repeated for each nonzero second derivative and terminated with M = 0.
+.iO       "(1) M" "A symmetry internal coordinate number."
+.iO       "(2) N" "A symmetry internal coordinate number satisfying M >= N."
+.iO       "(3) F2(M,N)" "The second derivatives."
+
+.iL "c. FORMAT(3I5,5X,F20.10)"
+This must be present if DERLVL >= 3, in which case, line 6b must also
+be present.
+It is repeated for each nonzero third derivative and terminated with M = 0.
+.iO       "(1) M" "A symmetry internal coordinate number."
+.iO       "(2) N" "A symmetry internal coordinate number satisfying M >= N."
+.iO       "(3) P" "A symmetry internal coordinate number satisfying N >= P."
+.iO       "(4) F3(M,N,P)" "The third derivatives."
+
+.iL "d. FORMAT(4I5,F20.10)"
+This must be present if DERLVL >= 4, in which case, lines 6b and 6c must also
+be present.
+It is repeated for each nonzero fourth derivative and terminated with M = 0.
+.iO       "(1) M" "A symmetry internal coordinate number."
+.iO       "(2) N" "A symmetry internal coordinate number satisfying M >= N."
+.iO       "(3) P" "A symmetry internal coordinate number satisfying N >= P."
+.iO       "(4) Q" "A symmetry internal coordinate number satisfying P >= Q."
+.iO       "(5) F4(M,N,P,Q)" "The fourth derivatives."
+
+.iL
+
+.SH INTERNAL COORDINATE SPECIFICATION
+The defining of internal coordinates is the same as for the
+.B bmat
+program.  See intco(2) for a description of how to set up the
+.B INTCO
+input.
+
+.SH PRINT CONTROL
+Printing in \fBintder\fP is controlled by the IPRINT option.  This is
+a four digit number, DCBA, the meaning of which is as follows:
+
+.iO       A
+.  iV        "=  0"     "default, standard output"
+.  iV        ">= 1"     "cubic and quartic force constants are printed"
+.  iV        ">= 2"     "the symmetrized B matrix is printed"
+.  iV        ">= 3"     "the A matrix (= B inverse) is printed"
+.  iV        ">= 4"     "the transpose of the symmetrized BB matrix is"
+.    __                "printed"
+.  iV        ">= 5"     "linear transformation contributions to the force"
+.    __                "constants are printed"
+
+.iO       B      "control of printing with the NTEST option"
+.  iV        "=  0"     "default, no printing of SR matrices"
+.  iV        ">= 1"     "analytic SR and Y matrices are printed as"
+.    __                "governed by NTEST"
+.  iV        ">= 2"     "error matrices (SR analytic - SR numerical, and"
+.    __                "perhaps Y analytic - Y numerical) are printed"
+.    __                "as governed by NTEST"
+
+.iO       C      "control of printing with the FREQ_ANAL option"
+.  iV        "=  0"     "default, standard output"
+.  iV        ">= 1"     "the G matrix and its eigenvalues are printed if"
+.    __                "FREQ_ANAL = INT_CO, BOTH or NONE_R."
+.  iV        ">= 2"     "the dipole moment derivatives with respect to"
+.    __                "normal coordinates are printed if FREQ_ANAL does not"
+.    __                "equal NONE."
+.  iV        ">= 3"    "eigenvectors for the zero frequencies in normal"
+.    __                "coordinates are printed if FREQ_ANAL = CART_CO"
+.    __                "or BOTH."
+
+.iO       D      "control of printing to the"
+.  __            ".pN CHECK"
+.  __            "file"
+.  iV        "=  0"     "default, standard output"
+.  iV        ">= 1"     "messages from subroutines XIN, XOUT, YIN and"
+.    __                "YOUT are suppressed"
+.  iV        ">= 2"     "force constants are printed in NINV = 2 format"
+.  iV        ">= 4"     "input for use with the old \fBgfmat\fP program is"
+.    __                "printed"
+
+
+
+.SH DIPOLE MOMENT DERIVATIVES
+If TRANS_DIPDER = TRUE, then dipole moment derivatives are to be read from
+.pN FILE17
+(if TRANS_TYPE = C_TO_I) or from
+.pN FILE18
+(if TRANS_TYPE = I_TO_C).
+.LP
+The information required in
+.pN FILE17
+is:
+.iL "1. FORMAT(2I5,3F20.10)"
+.iO       NA        "number of atoms"
+.iO       ICHG      "total charge on molecule"
+.iO       MUX       "X component of dipole moment"
+.iO       MUY       "Y component of dipole moment"
+.iO       MUZ       "Z component of dipole moment"
+
+.iL "2. FORMAT(3F20.10)"
+.iO      "((U(I,J), J=1,NC), I=1,NC)"
+.  __              "Cartesian dipole moment derivatives in Debye/A"
+.  __              "(NC = 3*NA)"
+
+.LP
+The information required in
+.pN FILE18
+is:
+.iL "1. FORMAT(2I5,3F20.10)"
+.iO       NA        "number of atoms"
+.iO       ICHG      "total charge on molecule"
+.iO       MUX       "X component of dipole moment"
+.iO       MUY       "Y component of dipole moment"
+.iO       MUZ       "Z component of dipole moment"
+
+.iL "2. FORMAT(3F20.10)"
+.iO       "((U(M,N), M=1,NSX), N=1,3)"
+.  __               "internal (symmetry) coordinate dipole moment"
+.  __               "derivatives in Debye/A or Debye/radian"
+.  __               "(NSX = number of internal coordinates."
+.  __               "NSX = NSYM unless NSYM = 0, and then NSX = NS.)"
+.iO
+.  __               "Thus, the x-axis dipole derivative with respect"
+.  __               "to all of the symmetry internal coordinates are"
+.  __               "first, then y-axis, and, finally, z-axis.  Only"
+.  __               "three derivatives can be given on each occurance"
+.  __               "of line 2."
+

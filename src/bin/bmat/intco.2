@@ -1,0 +1,195 @@
+.TH intco 2 "30 May, 1991" "Psi Release 2.0" "\*(]D"
+.SH NAME
+intco \- definition of internal coordinates
+
+.SH DESCRIPTION
+.LP
+The
+.B intco
+section of the input is used to define the internal coordinates
+used by \fBintder\fP(1) and \fBbmat\fP(1).  These internal coordinates consist
+of two types,
+.I simple
+internal coordinates and
+.I symmetrized
+internal coordinates.  The symmetrized internal coordinates are
+Symmetry Adapted Linear Combinations of the simple internal coordinates.
+For a thorough discussion of SALC's it is suggested that you read
+Cotton's 
+.I Chemical Applications of Group Theory.
+
+
+.SH SIMPLE INTERNAL COORDINATES
+.LP
+The following types of simple internal coordinates are valid:
+.iO     TYPE
+.iV         "STRE"   "for bond stretching coordinates"
+.iV         "INVR"   "for inverse bond length coordinates (\fBbmat\fP only)"
+.iV         "BEND"   "for bond angle coordinates"
+.iV         "OUT"    "for out-of-plane coordinates"
+.iV         "TORS"   "for torsion coordinates"
+.iV         "LIN1"
+for the deformation of a linear chain of atoms in
+the plane of a fourth atom (\fBbmat\fP only, see the \fBbmat\fP manual page for
+the input required to specify the dummy atoms)
+.iV         "LIN2"
+is like LIN1, but the deformation is perpendicular
+to the plane of the four atoms
+.iV         "SPF"    
+Simons-Parr-Finlan coordinate for bond length i.e.
+.if n (r-r0)/r.
+.if t (r-r\s-2\d0\u\s0)/r.
+(\fBintder\fP only)
+
+
+.LP
+The simple internal coordinates are entered as:
+.DS
+
+  \fBTYPE \fP= ( 
+    (\fIindex A B \fP<\fIC\fP> <\fID\fP> <\fIst\fP>)
+    (  "   " "   "  "   "  ) (\fRrepeat this until
+    (  "   " "   "  "   "  )  all simples of this
+    (  "   " "   "  "   "  )  type are defined)
+    )
+.DE
+.LP
+where
+.I index
+is a label used in the SYMM and ASYMM vectors,
+.I A-D
+are atom labels, and
+.I st
+is an optional flag used by \fBintder\fP.  
+Note, the indices must run from 1 to \fInsim \fPwhere
+nsim is the total number of simple internal coordinates.
+The atom labels are defined as follows:
+.iO
+For STRE, the coordinate is the A-B bond distance, and the order
+of A and B does not matter.  (C and D must not be given.)
+.iO
+For INVR, the coordinate is the A-B bond inverse, and the order
+of A and B does not matter.  (C and D must not be given.)
+.iO
+For SPF, the coordinate is the A-B bond distance, and the order
+of A and B does not matter.  SPF is different from all other simples
+in that C, if specified, is a \fIreal \fPrather than an integer.  C, if
+given, is the reference bond length 
+.if n r0.
+.if t r\s-2\d0\u\s0.
+If you wish to specify st
+with this type of coordinate, you must include C.
+.iO
+For BEND, it is the A-B-C bond angle.  A and C can be exchanged
+but the central atom must be B.  (D must not be given.)
+.iO
+For OUT,  the coordinate is the angle between the AB vector and
+the plane containing the angle C-B-D.  The coordinate is
+positive if A is on the same side of the plane as the
+vector BC X BD.  Note that the central atom comes second
+here and that C and D can be exchanged but that this
+changes the sign of the coordinate.
+.iO
+For TORS, the coordinate is defined as the angle between the
+planes ABC and BCD.  Note that ABCD and DCBA are
+equivalent.
+.iO
+For LIN1, the coordinate is the collinear bending of the linear
+chain of atoms ABC in the the plane which contains D.  The
+sign is positive if A and C move towards D.  The atom D is a dummy atom
+given in the DUMMY_ATOMS array.  See bmat(1) or intder(1) for a
+description of the DUMMY_ATOMS array.
+.iO
+For LIN2, the coordinate is the bending of ABC perpendicular to
+the plane which contains D.  The sign is positive if A and
+C move in the direction of the vector product BD X BA.
+The atom D is a dummy atom given in the DUMMY_ATOMS array.  See bmat(1) 
+or intder(1) for a description of the DUMMY_ATOMS array.
+
+.LP
+So, for example, the simple internal coordinates for water would be:
+.DS
+
+intco: (
+  stre = (
+   (1 1 2)
+   (2 1 3))
+  bend = (
+   (3 2 1 3))
+ )
+
+.DE
+.LP
+Note that the indices run from 1-3.  If coordinate testing were to be done
+in \fBintder\fP for coordinates 1 and 3, then the coordinates would look like this:
+
+intco: (
+  stre = (
+   (1 1 2 1)
+   (2 1 3 0))
+  bend = (
+   (3 2 1 3 1))
+ )
+
+.DE
+
+.SH SYMMETRIZED INTERNAL COORDINATES
+
+.LP
+The definition of symmetrized internal coordinates is a little more
+complex.  A \fBSYMM \fParray is constructed which is made up of
+internal coordinate vectors which consist of a character
+label for the coordinate, an \fIinteger_vector
+\fPspecifying which simples make up the
+coordinate, and an optional \fIreal_vector \fPof coefficients.
+Thus, in our water example, the 3N-6 symmetrized coordinates would be:
+.DS
+
+intco: (
+  stre = (
+   (1 1 2)
+   (2 1 3))
+  bend = (
+   (3 2 1 3))
+
+  symm = (
+    ("c-h symm st" (1 2) (1.0 1.0))
+    ("ch2 bend" (3 1 2))
+    ("c-h asymm st" (1 -2)(1.0 1.0))
+    )
+  )
+
+.DE
+.LP
+There are several important things to notice.  First, the coefficients do 
+not have to be specified.  If they are not, they default to 1.0.  Second,
+if a negative combination is desired, the negative sign appears before
+the simple coordinate index rather than the coefficient.  Finally, the
+labels must appear in quotes, and \fImust \fPbe present.  They are used
+for print out in \fBintder\fP.
+
+Finally, it is possible to split up the symmetrized coordinates into a SYMM
+vector and an ASYMM vector, with the SYMM vector containing only the
+totally symmetric irreducible representation.  This is useful geometry
+optimizations where only the totally symmetric irrep is necessary, but where
+one might want to set up all symmetrized coordinates at one time.
+So, the water example becomes:
+.DS
+
+intco: (
+  stre = (
+   (1 1 2)
+   (2 1 3))
+  bend = (
+   (3 2 1 3))
+
+  symm = (
+    ("c-h symm st" (1 2) (1.0 1.0))
+    ("ch2 bend" (3 1 2))
+    )
+  asymm = (
+    ("c-h asymm st" (1 -2)(1.0 1.0))
+    )
+  )
+
+.DE

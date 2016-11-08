@@ -1,0 +1,61 @@
+.TH bondex 1 "26 August, 1991" "Psi Release 2.0" "\*(]D"
+.SH NAME
+bondex \- compute bond orders and valencies
+
+.SH DESCRIPTION
+The program
+.B bondex
+calculates bond orders and valencies (both Mulliken and
+Lowdin).  The program is limited to 200 basis functions and 112
+atoms.
+
+.SH REFERENCES
+.IP "1."
+P. O. Lowdin, J. Chem. Phys. 18 (1950) 365.
+.IP "2."
+See the manual pages for the
+.B proper
+program.
+
+.sL
+.pN INPUT      
+.pN FILE30
+.pN FILE40      "	(if WFN != SCF)"
+.eL "FILES REQUIRED"
+
+.sL
+.pN CHECK
+.eL "FILES GENERATED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B bondex
+program
+searches through the default keyword path (first
+.B BONDEX
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBWFN =\fP \fIstring\fP"
+This is the type of wavefunction which is ultimately desired.
+The default is
+.B SCF .
+
+.IP "\fBF_OR_G =\fP \fIboolean\fP"
+Set to TRUE if f and g functions are present.  The default is TRUE.
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+A printing flag.  The default is 0.
+
+.LP
+If using WFN = CI, \fBbondex\fP would normally be run after the
+program \fBbacktr\fP.  Alternatively, it is possible to calculate
+just the CI energy and then run \fBmakepk\fP (or \fBmaster\fP), 
+\fBonepdm\fP (with the option WRTOPDM = TRUE) and \fBbondex\fP.
+

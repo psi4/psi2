@@ -1,0 +1,674 @@
+.TH bmat 1 "15 July, 1991" "Psi Release 2.0" "\*(]D"
+.SH NAME
+bmat \- determines displacements for geometry optimizations
+
+.SH DESCRIPTION
+.LP
+The program
+.B bmat
+is an extensively modified version of Prof. Peter Pulay's
+"BMAT" program.  The
+.B bmat
+program also incorporates the eigenvector following
+routine OPTEFC of Dr. Jon Baker.
+
+.LP
+The main tasks performed by \fBbmat\fP are:
+
+.IP "1." 5
+Geometry optimizations can be carried out completely in
+internal coordinates.  The
+.B bmat
+program takes Cartesian geometries and
+energy gradients and transforms these to internal coordinates and
+internal forces.  The user also supplies an initial-guess force
+constant matrix in internal coordinates.  This can be built up
+from values found in the literature for previous calculations or
+from experiments.  Alternatively, a set of force constants from a
+small basis set calculation can be used.  The force constants are
+updated using various Hessian update methods and placed
+in the file
+.pN RESUL2 .
+The update methods can be selected from:
+
+.RS +.5in
+.IP "a)"
+Powell (symmetric Broyden), which does not enforce positive
+definiteness.
+This is the default for transition structures.
+.IP "b)"
+Davidon-Fletcher-Powell
+.IP "c)"
+The variable metric method of Murtaugh and Sargent.
+.IP "d)"
+Broyden-Fletcher-Goldfarb-Shanno (BFGS), which is usually
+the best for equilibrium geometries.
+This is the default for minima.
+.RE
+
+.IP
+New internal coordinates are obtained according to the Newton-
+Raphson scheme and transformed back into Cartesian
+coordinates.  These are placed at the top of the file
+called
+.pN GEOM
+in the format appropriate for the \fBugeom\fP program.
+
+.IP "2."
+Cartesian coordinates can be generated for displacements along
+internal coordinates.  The
+.B bmat
+program takes as input the reference
+geometry in Cartesian coordinates along with the specification
+of the internal coordinate distortion(s) to be made.  The
+Cartesian coordinates corresponding to the internal coordinate
+distortion(s) are placed in the the file called
+.pN GEOM ,
+with the most recent displacement at the bottom.
+If atomic masses are given, the transformations between Cartesian
+and internal coordinates will be in accordance with the Eckart
+conditions (see Wilson, Decius & Cross "Molecular Vibrations"
+(1955), Section 11-1).  (This is important if displacements of
+dipole moments are desired.)
+
+.IP "3."
+The \fBbmat\fP program can be used to simply compute and print the B-matrix
+which transforms Cartesian coordinates to internal coordinates.
+
+.LP
+Geometry optimizations in internal coordinates are always
+carried out in the totally symmetric irreducible
+representation of the point group of the system in question
+(e.g. A' for 
+.if n Cs,
+.if t C\s-2\ds\u\s0,
+.if n A1 
+.if t A\s-2\d1\u\s0
+for 
+.if n C2v,
+.if t C\s-2\d2v\u\s0,
+.if n Ag 
+.if t A\s-2\dg\u\s0
+for 
+.if n D2h,
+.if t D\s-2\d2h\u\s0,
+etc.).  Some of
+the most frequent causes of error in the use of \fBbmat\fP are
+the attempt to use fewer coordinates than there are degrees
+of freedom, and the use of redundant sets of coordinates.
+For 
+.if n H2O,
+.if t H\s-2\d2\u\s0O,
+it is obvious that there are two 
+.if n A1 
+.if t A\s-2\d1\u\s0
+coordinates that
+one would use to optimize the molecule.  For very large
+systems, however, it is sometimes tedious to work out the
+number of coordinates of a particular symmetry and some useful
+time-saving formulas are given in H. H. Jaffe and M. Orchin
+"Symmetry in Chemistry" (Wiley-Interscience, New York, 1965),
+Appendix 2.
+If it is desired to obtain asymmetric displacements then all
+3N-6 internal coordinates need to be specified.
+
+.LP
+If an optimization gets bollixed up in any way, it may be that
+the file called
+.pN RESUL2
+is causing problems.  If the old
+geometry in
+.pN RESUL2
+and the geometry in
+.pN FILE11
+are the same, the
+Hessian updates will behave badly.  It may be necessary to
+erase the
+.pN RESUL2
+file and start the update over.
+
+.LP
+Occasionally problems may arise due to a discontinuity in the
+definition of an internal coordinate (e.g. a nearly linear
+angle or out-of-plane angle near 90 degrees).  Solution: try
+different angle definitions.
+
+
+.SH EIGENVECTOR FOLLOWING
+
+.LP
+The eigenvector following routine (OPTEFC) is an efficient
+quasi-Newton algorithm for locating transition structures.
+It can also be used to locate minima.
+It was written by Jon Baker as a local addition to the GAUSSIAN 82
+package in Leo Radom's group.
+The eigenvector following routine is invoked with the EIGF
+option.
+
+.LP
+The method is based on a modification to the Newton-Raphson
+step first proposed by Cerjan and Miller <1>, although the major
+part of the algorithm is based on the later developments of Simons
+and coworkers <2,3>.  It is capable of locating transition
+structures even if started in the wrong region of the energy
+surface, and, by invoking Hessian mode following, can locate
+several different transition structures from the same initial
+starting point.
+
+.LP
+A discussion of the formalism and the ideas behind it,
+together with a description of the algorithm and some practical
+examples are given in ref <4>.
+
+
+.SH MODE FOLLOWING
+.LP
+For a transition structure search, maximization normally
+takes place along the lowest mode and minimization along all other
+modes.  However, as first pointed out by Cerjan and Miller <1>,
+it is possible to maximize along modes other than the lowest and
+in this manner obtain transition structures for alternative
+rearrangements and/or dissociations from the same initial
+starting point.
+
+.LP
+Mode following is switched on for OPTEFC by means of the MODE
+option in
+.pN BMAT .
+The lines "MODEF = yes", "MF_METHOD = intco", and "MF_MODE = n" 
+for a particular variable "n"
+will cause a transition structure search to follow the Hessian
+mode with the largest magnitude component for that variable.
+The idea behind this is that, in many cases, the various Hessian
+modes are dominated by a single variable corresponding to a large
+change in a particular bond length or bond angle say, and it is
+this particular parameter that is required to change the most
+during a transition structure search.  For example, looking for a
+dissociation transition structure should involve change in
+essentially just one parameter - the bond length between the two
+dissociating moieties - and following the mode with the largest
+magnitude component for this bond length should have the best
+chance of leading to the desired transition structure.
+
+.LP
+This is not always the case however, and specific Hessian
+modes can be followed without any reference to particular
+internal variables by using "MODEF = yes", "MF_METHOD = hessian",
+and "MODE = n", causing the nth
+mode to be followed.
+
+.LP
+Note that only one mode can be followed at a time.
+
+
+.SH ERROR MESSAGES IN OPTEFC
+.LP
+A certain amount of input checking is done in the subroutine
+INITEF and most of the error message printout occurs here.
+Nothing else should go wrong, although it is theoretically
+possible for the iterative procedure which calculates the
+eigenvalue shift parameter lambda in subroutine FORMD to fail.
+Either the procedure will not converge, in which case the message
+
+.RS +1.in
+.nf
+****************************************
+** UNABLE to determine lamda in FORMD **
+****************************************
+.fi
+.RE
+
+.LP
+will be printed out, or convergence will be attained, but to an
+unacceptable value, giving the message
+
+.RS +1.in
+.nf
+*****************************************
+** ERROR in determining lamda in FORMD **
+*****************************************
+.fi
+.RE
+
+.LP
+It is EXTREMELY UNLIKELY for either of these events to occur.
+If they do, the internal coordinates should be checked carefully;
+specifying more variables than are allowed for by symmetry may be
+what is causing the problem.  Also double check that the geometry
+and forces in the
+.pN FILE11
+are different from the "old" ones in
+.pN RESUL2 .
+Note that switching on the Newton-Raphson step (setting NWT_RPH=true)
+obviates the need to calculate a shift parameter, although this
+can only be used in the right region of the energy surface.
+
+
+.SH REFERENCES
+.LP
+References for BMAT:
+.IP "1."
+P. Pulay in "Applications of Electronic Structure Theory", ed. H.
+F. Schaefer (Plenum, New York, 1977) p. 165.
+.LP
+References for OPTEFC:
+.IP "1."
+C. J. Cerjan and W. H. Miller, J. Chem. Phys. 75 (1981) 2800.
+.IP "2."
+J. Simons, P. Jorgensen, H. Taylor and J. Ozment, J. Phys.
+Chem. 87 (1983) 2745.
+.IP "3."
+A. Banerjee, N. Adams, J. Simons and R. Shepard, J. Phys. Chem.
+89 (1985) 52.
+.IP "4."
+J. Baker, J. Comput. Chem. 7 (1986) 385.
+
+.sL
+.pN INPUT
+.pN FCONST "	force constants in internal"
+.pN "\&" "	coordinates"
+.pN FILE11 "	geometry and gradient read from here"
+.pN RESUL2
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT       "	(main output)"
+.pN RESUL3       "	(internal forces)"
+.pN MAKEFT       "	(accumulated internal forces)"
+.eL "FILES GENERATED"
+
+.sL
+.pN RESUL2
+.pN GEOM
+.eL "FILES UPDATED"
+
+
+.SH INPUT FORMAT
+.LP
+The 
+.B bmat
+program searches through the default keyword path (first
+.B BMAT
+and then
+.BR DEFAULT )
+The following keywords are valid:
+
+
+.IP "\fBFIX_COORD =\fP \fIinteger_vector\fP"
+This is a vector containing the numbers of those internal
+coordinates in the
+.B SYMM
+vector which will be frozen in the geometry optimization.
+Defaults to zero vector.
+
+.IP "\fBNOUP =\fP \fIboolean\fP"
+If this option is true, Hessian updating is not
+performed.  Otherwise, the internal coordinates and forces
+in the previous step of the geometry optimization are used
+to improve the force constant matrix.  The default is false.
+
+.IP "\fBEIGF =\fP \fIboolean\fP"
+If true, the EIGF option specifies that the eigenvector following
+routine OPTEFC is to be used to perform the geometry
+optimization.  The default is false.  The following options are
+used in conjunction with the
+.B EIGF
+option:
+
+
+.iO      "\fBMINIMUM =\fP \fIboolean\fP"
+.iV          "false"  "Find a TS"
+.iV          "true"   "Find a minimum (default)"
+
+.iO      "\fBMAX_STEP =\fP \fIinteger\fP"
+Maximum stepsize allowed during optimization
+.iV           "= 0"   "DMAX = 0.3 (default)"
+.iV           "= n>0"   "DMAX = 0.01*n"
+
+.iO      "\fBUPDT =\fP \fIinteger\fP"
+Type of Hessian update
+.iV           "= 0"   "Powell update (default)"
+.iV           "= 1"   "BFGS update (used for minima)"
+.iV           "= 2"
+BFGS update with safeguards to ensure retention
+of positive definiteness
+
+.iO      "\fBEIG_MAX =\fP \fIinteger\fP"
+Maximum allowable magnitude of Hessian eignvalues.
+If this magnitude is exceeded, the eigenvalue is
+replaced.
+.iV           "= 0"   "EIGMAX = 25.0 (default)"
+.iV           "= n>0"   "EIGMAX = 0.1*n"
+
+.iO      "\fBEIG_MIN =\fP \fIinteger\fP"
+Minimum allowable magnitude of Hessian eigenvalues.
+.iV           "= 0"   "EIGMIN = 0.0001 (default)"
+.iV           "= n>0"   "EIGMIN = 1.0/n"
+
+.iO      "\fBNWT_RPH =\fP \fIboolean\fP"
+Search selection
+.iV           "false"   "P-RFO or RFO step only (default)"
+.iV           "true"
+P-RFO or RFO step for "wrong" Hessian otherwise
+Newton-Raphson
+
+.iO      "\fBNO_PRINT =\fP \fIboolean\fP"
+Print option
+.iV           "false"   "Turns on extra printing (default)."
+.iV           "true" "Turns off extra printing."
+
+.iO      "\fBDEBUG =\fP \fIboolean\fP"
+.iV           "false"   "Turns off debug printing (default)."
+.iV           "true"   "Turns on debug printing."
+
+.iL
+Setting 
+.B UPDT
+= 2 ensures that the BFGS update
+(the default update for a minimum search) retains positive
+definiteness; i.e. if the Hessian before the update has all
+positive eigenvalues, then so will the updated Hessian.
+In most cases the BFGS update retains positive definiteness
+anyway, but this is not guaranteed.  Use of this option will
+cause the update to be skipped if positive definiteness is
+endangered.  Thus, once the Hessian becomes positive definite,
+it will remain so within the limits of numerical rounding
+error.  Such a feature is, of course, not desirable for a
+transition structure search, and use of the BFGS update is
+consequently not recommended when searching for a transition
+structure.
+
+.iL
+If there is a conflict in the updating methods specified
+by 
+.B UPDT
+and EXPLICITLY by BMAT, the BMAT option will take
+precedence.
+
+.IP "\fBMODEF =\fP \fIboolean\fP"
+Used with 
+.B EIGF ,
+this option turns on mode following in OPTEFC.
+The default is false.
+
+.IP "\fBMF_METHOD =\fP \fIstring\fP"
+.IP "\fBMF_MODE =\fP \fIinteger\fP"
+Used with 
+.B EIGF 
+and
+.B MODEF .
+If 
+.B MF_METHOD
+is "HESSIAN", then
+.B MF_MODE
+is the
+number of the Hessian mode (as ordered by eigenvalue) to be
+followed.  In transition structure searches, this
+is 1 by default (i.e. the lowest mode).
+If 
+.B MF_METHOD
+is "INTCO", then
+.B MF_MODE
+is the number of the
+internal coordinate that determines which mode is followed
+(the mode with the highest component for that internal
+coordinate).
+.B MF_METHOD
+defaults to "HESSIAN", and
+.B MF_MODE
+defaults to 1.
+
+.IP "\fBDISPLACEMENTS =\fP \fIdisplacement_vector\fP"
+If the 
+.B DISPLACEMENTS
+vector is present, 
+this indicates that the aim of the calculation is not to
+transform forces but to obtain molecular geometries which are
+distorted in a prescribed way from the reference geometry.
+Note that the distortions
+are exact curvilinear distortions.  There is no default.
+Each element of this vector is a vector consisting of internal
+coordinate indices and displacement values.  For example, if
+you desire two displacements, the first being a displacement of
+internal coordinate 1 by 0.01 angstroms, the second a combination
+of displacements, ie. coordinate 1 displaced by 0.01 angstroms and
+coordinate 2 by 0.05 angstroms, the 
+.B DISPLACEMENTS 
+vector would be:
+.DS
+   displacements = (
+     (1 0.01)
+     (1 0.01 2 0.05))
+.DE
+
+.IP "\fBBOHR =\fP \fIboolean\fP"
+This option is for use with the DISPLACEMENTS option.  It specifies
+that displacements for bond stretching coordinates are given
+in bohr rather than Angstrom.  (Units for angular coordinates
+are still in radians.)  The default is false.
+
+.IP "\fBDEGR =\fP \fIboolean\fP"
+This option is for use with the DISPLACEMENTS option.  It specifies
+that displacements for angular coordinates are given in
+degrees rather than radians.  (Units for stretching
+coordinates are still in Angstrom.)  The default is false.
+
+.IP "\fBDUMMY_ATOMS =\fP \fIreal_array\fP"
+This option is for use with the DISPLACEMENTS option.  It specifies
+the Cartesian coordinates of a dummy atom for linear bends.
+The program zooms the dummy atom out to a distance of 1
+billion angstrom so that displacements using LIN1 and LIN2
+are degenerate.  The Cartesian coordinates generated do not
+include the dummy atom.
+The \fIreal_array\fP is a vector of coordinates of each dummy atom.
+Each element of this vector is another vector in the
+form \fB(\fP\fIx\fP \fIy\fP \fIz\fP\fB)\fP.
+The numbering for the dummy atoms begins at NA+1 (NA = number of atoms).
+
+.IP "\fBMASSES =\fP \fIreal_vector\fP"
+This (optional) vector specifies the masses of each atom.  This
+defaults to a vector of natom ones.
+If the masses are specified, the calculation of the new
+Cartesian coordinates is performed such that the Eckart
+conditions are obeyed.  It is important to do this if you
+wish to calculate displacements of dipole moments.
+
+.IP "\fBSYMBOLS =\fP \fIstring_vector\fP"
+This (optional) vector specifies atomic symbols for each atom.  This
+defaults to a vector of blanks.  Only used for print out.
+
+.IP "\fBAT_NUMBER =\fP \fIinteger_vector\fP"
+This (optional) vector specifies atomic numbers for each atom.  This
+defaults to a vector of zeros.  Only used for print out.
+
+.\" ---------------------------------------- Uncommonly used input here:
+.LP
+There are also a large number of less commonly used input parameters.
+If you do not understand what the following options mean, then
+make sure that they do not appear in your input.  The defaults will
+work in the overwhelming majority of cases.
+These are specified with the following keywords:
+
+.IP "\fBFMAT =\fP \fIboolean\fP"
+If true, this indicates that a force constant matrix is to be read
+in.  The units of the force constants are mdyne/A, mdyne or
+mdyne*A depending on the type of internal coordinate.
+If this is the first cycle, the force constant matrix is read
+in from the
+.pN FCONST
+file (see below).
+On subsequent cycles, the force constant matrix and old data
+(internal coordinates, forces, and displacements) are read in
+from the file called
+.pN RESUL2 .
+The program keeps track of the number of optimization cycles
+through the information on the file called
+.pN RESUL2 .
+The default is true.
+
+.IP "\fBANGSTROMS =\fP \fIboolean\fP"
+If true, this indicates that the nuclear coordinates are to be
+read in Angstrom units as opposed to atomic units.  The default
+is false.
+
+.IP "\fBGDYN =\fP \fIboolean\fP"
+If true, the Cartesian forces are read in with units
+of mdyne.  Keep in mind that the forces in
+.pN FILE11
+are in
+atomic units, so this option should only be used if the forces
+are to be typed in by hand. The default is false.
+
+.IP "\fBWRT_BMAT =\fP \fIboolean\fP"
+This causes the program to print the B-matrix to the file
+called
+.pN MAKEFT .
+The default is false.
+
+.IP "\fBINT_FORCES =\fP \fIreal_vector\fP"
+This vector (of length nsym, where nsym = the number of
+internal coordinates) contains the internal forces.  If given,
+the program will not read the Cartesian forces in
+.pN FILE11 .
+The dimensions of the
+internal forces should be compatible with the energy measured
+in AJ (=mdyne*A) and with the stretching coordinates measured
+in Angstrom, bending ones in radian.  There is no default.
+
+.IP "\fBUPDATE =\fP \fIstring\fP"
+If 
+.B UPDATE
+= "MURT"
+use the Murtagh-Sargent update method.
+
+If 
+.B UPDATE
+= "POWL"
+use the Powell update method.  This is the default for transition structures.
+
+If 
+.B UPDATE
+= "DFLP"
+use the Davidon-Fletcher-Powell update method.
+
+If 
+.B UPDATE
+= "BFGS"
+use the BFGS update method.  This is default for minima.
+
+.IP "\fBFLT1 =\fP \fIreal_vector\fP"
+The 
+.B FLT1
+vector consists of up to four 
+.I ETA 
+values. The
+.B FLT1
+vector specifies that the Fletcher-Powell method of optimization
+is to be used rather than the variable metric method of
+Murtagh-Sargent.  With 
+.B FLT1 ,
+the first part of the algorithm
+is implemented.  The 
+.B FMAT 
+option must also be true if the
+.B FLT1 
+option is present.  The 
+.I ETAn 
+values are steps along the
+Fletcher-Powell direction vector for which Cartesian
+coordinates are desired.  If, for example, only two steps are
+desired, do not enter 
+.I ETA3 
+or 
+.I ETA4 .  
+The new sets of Cartesian
+coordinates are written to the top of the 
+.pN GEOM 
+file in
+the format appropriate for the 
+.B ugeom
+program.
+
+
+.IP "\fBFLT2 =\fP \fIreal_vector\fP"
+.IP "\fBFLT2E =\fP \fIreal_vector\fP"
+With 
+.B FLT2 
+and
+.B FLT2E
+the second part of the Fletcher-Powell algorithm is
+implemented.  The three (
+.I ETA ,
+.I ENERGY ) 
+pairs allow computation
+of the 
+.I ETA 
+value which minimizes the energy along the
+Fletcher-Powell vector, whence Cartesian coordinates for a
+new gradient calculation are computed.
+
+
+
+.SH INTERNAL COORDINATE SPECIFICATION
+
+.LP
+Internal coordinates are defined in the 
+.B INTCO
+section of the input.
+The format is a bit unusual, so it would be best to give an example
+first.  For water, the 
+.B INTCO
+section should look like this:
+.DS
+
+ intco: (
+  stre = (
+   (1 1 2)
+   (2 1 3))
+
+  bend = (
+   (3 2 1 3))
+
+  symm = (
+   ("c-h sym st" (1 2))
+   ("ch2 bend" (3))
+   )
+ )
+
+.DE
+.LP
+For more information on the definition of internal coordinates, see the
+intco(2) man page.
+
+.SH FORCE CONSTANTS
+If the 
+.B FMAT 
+option is true and 
+.B NOEX 
+is false (or it
+is the first optimization cycle), then an approximation to
+the internal coordinate force constant matrix is read in from the
+.pN FCONST
+file.  This file is written by 
+.B intder .
+
+.iO  "((FC(I,J), J=1,I), I=1,NQ)"
+where NQ is the number of internal coordinates
+
+.iO
+Each row of the force constant matrix is read up to and
+including the diagonal element.  Each row begins on a new
+line.
+
+.iO
+It is usually a good idea to get this file from a second
+derivative calculation done at a lower level of theory.
+If this is your first attempt then
+just use values of 3.0 - 8.0 (for stretching coordinates) and
+1.0 (for bending coordinates) for the diagonal force
+constants, and leave the rest zero.  If experimental force
+constants are used, they should be scaled by 1.21 to get
+better results.
+For transition structure optimizations, it is important to
+start with an analytical Hessian (calculated, perhaps, at a
+very low level of theory).

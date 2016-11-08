@@ -1,0 +1,74 @@
+.TH ints 1 "30 May, 1991" "Psi Release 2.0" "\*(]D"
+.SH NAME
+ints \- calculates integrals
+
+.SH DESCRIPTION
+.LP
+The program
+.B ints
+calculates integrals in terms of symmetry-adapted atomic
+orbitals (SO).
+
+.SH REFERENCES
+.LP
+References for
+Rys-polynomial method and integrals over gaussian basis functions:
+.IP "1."
+H.F.King, and M.Dupuis, J. Comp. Phys. 21 (1976) 144.
+.IP "2."
+M. Dupuis, J. Rys, and H. F. King, J. Chem. Phys. 65 (1976) 111.
+.IP "3."
+J. Rys, M. Dupuis, and H. F. King, J. Comp. Chem. 4 (1983) 154.
+.LP
+References for Pitzer's method:
+.IP "1."
+R. Pitzer, J. Chem. Phys. 58 (1973) 3111.
+
+.sL
+.pN INPUT
+.pN FILE30
+.eL "FILES REQUIRED"
+
+.sL
+.pN FILE30
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE34     "	(1 and 2 electron integrals)"
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B ints
+program
+searches through the default keyword path (first
+.B INTS
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBMK_1EI =\fP \fIboolean\fP"
+If FALSE, then no one-electron integrals are calulated.  This is primarily
+for use with the
+.B drt
+program.  (see drt(1) for more information).  The default is TRUE.
+
+.IP "\fBMK_2EI =\fP \fIboolean\fP"
+If FALSE, then no two-electron integrals are calulated.  This is primarily
+for use with the
+.B drt
+program.  (see drt(1) for more information). The default is TRUE.
+
+.SH EXAMPLES
+.LP
+The following example will calculate the one-electron integrals, but
+not the two-electron integrals:
+
+.DS
+ ints: (
+  mk_2ei = false
+  )
+.DE

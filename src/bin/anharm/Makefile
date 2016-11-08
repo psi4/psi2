@@ -1,0 +1,42 @@
+# Generated automatically from Makefile.in by configure.
+srcdir = /home/usrb/b3/longhorn/psi/src/bin/anharm
+VPATH = /home/usrb/b3/longhorn/psi/src/bin/anharm
+
+include ../MakeVars
+
+
+TRUESRC = \
+abcmat.F \
+anhout.F \
+asytop.F \
+bcxyz.F \
+blkdta000.F \
+centas.F \
+centli.F \
+coriol.F \
+dist.F \
+fconst.F \
+fentry.F \
+force3.F \
+force4.F \
+gprgid.F \
+linear.F \
+ltypli.F \
+moment.F \
+mtxmpy.F \
+mx2out.F \
+mx3out.F \
+normfx.F \
+normli.F \
+order.F \
+phimat.F \
+read48.F \
+rovasy.F \
+rovlir.F \
+taumat.F \
+vibfx.F \
+vltyli.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules

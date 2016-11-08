@@ -1,0 +1,96 @@
+      SUBROUTINE ROTATE(EIG,OCC,FF,EE,EZ,EIGN,OCN,DUM1,DUM2,
+     1                  NADDS,NBF)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      integer nbasis,nbatri,nbfao
+      DIMENSION EIG(NBASIS),OCC(NBASIS),FF(NBATRI)
+      DIMENSION EE(NBFAO,NBFAO),EZ(NBFAO,NBFAO)
+      DIMENSION EIGN(NBFAO),OCN(NBFAO),DUM1(NBFAO),DUM2(NBFAO)
+      COMMON/BASIS/NBASIS,NTRI,NSYM,NBFAO,NBFSO,NBATRI
+      COMMON/SIGNS/IOFF(256),IPRNT
+      COMMON/TEMPS/NORD(400)
+      DATA ZERO / 0.0D+00 /
+    1 FORMAT(//,2X,' FF MATRIX'/)
+    2 FORMAT(//,2X,' TRANSFORMATION MATRIX'/)
+    3 FORMAT(//,2X,' NORD = ',(30I4))
+    4 FORMAT(//,2X,' XXXXXWARNING IN NORDXXXXX',I4//)
+    5 FORMAT(//,2X,' XXXXXPROGRAM ERROR IN NORD---STOP !XXXXX'//)
+    6 FORMAT(//,2X,' SORTED TRANSFORMATION MATRIX'/)
+    7 FORMAT(//,2X,' SIGN ADJUSTED TRANSFORMATION MATRIX'/)
+C
+      IF(IPRNT.LE.2) GO TO 301
+      WRITE(6,1)
+      CALL PRINT(FF,NBATRI,NBF,6)
+C
+C   DIAGONALIZE FF MATRIX
+  301 CALL RSP(NBFAO,NBF,NBATRI,FF,EIGN,1,EZ,DUM1,DUM2)
+C
+      DO 101 I=1,NBF
+      II=NADDS+I
+  101 OCN(I)=OCC(II)
+      IF(IPRNT.LE.2) GO TO 302
+      WRITE(6,2)
+      CALL EIGOUT(EZ,EIGN,OCN,NBFAO,NBFAO,NBF,NBF,6)
+C
+  302 DO 102 I=1,NBF
+      NI=1
+      NJ=2
+  201 IF(DABS(EZ(NI,I)).LT.DABS(EZ(NJ,I))) GO TO 202
+      MAXN=NI
+      GO TO 203
+  202 MAXN=NJ
+      NI=NJ
+  203 NJ=NJ+1
+      IF(NJ.LE.NBF) GO TO 201
+      NORD(I)=MAXN
+  102 CONTINUE
+C
+      IF(IPRNT.GE.3)
+     *WRITE(6,3) (NORD(I),I=1,NBF)
+      DO 105 I=1,NBF
+      DO 103 J=1,NBF
+      IF(NORD(J).EQ.I) GO TO 105
+  103 CONTINUE
+      WRITE(6,4) I
+      DO 104 K=1,NBF-1
+      DO 104 L=K+1,NBF
+      IF(NORD(K).EQ.NORD(L)) GO TO 205
+  104 CONTINUE
+      WRITE(6,5)
+      STOP
+  205 NORD(K)=I
+  105 CONTINUE
+      IF(IPRNT.GE.3)
+     *WRITE(6,3) (NORD(I),I=1,NBF)
+C
+      DO 107 I=1,NBF
+        II=NADDS+I
+        EIG(NORD(I)+NADDS)=EIGN(I)
+        DO 107 J=1,NBF
+          JJ=NADDS+NORD(J)
+          EE(II,JJ)=EZ(I,J)
+  107 CONTINUE
+c
+      IF(IPRNT.LE.2) GO TO 303
+      WRITE(6,6)
+cnab091691      CALL EIGOUT(EE,EIG,OCN,NBFAO,NBFAO,NBF,NBF,6)
+      call eigout(ee,eig,ocn,nbfao,nbfao,nbfao,nbfao,6)
+C
+cnab091691 this section to adjust signs of rotation matrix to match original
+c          mo's has been corrected to take into account that other shells 
+c          have been added to ee previously
+  303 DO 110 I=1,NBF
+        ii=nadds+i
+c      IF(EE(I,I).GT.ZERO) GO TO 110
+        if(ee(ii,ii).gt.zero) go to 110
+        DO 108 J=1,NBF
+          jj=nadds+nord(j)
+  108     ee(jj,ii)=-ee(jj,ii)
+cnab091691  108   EE(J,I)=-EE(J,I)
+  110 CONTINUE
+      IF(IPRNT.LE.2) GO TO 305
+      WRITE(6,7)
+cnab091691      CALL EIGOUT(EE,EIG,OCN,NBFAO,NBFAO,NBF,NBF,6)
+      call eigout(ee,eig,ocn,nbfao,nbfao,nbfao,nbfao,6)
+C
+  305 RETURN
+      END

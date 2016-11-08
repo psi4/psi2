@@ -1,0 +1,59 @@
+.TH ccprop 1 "26 August, 1991" "\*(]W" "\*(]D"
+.SH NAME
+ccprop \- calculates properties of correlated wavefunctions
+
+.SH DESCRIPTION
+The program
+.B ccprop
+performs a Mulliken population analysis of the
+CC wavefunction and calculates the CC dipole moment.
+
+.SH REFERENCES
+.IP "1."
+See the manual pages for the
+.B proper
+program.
+
+.sL
+.pN INPUT 
+.pN FILE30
+.pN FILE40
+.eL "FILES REQUIRED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE59
+.eL "FILES GENERATED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B ccprop
+program
+searches through the default keyword path (first
+.B CCPROP
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+A printing flag.  The default is 0.
+
+.IP "\fBICENT =\fP \fIinteger\fP"
+ICENT specifies the origin for the dipole moment calcution.
+.  iV             "= 0 or 1" "Use center of mass as the"
+.    __                  "reference coordinate of dipole moment (default = 1)."
+.  iV             "= 2"    "Use origin of space fixed coordinate."
+.  iV             "= 3"    "Use center of charge based on Mulliken."
+.    __                    "population."
+.  iV             "= 4"    "Use center of nuclear charge."
+.  iV             "= 5"    "Use center of net charge."
+.    __                    "Values 2-5 may be used for charged systems"
+.    __                    "(for which cases the dipole moment"
+.    __                    "definition is ambiguous)."
+

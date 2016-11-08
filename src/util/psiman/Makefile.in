@@ -1,0 +1,16 @@
+
+ROOT = /home/farragut/psi
+
+CFLAGS = -O -DPSI_MANDIR="\"/home/xerxes/psi/man\"" \
+  -DPSI_MANDIR1="\"/home/xerxes/psi/man1.1\"" -DMORE="\"less\"" \
+  -DHOST="\"artaxerxes1\""
+
+default: psiman psiman1.1
+
+install: psiman psiman1.1
+	/bin/mv psiman $(ROOT)/bin
+	/bin/mv psiman1.1 $(ROOT)/bin
+
+clean:
+	/bin/rm -f *.o
+	

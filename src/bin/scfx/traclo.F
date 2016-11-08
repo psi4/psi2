@@ -1,0 +1,27 @@
+C     /////////////////////////////////////////////////////////////
+      FUNCTION TRACLO (A,B,C,D,IR,NLAMDA)
+C
+C     THIS DOTS THINGS TOGETHER IN ONE WAY OR ANOTHER THAT ARE SYMMETRIC
+C
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C
+      COMMON /INPT/  NSYM,IPMAX,NMAT,ITMAX,NSFMAX,NTOTAL,MXCOEF,MSFRU
+      DIMENSION A(1),B(1),C(1),D(1),NLAMDA(NSYM)
+      TRACLO=0.0D0
+      N=0
+      K=0
+    4 CONTINUE
+      N=N+1
+      DO 3 L=1,NSYM
+         LMN=NLAMDA(L)
+         DO 2 J=1,LMN
+            DO 1 I=1,J
+               K=K+1
+    1       TRACLO=TRACLO+2.0D0*(A(K)-B(K))*(C(K)-D(K))
+    2    TRACLO=TRACLO-(A(K)-B(K))*(C(K)-D(K))
+    3 CONTINUE
+      IF (IR.EQ.2.AND.N.EQ.1) GO TO 4
+      RETURN
+      END

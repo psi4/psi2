@@ -1,0 +1,134 @@
+      SUBROUTINE COUNT(KLASS,KTYPE,KMIN,KATOM,LOC,LOC2,LAB,CC,
+     1  LAMBDA,ISC,IPC,ICT)
+C
+C  RUN THROUGH SYMMETRY PART TO FIND DIMENSIONS FOR PITZER ARRAYS
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+      COMMON /MAXDIM/ MXAT,MXTRN,MXPR,MXSH,MXSYM,MXCF,MXT,MXISO,MXPSYM
+      COMMON /PSIZE/  MSU,KAORDS,MCONSU,MGCSU,MSTU,MRU,MCSU,MCTU,MCONU,
+     1                MCU,MSFU,MGU,MSFRU,MNSFU,MPRU,MCXU,MCCU,MBLU,MRCRU
+      COMMON /NSHEL/  NSHELL,MSHELL
+      COMMON /SALCS/  NIRRED
+      COMMON /SYMTRY/ NT
+      COMMON /IOFILE/ IR,IW
+      COMMON /INOUT/  IOUT,ICHECK,ITAP30
+      COMMON /INFOA/  NAT,NUM,NQW,NX
+      COMMON /PACKQ/   I1,I2,I3,I4,I5
+      COMMON /ISOPAC/ INDIN(120),INDOUT(30)
+C
+      REAL*8 CC(MXCF)
+      INTEGER KLASS(MXAT),KTYPE(MXSH),KMIN(MXSH),KATOM(MXSH)
+      INTEGER LOC(MXAT,5),LOC2(MXAT,5),LAB(MXCF),LAMBDA(MXSYM)
+      INTEGER ISC(MXSH,MXPSYM),IPC(MXSH,MXPSYM),ICT(MXAT,MXTRN)
+C
+      DIMENSION II(50),CA(50,18)
+C
+C     WRITE(IOUT,*) LOC2
+      ITM=NT
+      NTSAVE=NT
+      NT=NIRRED
+      NTD=(NT+3)/4
+      MGCSU=0
+      MCTU=0
+      MRU=0
+      MCSU=0
+C
+      DO 500 NATOM=1,NAT
+C
+        DO 170 IT=1,ITM
+          IF(ICT(NATOM,IT).GT.NATOM) GO TO 500
+  170   CONTINUE
+C
+        ICLASS=KLASS(NATOM)
+C
+        DO 180 I=1,NAT
+  180   II(I)=0
+C
+        DO 190 IT=1,ITM
+          JCEN=ICT(NATOM,IT)
+  190   II(JCEN)=1
+C
+        NP=0
+        DO 400 KT=1,5
+          NP=NP+KT
+          DO 210 I=1,NSHELL
+            J=KATOM(I)
+            IF(J.NE.NATOM) GO TO 210
+            IF(KTYPE(I).EQ.KT) GO TO 240
+            IF(KT.EQ.1.AND.KTYPE(I).EQ.2.AND.KMIN(I).EQ.1) GO TO 220
+  210     CONTINUE
+          GO TO 400
+  220     CONTINUE
+          DO 230 IQ=1,NTD
+            INDOUT(IQ)=ISC(I,IQ)
+  230     CONTINUE
+          GO TO 260
+  240     CONTINUE
+          DO 250 IQ=1,NTD
+            INDOUT(IQ)=IPC(I,IQ)
+  250     CONTINUE
+C
+  260     CALL ISOOUT
+C
+C     ----- COUNT NUMBER OF SHELLS OF THIS TYPE -----
+C
+          IFAC=0
+          DO 265 I=1,NSHELL
+            J=KATOM(I)
+            IF (J.NE.NATOM) GO TO 265
+            IF (KTYPE(I).EQ.KT) IFAC=IFAC+1
+            IF (KT.EQ.1.AND.KTYPE(I).EQ.2.AND.KMIN(I).EQ.1) IFAC=IFAC+1
+  265     CONTINUE
+C
+          IF (IFAC.LE.0) STOP ' IFAC.LE.0 IN COUNT'
+C
+          KA=LOC(ICLASS,KT)
+          KAA=KA
+          KB=LOC2(ICLASS,KT)
+C
+          MGCSU=MGCSU+1
+          NSOL=0
+          NSO=0
+C
+  270     I5=LAB(KA+1)
+          CALL UNPAK
+          IRP=I3
+          IPA=I2+INDIN(IRP)-1
+          LL=LAMBDA(IRP)
+          MAX=NP*LL
+C
+          NSO=NSO+1
+C
+          DO 300 JCEN=1,NAT
+            IF(II(JCEN).EQ.0) GO TO 300
+            IF(JCEN.EQ.NATOM) GO TO 300
+            JCLASS=KLASS(JCEN)
+            KC=LOC(JCLASS,KT)+KA-KAA
+  300     CONTINUE
+          K=0
+          DO 340 L=1,LL
+            NSOL=NSOL+1
+            NAO=0
+            DO 320 N=1,NAT
+              IF (II(N).EQ.0) GO TO 320
+              NAO=NAO+NP
+  320       CONTINUE
+C
+            IF (NAO.GT.MCTU) MCTU=NAO
+C
+  340     K=K+NP
+C
+          KA=KA+MAX
+          IF(KA.LT.KB) GO TO 270
+C
+          IF (NSO.GT.MRU) MRU=NSO
+          IF (NSOL.GT.MCSU) MCSU=NSOL
+C
+  400   CONTINUE
+  500 CONTINUE
+      NT=NTSAVE
+      KAORDS=MGCSU
+C
+      RETURN
+      END

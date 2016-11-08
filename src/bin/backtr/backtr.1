@@ -1,0 +1,74 @@
+.TH backtr 1 "26 August, 1991" "\*(]W" "\*(]D"
+.SH NAME
+backtr \- begins the back transformation of the 2-PDM
+
+.SH DESCRIPTION
+.LP
+The program
+.B backtr
+performs the first part
+of the back transformation of the 2-PDM for determining configuration
+interation energy gradients.
+
+.SH REFERENCES
+.LP
+See the Psi manual pages for the \fBcphfci\fP program.
+
+.sL
+.pN INPUT
+.pN FILE30
+.pN FILE40
+.pN FILE47
+.pN FILE52
+.pN FILE53
+.pN FILE54
+.pN FILE58
+.eL "FILES REQUIRED"
+
+.sL
+.pN FILE91
+.pN FILE93
+.pN FILE95
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN OUTPUT
+.pN FILE40 
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE47
+.pN FILE55
+.pN FILE71
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B backtr
+program
+searches through the default keyword path (first
+.B BACKTR
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBDELETE91 =\fP \fIboolean\fP"
+This is meant to be used for debugging.
+When \fIboolean\fP is true,
+.pN FILE91
+will be deleted after \fBbacktr\fP completes.
+The default is true.
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+A printing option.  The default is 0.
+
+.IP "\fbucket_size =\fP \fIinteger\fP"
+Changes the 'bucket size' for memory allocation purposes. Values are
+specified in units of kilobytes. Default value is 8192 (8MB).
+
+.IP "\fmax_bucket =\fP \fIinteger\fP"
+Changes the maximum number of 'buckets' that the program uses for memory allocation purposes.  Default value is 500.
+

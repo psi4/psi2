@@ -1,0 +1,124 @@
+C
+C-----------------------------------------------------------------------
+C
+      SUBROUTINE SET55(AOPS,IJOFF,KLOFF,LNSR,MAPIJ,
+     .                 KTYPE,KLOC,IPQ,
+     .                 NSHELL,NST,NTAO,NTAO2,ITAP55,AOSTRT,DUMMY,LEFT)
+      IMPLICIT INTEGER (A-Z)
+      INTEGER AOPS(NSHELL),KTYPE(NSHELL),MAPIJ(NTAO2),
+     .        IPQ(*),KLOC(NSHELL),IJOFF(NST),KLOFF(NST),LNSR(NST)
+      REAL*8 DUMMY(LEFT)
+C
+      DO 10 XSHL=1,NSHELL
+         MUTYP = KTYPE(XSHL)*(KTYPE(XSHL)+1)/2
+         AOPS(XSHL) = MUTYP
+   10 CONTINUE
+C
+C >>> CAUTION, KLOC IS FIRST FUNCTION OF AO BASIS !
+C     IF NTAO.NE.NT, FIRST FUNCTION OF AO AND SO BASIS ARE DIFFERENT
+C
+      NWMUNU = 0
+      DO 110 R = 1,NSHELL
+         FMU = KLOC(R)
+         LMU = FMU + AOPS(R) - 1
+         DO 120 S = 1,R-1
+            FNU = KLOC(S)
+            LNU = FNU + AOPS(S) - 1
+            DO 130 MU = FMU,LMU
+               DO 140 NU = FNU,LNU
+                  MUNU = IPQ(MU) + NU
+                  NWMUNU = NWMUNU + 1
+                  MAPIJ(MUNU) = NWMUNU
+  140          CONTINUE
+  130       CONTINUE
+  120    CONTINUE
+         DO 150 MU = FMU,LMU
+            DO 160 NU = FMU,MU
+               MUNU = IPQ(MU) + NU
+               NWMUNU = NWMUNU + 1
+               MAPIJ(MUNU) = NWMUNU
+  160       CONTINUE
+  150    CONTINUE
+  110 CONTINUE
+C
+      NNST = 0
+      KLOFF(1) = 0
+      DO 220 S=1,NSHELL
+         APS = AOPS(S)
+         DO 230 T=1,S
+            NNST = NNST + 1
+            LNSR(NNST) = APS*AOPS(T)
+            IF(NNST.NE.NST) KLOFF(NNST+1) = KLOFF(NNST) + LNSR(NNST)
+  230    CONTINUE
+  220 CONTINUE
+C
+      SRMN = 0
+      IJOFF(1) = 0
+      DO 240 ST = 1,NST
+         LNST = LNSR(ST)
+         IJOF = 0
+         DO 250 MN = 1,ST
+            SRMN = SRMN + 1
+            IJOF = IJOF + LNST*LNSR(MN)
+  250    CONTINUE
+         IF(ST.NE.NST) IJOFF(ST+1) = IJOFF(ST) + IJOF
+  240 CONTINUE
+C
+C     WRITE(6,*) '    NST        IJOFF        KLOFF      LNSR '
+C     DO 3010 I = 1,NST
+C     WRITE(6,*) I,IJOFF(I),KLOFF(I),LNSR(I)
+C3010 CONTINUE
+C
+C >>> WRITE THE ARRAYS OF POINTERS TO FILE 55
+C
+      CALL WWRITW(ITAP55,AOPS,NSHELL,1,JUNK)
+      CALL WWRITW(ITAP55,IJOFF,NST,JUNK,JUNK)
+      CALL WWRITW(ITAP55,KLOFF,NST,JUNK,JUNK)
+      CALL WWRITW(ITAP55,LNSR,NST,JUNK,JUNK)
+C
+      TPDMEL = IJOFF(NST) + IJOF
+      WRITE(6,*) '  '
+      WRITE(6,*) '  THE NUMBER OF TPDM ELEMENTS IS ',TPDMEL
+C
+C >>> AOSTRT IS THE POINTER FOR THE BEGINNING OF THE TWOPDM
+C
+      AOSTRT = JUNK
+C
+C >>> CALCULATE LAST ADDRESS OF 55 AND WRITE ZEROES SEQUENTIALLY
+c
+cges081789 see note below:
+c  while this is necessary to avoid io errors in the ibm when
+c  directly accessing a non-existent file, it might not be necessary
+c  on unix  based systems.
+C
+c     MUNUX=IPQ(NSHELL)+NSHELL
+c     MUNU=IJOFF(MUNUX)
+c     LASIX=IPQ(NSHELL)+NSHELL
+c     LASI=KLOFF(LASIX)*LNSR(MUNUX)
+c     SADR=INTOWP(MUNU+LASI)+AOSTRT
+c     NBLA=AOPS(NSHELL)
+c     NBSI=AOPS(NSHELL)
+c     SIZE=NBLA*NBSI
+c     LMU=KLOC(NSHELL)+AOPS(NSHELL)-1
+c     ACNT=(LMU-1)*AOPS(NSHELL)+LMU
+c     LADR=SADR+INTOWP((ACNT-1)*SIZE)
+c     CYCLES=(LADR-AOSTRT)/INTOWP(LEFT)
+c     REST= (LADR-AOSTRT-CYCLES*INTOWP(LEFT))/INTOWP(1)
+c     IF(REST.EQ.0)REST=1
+c     WRITE(6,*)
+c     WRITE(6,*)' 2PDM ELEMENTS START AT  ',AOSTRT
+c     WRITE(6,*)' LAST ADDRESS OF FILE55 IS',LADR
+c     WRITE(6,*)' THE NUMBER OF DUMMY CYCLES',CYCLES,'  * ',INTOWP(LEFT)
+c     WRITE(6,*)' REST IS',REST
+c     SPOINT=AOSTRT
+c     CALL ZERO(DUMMY,LEFT)
+c     DO  990 I=1,CYCLES
+c     CALL WWRITW(ITAP55,DUMMY,INTOWP(LEFT),SPOINT,SPOINT)
+c 990 CONTINUE
+c     CALL WWRITW(ITAP55,DUMMY,INTOWP(REST),SPOINT,SPOINT)
+C
+c     WRITE(6,*)' LAST ADDRESS WRITTEN IS',SPOINT
+c     WRITE(6,*)
+C
+      RETURN
+      END

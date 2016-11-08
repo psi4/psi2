@@ -1,0 +1,22 @@
+      SUBROUTINE DIST
+      IMPLICIT REAL*8 (A-H,O-Z)
+      COMMON/COM101/NATOM,N3N
+      COMMON/COM102/CHG(150),X(150),Y(150),Z(150)
+      COMMON/COM103/R(1275)
+    1 FORMAT(//,2X,' INTERATOMIC DISTANCE MATRIX'/)
+C
+      CALL ZERO(R,1275)
+      IJ=0
+      DO 101 I=1,NATOM
+      DO 101 J=1,I
+      IJ=IJ+1
+      IF(I.EQ.J) GO TO 101
+      XD=X(I)-X(J)
+      YD=Y(I)-Y(J)
+      ZD=Z(I)-Z(J)
+      R(IJ)=DSQRT(XD*XD+YD*YD+ZD*ZD)
+  101 CONTINUE
+      WRITE(6,1)
+      CALL PRINT(R,1275,NATOM,6)
+      RETURN
+      END

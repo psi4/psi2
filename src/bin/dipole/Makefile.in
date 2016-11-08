@@ -1,0 +1,11 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+TRUESRC = dipole.F gprgid.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+

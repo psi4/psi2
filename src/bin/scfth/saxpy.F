@@ -1,0 +1,7 @@
+      SUBROUTINE SAXPY(N,SCALAR,A,IX,B,IY)
+      REAL*8 SCALAR,A(IX,N),B(IY,N)
+      DO 10 I=1,N
+      B(1,I)=B(1,I)+A(1,I)*SCALAR
+   10 CONTINUE
+      RETURN
+      END

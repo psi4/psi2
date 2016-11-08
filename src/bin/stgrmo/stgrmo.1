@@ -1,0 +1,163 @@
+.TH stgrmo 1 "14 January, 1995" "\*(]W" "\*(]D" 
+.SH NAME
+
+stgrmo \- an SCF stability program for RHF and ROHF systems
+
+.SH DESCRIPTION
+.LP
+The program
+.B stgrmo
+carries out a stability analysis of the SCF wavefunction.
+
+.SH REFERENCES
+.LP
+Methodology:
+.IP "1."
+Y. Yamaguchi, I. L. Alberts, J. D. Goddard, and H. F. Schaefer, Chem. Phys., 147, 309 (1990).
+.LP
+Symmetry Breaking Problems:
+.IP "1."
+W. D. Allen, D. A. Horner, R. L. DeKock, R. B. Remington, and H. F. Schaefer, Chem. Phys., 133, 11 (1989).
+.LP
+Instability Problems:
+.IP "1."
+N. A. Burton, Y. Yamaguchi, I. L. Alberts, and H. F. Schaefer, J. Chem. Phys., 95, 7466 (1991).
+.LP
+
+.sL
+.pN INPUT
+.pN FILE35
+.eL "FILES REQUIRED"
+
+.sL
+.pN FILE91
+.pN FILE92
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.SH INPUT REQUIRED
+.LP
+The
+.B stgrmo
+program
+searches through the default keyword path (first
+.B STABILITY
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBNROOT =\fP \fIinteger\fP"
+The number of roots to be calculated.  The default is 10 and the
+maximum is 20.
+
+.IP "\fBSYMMETRY =\fP \fIstring\fP"
+This is the point group of the molecule.
+For the
+.if n C1
+.if t C\s-2\d1\u\s0
+point group
+use \fIstring\fP \fB= C1\fP;
+for
+.if n Cs
+.if t C\s-2\ds\u\s0
+use \fBCS\fP;
+for
+.if n Ci
+.if t C\s-2\di\u\s0
+use \fBCI\fP;
+for
+.if n C2
+.if t C\s-2\d2\u\s0
+use \fBC2\fP;
+for
+.if n C2h
+.if t C\s-2\d2h\u\s0
+use \fBC2H\fP;
+for
+.if n C2v
+.if t C\s-2\d2v\u\s0
+use \fBC2V\fP;
+for
+.if n D2
+.if t D\s-2\d2\u\s0
+use \fBD2\fP;
+and
+for
+.if n D2h
+.if t D\s-2\d2h\u\s0
+use \fBD2H\fP.
+For linear molecules, point groups
+.if n C2v
+.if t C\s-2\d2v\u\s0
+or
+.if n D2h
+.if t D\s-2\d2h\u\s0
+should be used.
+There is no default.
+
+.IP "\fBNPAIR =\fP \fIinteger\fP"
+The number of Independent Pairs to be displayed for each root.
+The default is 20.
+
+.IP "\fBMAXITER =\fP \fIinteger\fP"
+This gives the maximum number of iterations to solve the number of roots specified.
+The default is 20 * 
+\fBROOT\fP.
+
+.IP "\fBMAXVEC =\fP \fIinteger\fP"
+This gives the maximum number of vectors used in the expansion to diagonlize
+the MO Hessian.  The
+default is 20 *
+\fBROOT\fP.
+
+.IP "\fBQCONVERGENCE =\fP \fIinteger\fP"
+The convergence criterion is
+.if n 10**(\-\fIinteger\fP).
+.if t 10\s-2\u(\-\fIinteger\fP)\d\s0.
+The default is 6.
+
+.IP "\fBDCONVERGENCE =\fP \fIinteger\fP"
+The convergence criterion is
+.if n 10**(\-\fIinteger\fP).
+.if t 10\s-2\u(\-\fIinteger\fP)\d\s0.
+The default is 6.
+
+.IP "\fBECONVERGENCE =\fP \fIinteger\fP"
+The convergence criterion is
+.if n 10**(\-\fIinteger\fP).
+.if t 10\s-2\u(\-\fIinteger\fP)\d\s0.
+The default is 6.
+
+.IP "\fBDMETHOD =\fIstring\f\fP"
+The method used for diagonalization.  There is a choice of 
+\fBRSP\fP,
+\fBDAVIDSON\fP,
+and \fBDLARGE\fP.  \fBRSP\fP
+should be used for small cases, since it calculates all roots.
+\fBDAVIDSON\fP
+is the Davidson-Liu method, which calculates only the specified
+number of roots and, therefore, should be used for medium size cases.  \fBDLARGE\fP
+is the Davidson-Liu method using buffered disk I/O to handle 
+very large matricies.  The default is \fBRSP\fP.  [Default subject to change 
+depending on the number of independent pairs.]
+
+.IP "\fBNVECTOR =\fP \fIinteger\fP"
+The number of SCF vectors to print.  The default is 10 + number
+of occupied orbitals.
+
+.IP "\fBSINGLET =\fP \fIboolean\fP"
+Do singlet stability check.  The default is 
+\fBfalse\fP.  (Currently not implimented)
+
+.IP "\fBTRIPLET =\fP \fIboolean\fP"
+Do triplet stability check.  The default is 
+\fBfalse\fP.  (Currently not implimented)
+
+.IP "\fBPRINT =\fP \fIinteger\fP"
+The program will give additional output.  The higher the value of
+.BR PRINT
+the more output provided.  The default is 0 for minimal output.
+

@@ -1,0 +1,65 @@
+.TH lag 1 "26 August, 1991" "\*(]W" "\*(]D"
+.SH NAME
+lag \- constructs the Lagrangian
+
+.SH DESCRIPTION
+.LP
+The program
+.B lag
+constructs the Lagrangian matrix for determining configuration
+interation energy gradients.
+
+.SH REFERENCES
+.LP
+See the Psi manual pages for the \fBcphfci\fP program.
+
+.sL
+.pN INPUT
+.pN FILE30
+.pN FILE40
+.pN FILE47
+.pN FILE52
+.pN FILE53
+.pN FILE54
+.pN FILE58
+.eL "FILES REQUIRED"
+
+.sL
+.pN FILE91
+.pN FILE93
+.pN FILE95
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN OUTPUT
+.pN FILE40   
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE47
+.pN FILE55
+.pN FILE71
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B lag
+program
+searches through the default keyword path (first
+.B LAG
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBDELETE53 =\fP \fIboolean\fP"
+When this is true,
+.pN FILE53
+will be deleted after \fBlag\fP completes.
+The default is true.
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+A printing option. The default is 0.
+

@@ -1,0 +1,48 @@
+.TH ccsr 1 "22 March, 1991" "\*(]W" "\*(]D"
+.SH NAME
+ccsr \- sorts MO integrals for use in coupled cluster calcultations
+
+.SH DESCRIPTION
+.LP
+The program
+.B ccsr
+is used to sort the MO basis integrals
+for their subsequent use in coupled cluster calculations.
+
+.sL
+.pN INPUT
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B ccsr
+program
+searches through the default keyword path (first
+.B CCSR
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBSYMMETRY =\fP \fIstring\fP"
+The point group of the molecule as is described in the \fBinput\fP program
+manual pages.  There is no default.
+
+.IP "\fBLARGE_CORE =\fP \fIboolean\fP"
+.B ccsr
+rarely needs more than 6 megabytes of memory, and on the rs6000s will
+run very slowly if more than 8 mb of core has been specified with MEMORY.
+Thus, by default, 
+.B ccsr
+will use less than 8mb of core, regardless of what is specified with the
+MEMORY keyword.  If more memory is needed, then set LARGE_CORE to TRUE.
+The default is false.

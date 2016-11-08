@@ -1,0 +1,284 @@
+C
+C----------------------------------------------------------------------
+C
+      SUBROUTINE SYMARR(ORBSYM,FLOV,NIRRED,NO,NV,NT,NOV,NM,
+     .                  FZO,FZV,NFZO,NFZV,UOFF,VADD,ITR,ITV,NONO,NVNV,
+     .                  TOFF,TADD,OPTION,NSGOO,NSGOV,NSHOV,NSLOV,
+     .                  AOFF,AADD,COFF,CADD,DOFF,DADD,EOFF,EADD)
+      IMPLICIT INTEGER (A-Z)
+      CHARACTER *4 OPTION
+      DIMENSION FLOV(NIRRED,4),ORBSYM(NT),UOFF(NO,NO,2),VADD(NV,NV),
+     .          FZO(NO),FZV(NV),NFZO(NIRRED),NFZV(NIRRED)
+      DIMENSION ITR(NOV),ITV(NV)
+      DIMENSION TOFF(NO,NO,2,NIRRED),TADD(NV,NV,NIRRED)
+      DIMENSION AOFF(NONO),AADD(NONO),COFF(NVNV),CADD(NONO),
+     .          DOFF(NM)  ,DADD(NM)  ,EOFF(NM)  ,EADD(NONO)
+C
+      WRITE(6,*)'IN SYMARR'
+      WRITE(6,*)'FZO'
+      WRITE(6,*) FZO
+      WRITE(6,*)'FZV'
+      WRITE(6,*) FZV
+C
+C     SET UP ARRAYS TO ADRESS T COEFF. AND 2E MO INTS.
+C
+      NOFF=0
+      DO 160 TSYM=1,NIRRED
+      DO 150 USYM=1,NIRRED
+      DO 140 VSYM=1,NIRRED
+      UVSYM=IEOR(USYM-1,VSYM-1)+1
+      IF(UVSYM.NE.TSYM) GO TO 130
+      DO 125 U=FLOV(USYM,1),FLOV(USYM,2)
+      DO 120 V=FLOV(VSYM,1),FLOV(VSYM,2)
+      NADD=0
+      UOFF(U,V,1)=NOFF
+      DO 119 BE=1,NV
+      BESYM=ORBSYM(BE+NO)
+      IF(FZV(BE).EQ.1) GO TO 119
+      DO 118 GA=1,BE
+      IF(FZV(GA).EQ.1) GO TO 118
+      GASYM=ORBSYM(GA+NO)
+      BEGSYM=IEOR(BESYM,GASYM)+1
+      IF(BEGSYM.NE.TSYM)GO TO 115
+      NOFF=NOFF+1
+      NADD=NADD+1
+      VADD(BE,GA)=NADD
+C     TOT=UOFF(U,V,1)+VADD(BE,GA)
+C     WRITE(6,657) U,V,UOFF(U,V,1),BE,GA,VADD(BE,GA),TOT
+  115 CONTINUE
+  118 CONTINUE
+  119 CONTINUE
+  120 CONTINUE
+  125 CONTINUE
+  130 CONTINUE
+  140 CONTINUE
+  150 CONTINUE
+  160 CONTINUE
+      DO 172 U=1,NO
+      DO 170 V=1,NO
+      UOFF(V,U,2)=UOFF(U,V,1)
+  170 CONTINUE
+  172 CONTINUE
+      DO 182 A=1,NV
+      DO 180 B=1,A
+C     ZLX(B,A)=2
+C     ZLX(A,B)=1
+      VADD(B,A)=VADD(A,B)
+  180 CONTINUE
+  182 CONTINUE
+  657 FORMAT(' U=',I3,' V=',I3,' UOFF=',I6,' BE=',I3,' GA=',I3,
+     .                        ' VADD=',I6,' TOT= ',I6)
+C
+C     FORM ARRAYS FOR T3
+C
+      IF(OPTION.EQ.'SDT1')THEN
+      DO 890 T3SYM=1,NIRRED
+      NOFF=0
+      DO 880 TSYM=1,NIRRED
+      DO 875 USYM=1,NIRRED
+      DO 870 VSYM=1,NIRRED
+      UVSYM=IEOR(USYM-1,VSYM-1)
+      IF(UVSYM.NE.TSYM-1)GO TO 870
+      DO 865 U=FLOV(USYM,1),FLOV(USYM,2)
+      DO 860 V=FLOV(VSYM,1),FLOV(VSYM,2)
+      NADD=0
+      TOFF(U,V,1,T3SYM)=NOFF
+      DO 850 BE=1,NV
+      IF(FZV(BE).EQ.1)GO TO 850
+      BESYM=ORBSYM(BE+NO)
+C     DO 840 GA=1,NV
+      DO 840 GA=1,BE
+      IF(FZV(GA).EQ.1)GO TO 840
+      GASYM=ORBSYM(GA+NO)
+      BEGSYM=IEOR(BESYM,GASYM)
+      XSYM=IEOR(UVSYM,BEGSYM)+1
+      IF(XSYM.NE.T3SYM)GO TO 820
+      NOFF=NOFF+1
+      NADD=NADD+1
+      TADD(BE,GA,T3SYM)=NADD
+      TOT=TOFF(U,V,1,T3SYM)+TADD(BE,GA,T3SYM)
+C     WRITE(6,657) U,V,TOFF(U,V,1,T3SYM),BE,GA,TADD(BE,GA,T3SYM),TOT
+  820 CONTINUE
+  840 CONTINUE
+  850 CONTINUE
+  860 CONTINUE
+  865 CONTINUE
+  870 CONTINUE
+  875 CONTINUE
+  880 CONTINUE
+      DO 885 U=1,NO
+      DO 885 V=1,NO
+  885 TOFF(V,U,2,T3SYM)=TOFF(U,V,1,T3SYM)
+      DO 887 BE=1,NV
+      DO 887 GA=1,BE
+  887 TADD(GA,BE,T3SYM)=TADD(BE,GA,T3SYM)
+  890 CONTINUE
+      ENDIF
+C
+C     GA TERMS (OOOO)
+C
+      NOFF=0
+      DO 290 TSYM=1,NIRRED
+      DO 280 ISYM=1,NIRRED
+      DO 270 JSYM=1,ISYM
+      IJSYM=IEOR(ISYM-1,JSYM-1)+1
+      IF(IJSYM.NE.TSYM) GO TO 270
+      FI=FLOV(ISYM,1)
+      DO 260 I=FI,FLOV(ISYM,2)
+      JLIM=FLOV(JSYM,2)
+      IF(ISYM.EQ.JSYM)JLIM=I
+      FJ=FLOV(JSYM,1)
+      DO 250 J=FJ,JLIM
+      NADD=0
+      IJ=ITR(I)+J
+      AOFF(IJ)=NOFF
+      DO 230 K=1,I
+      IF(FZO(K).EQ.1)GO TO 230
+      KSYM=ORBSYM(K)
+      LL=K
+      IF(K.EQ.I)LL=J
+      DO 220 L=1,LL
+      IF(FZO(L).EQ.1)GO TO 220
+      LSYM=ORBSYM(L)
+      KL=ITR(K)+L
+      KLSYM=IEOR(KSYM,LSYM)+1
+      IF(KLSYM.NE.TSYM)GO TO 220
+      NOFF=NOFF+1
+      NADD=NADD+1
+      AADD(KL)=NADD
+      TOT=AOFF(IJ)+AADD(KL)
+C     WRITE(6,657) I,J,AOFF(IJ),K,L,AADD(KL),TOT
+  220 CONTINUE
+  230 CONTINUE
+  250 CONTINUE
+  260 CONTINUE
+  270 CONTINUE
+  280 CONTINUE
+  290 CONTINUE
+      NSGOO=NOFF
+C
+C     GC TERMS (VVOO)
+C
+      NOFF=0
+      DO 490 TSYM=1,NIRRED
+         DO 480 ISYM=1,NIRRED
+            DO 470 JSYM=1,ISYM
+               IJSYM=IEOR(ISYM-1,JSYM-1)+1
+               IF(IJSYM.NE.TSYM) GO TO 470
+               FI=FLOV(ISYM,3)-NO
+               LI=FLOV(ISYM,4)-NO
+               DO 460 I=FI,LI
+                  FJ=FLOV(JSYM,3)-NO
+                  LJ=FLOV(JSYM,4)-NO
+                  IF(ISYM.EQ.JSYM)LJ=I
+                  DO 450 J=FJ,LJ
+                     NADD=0
+                     IJ=ITV(I)+J
+                     COFF(IJ)=NOFF
+                     DO 430 K=1,NO
+                        IF(FZO(K).EQ.1)GO TO 430
+                        KSYM=ORBSYM(K)
+                        DO 420 L=1,K
+                           IF(FZO(L).EQ.1)GO TO 420
+                           LSYM=ORBSYM(L)
+                           KL=ITR(K)+L
+                           KLSYM=IEOR(KSYM,LSYM)+1
+                           IF(KLSYM.NE.TSYM)GO TO 420
+                           NOFF=NOFF+1
+                           NADD=NADD+1
+                           CADD(KL)=NADD
+                           TOT=COFF(IJ)+CADD(KL)
+C                          WRITE(6,657) I,J,COFF(IJ),K,L,CADD(KL),TOT
+  420                   CONTINUE
+  430                CONTINUE
+  450             CONTINUE
+  460          CONTINUE
+  470       CONTINUE
+  480    CONTINUE
+  490 CONTINUE
+      NSGOV=NOFF
+C
+C     GD TERMS (VOVO)
+C
+      NOFF=0
+      DO 590 TSYM=1,NIRRED
+      DO 580 ISYM=1,NIRRED
+      DO 570 JSYM=1,NIRRED
+      IJSYM=IEOR(ISYM-1,JSYM-1)+1
+      IF(IJSYM.NE.TSYM) GO TO 570
+      FI=FLOV(ISYM,3)-NO
+      LI=FLOV(ISYM,4)-NO
+      DO 560 I=FI,LI
+      FJ=FLOV(JSYM,1)
+      LJ=FLOV(JSYM,2)
+      DO 550 J=FJ,LJ
+      NADD=0
+      IJ=ITR(I)+J
+      DOFF(IJ)=NOFF
+      DO 530 K=1,I
+      IF(FZV(K).EQ.1)GO TO 530
+      KSYM=ORBSYM(K+NO)
+      LL=NO
+      IF(K.EQ.I)LL=J
+      DO 520 L=1,LL
+      IF(FZO(L).EQ.1)GO TO 520
+      LSYM=ORBSYM(L)
+      KL=ITR(K)+L
+      KLSYM=IEOR(KSYM,LSYM)+1
+      IF(KLSYM.NE.TSYM)GO TO 520
+      NOFF=NOFF+1
+      NADD=NADD+1
+      DADD(KL)=NADD
+      TOT=DOFF(IJ)+DADD(KL)
+C     WRITE(6,657) I,J,DOFF(IJ),K,L,DADD(KL),TOT
+  520 CONTINUE
+  530 CONTINUE
+  550 CONTINUE
+  560 CONTINUE
+  570 CONTINUE
+  580 CONTINUE
+  590 CONTINUE
+      NSHOV=NOFF
+C
+C     GE TERMS (VOOO)
+C
+      NOFF=0
+      DO 690 TSYM=1,NIRRED
+      DO 680 ISYM=1,NIRRED
+      DO 670 JSYM=1,NIRRED
+      IJSYM=IEOR(ISYM-1,JSYM-1)+1
+      IF(IJSYM.NE.TSYM) GO TO 670
+      FI=FLOV(ISYM,3)-NO
+      LI=FLOV(ISYM,4)-NO
+      DO 660 I=FI,LI
+      FJ=FLOV(JSYM,1)
+      LJ=FLOV(JSYM,2)
+      DO 650 J=FJ,LJ
+      NADD=0
+      IJ=ITR(I)+J
+      EOFF(IJ)=NOFF
+      DO 630 K=1,NO
+      IF(FZO(K).EQ.1)GO TO 630
+      KSYM=ORBSYM(K)
+      DO 620 L=1,K
+      IF(FZO(L).EQ.1)GO TO 620
+      LSYM=ORBSYM(L)
+      KL=ITR(K)+L
+      KLSYM=IEOR(KSYM,LSYM)+1
+      IF(KLSYM.NE.TSYM)GO TO 620
+      NOFF=NOFF+1
+      NADD=NADD+1
+      EADD(KL)=NADD
+      TOT=EOFF(IJ)+EADD(KL)
+C     WRITE(6,657) I,J,EOFF(IJ),K,L,EADD(KL),TOT
+  620 CONTINUE
+  630 CONTINUE
+  650 CONTINUE
+  660 CONTINUE
+  670 CONTINUE
+  680 CONTINUE
+  690 CONTINUE
+      NSLOV=NOFF
+C
+      RETURN
+      END

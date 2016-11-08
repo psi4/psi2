@@ -1,0 +1,20 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+TRUESRC = addto.F case4.F choser.F cntrl.F contr2.F contr3.F cprint.F dallas.F \
+          dmat.F dmat1.F erduw.F expand.F extrl.F fentry.F infind.F gprgid.F \
+          inone.F input.F intwo.F onei.F order.F outptx.F overlp.F pitzer.F \
+          prime.F prints.F scf1.F schmit.F shrink.F sueig.F takon.F tfock.F \
+          traclo.F tritrn.F trn1e.F twoi.F virtul.F wschmt.F
+
+BINOBJ = $(TRUESRC:%.F=%.o) mk31.o
+
+include ../MakeRules
+
+install_man:: scfx.1
+	$(MKDIRS) $(mandir)/man1
+	cat $(top_srcdir)/lib/macro.psi $< | sed "s OS_NAME_HERE UNIX " > \
+            $(mandir)/man1/scfx.1
+

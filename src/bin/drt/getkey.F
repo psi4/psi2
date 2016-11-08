@@ -1,0 +1,21 @@
+clj080889 MIPS f77 2.0 abends when given a character*1 function
+clj080889      CHARACTER*1 FUNCTION GETKEY()
+      subroutine newkey(getkey)
+C
+      IMPLICIT INTEGER (A-Z)
+      character*1 getkey
+      CHARACTER*1 BLANK,DIGIT,MULTRF,VALENC,JUNK,NEXTC
+      CHARACTER*3 CODES,WORDS
+C
+      COMMON /CONST/  BLANK, DIGIT(10)
+      COMMON /DRTCOD/ NCODES,DELA(9),DELB(9),DELELE(9)
+     #,               NTYPES,VIRTUL,OCCUPD,VALOCC,RESCOR,RESVIR,FROZEN
+     #,               VALVIR,OPENSH,MULTI,SPESHL,MULTRF,VALENC
+     #,               WORDS(6,9),CODES(9)
+C
+      JUNK=NEXTC(GETKEY)
+      IF (GETKEY.EQ.MULTRF.OR.GETKEY.EQ.VALENC) RETURN
+      GETKEY=BLANK
+      CALL BKSPAC
+      RETURN
+      END

@@ -1,0 +1,145 @@
+      SUBROUTINE GDIIS (MM1,MNQ,M1,NQ,Q,G,H,A,LL,MM,DQ,DG,C,XLAM,IER)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION Q(MNQ,MM1), G(MNQ,MM1), A(M1,M1), LL(NQ), MM(NQ),
+     1DQ(NQ), DG(NQ), C(M1), H(NQ,NQ)
+      COMMON /IO/ IN,IOUT,INP2,IPUN,IGMUP
+C
+C     CONSTRUCTS AND SOLVE DIIS EQUATIONS
+C
+C     PARAMETERS
+C     M1 = NUMBER OF POINTS +1
+C          (NQ.GE.M1 AND M1.GE.3 MUST BE HOLD)
+C     MM1= MAXIMAL VALUE OF M1
+C     NQ = NUMBER OF VARIABLES(COORDINATES)
+C          (DIMENSION OF THE Q AND G VECTORS)
+C     MNQ= MAXIMAL VALUE OF NQ
+C     Q  = VECTORS OF THE VARIABLES
+C          STORED COLUMNWISE AS ((Q(I,J),J=1,NQ),J=1,M)
+C     G  = VECTORS OF GRADIENTS (FIRST DERIVATIVES)
+C          STORED SIMILARLY TO Q
+C     H  = INVERSE OF THE HESSIAN (SECOND DERIVATIVES)
+C     A  = DIIS MATRIX
+C     DQ = VECTOR OF PREDICTED VARIABLES
+C     DG = VECTOR OF PREDICTED GRADIENTS AT DQ
+C     C  = VECTOR OF DIIS COEFFICIENTS
+C     XLAM= LAGRANGIAN MULTIPLIER
+C     IER= ERROR CODE
+C        =0 NO ERROR
+C        =1 THE DIIS MATRIX IS SINGULAR
+C           (THE GRADIENTS ARE LINEARLY DEPENDENT)
+C
+C     METHOD
+C     P.PULAY,CHEM.PHYS.LETT.,23,393(1980)
+C     P.PULAY, J. COMP. CHEM., 3 (1982) 556-560
+C     P.CSASZAR AND P. PULAY, J. MOL. STRUCTURE 114,(1984) 31-34
+C
+C
+      IER=0
+      M=M1-1
+C
+C     CONSTRUCT DIIS MATRIX
+C
+      DO 121 I=1,NQ
+         IK=I*NQ-NQ
+         WRITE(IOUT,122) I
+         WRITE(IOUT,123) (H(I,J), J=1,NQ)
+  121 CONTINUE
+  122 FORMAT('HESSIAN ROW #',I2)
+  123 FORMAT(8F10.7)
+      DO 124 I=1,M
+         WRITE(IOUT,125) I
+         WRITE(IOUT,123) (G(K,I), K=1,NQ)
+  124 CONTINUE
+  125 FORMAT('GRADIENT #',I2)
+      DO 70 I=1,M
+         DO 20 II=1,NQ
+            S=0.0D0
+            DO 10 K=1,NQ
+               IIK=(K-1)*NQ+II
+   10       S=S+H(II,K)*G(K,I)
+   20    DQ(II)=S
+         WRITE(IOUT,126) I
+         WRITE(IOUT,123) (DQ(K), K=1,NQ)
+  126    FORMAT('DQ #',I2)
+         DO 60 J=1,I
+            DO 40 II=1,NQ
+               S=0.0D0
+               DO 30 K=1,NQ
+                  IIK=(K-1)*NQ+II
+   30          S=S+H(II,K)*G(K,J)
+   40       DG(II)=S
+         WRITE(IOUT,127) J
+         WRITE(IOUT,123) (DG(K), K=1,NQ)
+  127    FORMAT('DG #',I2)
+            S=0.0D0
+            DO 50 K=1,NQ
+   50       S=S+DQ(K)*DG(K)
+            A(I,J)=S
+            A(J,I)=S
+   60    CONTINUE
+         A(I,M1)=-1.0
+         A(M1,I)=-1.0
+   70 CONTINUE
+      A(M1,M1)=0.0
+      WRITE(IOUT,860)
+  860 FORMAT(1X,'DIIS MATRIX')
+      DO 277 I=1,M1
+         WRITE(IOUT,660) (A(I,J), J=1,M1)
+  277 CONTINUE
+  660 FORMAT(8F10.5)
+C
+C     SCALE A MATRIX BEFORE INVERSION
+C
+      DO 80 I=1,M
+   80 DQ(I)=1.0/DSQRT(DABS(A(I,I)))
+      DO 90 I=1,M1
+   90 CONTINUE
+      DQ(M1)=1.0
+      SMIN=1.E10
+      DO 100 I=1,M1
+      DO 100 J=I,M1
+C
+C     DQ(J)=1.0
+C
+         A(I,J)=A(I,J)*DQ(I)*DQ(J)
+         A(J,I)=A(I,J)
+         IF (DABS(A(I,J)).LT.SMIN.AND.I.NE.J) SMIN=A(I,J)
+  100 CONTINUE
+      TOL=DABS(SMIN)*1.E-10
+      IF (TOL.EQ.0.0) TOL=1.E-8
+      CALL OSINV1(A,M1,DET,TOL,LL,MM)
+      DO 110 I=1,M
+      DO 110 J=I,M
+         A(I,J)=A(I,J)*DQ(I)*DQ(J)
+  110 A(J,I)=A(I,J)
+      IF (DET.NE.0.0) GO TO 120
+      IER=1
+      RETURN
+  120 CONTINUE
+C
+C     DIIS COEFFICIENTS AND THE LAGRANGIAN
+C
+      DO 130 I=1,M
+  130 C(I)=-A(I,M1)*DQ(I)
+      XLAM=-A(M1,M1)
+C
+C     PREDICTED VARIABLES AND GRADIENTS
+C
+      DO 150 I=1,NQ
+         SI=0.0
+         SJ=0.0
+         DO 140 J=1,M
+            SI=SI+C(J)*Q(I,J)
+  140    SJ=SJ+C(J)*G(I,J)
+         DQ(I)=SI
+         DG(I)=SJ
+  150 CONTINUE
+      DO 160 I=1,M1
+         A(I,M1)=-C(I)
+         A(M1,I)=-C(I)
+  160 CONTINUE
+      A(M1,M1)=-XLAM
+      CALL OSINV1(A,M1,DET,TOL,LL,MM)
+      RETURN
+C
+      END

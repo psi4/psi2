@@ -1,0 +1,28 @@
+# Generated automatically from Makefile.in by configure.
+
+srcdir = /home/usrb/b3/longhorn/psi/src/lib/iomrth
+VPATH = /home/usrb/b3/longhorn/psi/src/lib/iomrth
+
+include ../MakeVars
+
+TARGET = $(top_objdir)/lib/iomrth.a
+
+TRUESRC = dfunc.F dnode.F droot.F dsmit.F root4.F root5.F rt123.F
+
+LIBOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+
+ifneq (,$(findstring power2-ibm-aix,$(target)))
+ifeq ($(FC),xlf)
+rt123.o: rt123.f
+	$(FC) -qxflag=xalias -qdpc -qarch=pwrx -qtune=pwrx -c $< -o $@
+
+root4.o: root4.f
+	$(FC) -qxflag=xalias -qdpc -qarch=pwrx -qtune=pwrx -c $< -o $@
+
+root5.o: root5.f
+	$(FC) -qxflag=xalias -qdpc -qarch=pwrx -qtune=pwrx -c $< -o $@
+endif
+endif
+

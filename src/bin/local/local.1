@@ -1,0 +1,76 @@
+.TH local 1 "9 April, 1991" "\*(]W" "\*(]D"
+.SH NAME
+local \- localizes molecular orbitals
+
+.SH DESCRIPTION
+The program
+.B local
+localizes the molecular orbitals
+using the algorithm of Pipek and Mezey.  After execution,
+the files
+.pN CMO
+and
+.pN LMO
+will contain the canonical molecular orbitals (as found
+in
+.pN FILE30 )
+and the localized
+molecular orbitals, respectively, in terms of the
+atomic orbitals.
+The
+.pN CMO
+file contains all of the orbitals, but the
+.pN LMO
+file only contains the doubly occupied orbitals.
+These files can then be
+used by the \fBcontour\fP program to localize the orbitals.
+
+The \fBlocal\fP program needs the molecular orbital and basis set
+information from
+.pN FILE30 .
+
+.SH REFERENCES
+.IP "1."
+J Pipek and P. G. Mezey, J. Chem. Phys. 90, p. 4916, (1989).
+
+.sL
+.pN INPUT
+.pN FILE30
+.eL "FILES REQUIRED"
+
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN CMO
+.pN LMO
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B local
+program requires no special input.  However, the input options
+which apply to all programs apply to the \fBlocal\fP program.
+For this input, the default keyword path (first
+.B LOCAL
+and then
+.BR DEFAULT )
+is searched.
+
+.SH PRINT CONTROL
+The following print control options are recognized by \fBlocal\fP:
+
+.IP \fBBRIEF\fP
+This should be \fBON\fP to indicate that minimal printing is
+desired.  The default is \fBON\fP.
+
+.SH BUGS
+Dimensions of arrays in the \fBlocalf\fP program are set at compile
+time and no double checking is done to make sure that memory is not
+being overwritten.  This needs to be fixed, but, for now, if a large
+molecule gives strange results, this could be the reason.

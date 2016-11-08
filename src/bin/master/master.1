@@ -1,0 +1,107 @@
+.TH master 1 "14 January, 1995" "\*(]W" "\*(]D"
+.SH NAME
+master \- form the master file
+
+.SH DESCRIPTION
+.LP
+The program
+.B master
+uses the SCF information to form the master file
+.pN FILE40 ) (
+for use in subsequent programs.
+The master file contains the necessary information (e.g. SCF
+eigenvectors, sorted eigenvectors, parameters, constants, etc.)
+to calculate SCF analytical derivatives and properties.
+
+.sL
+.pN INPUT
+.pN FILE30
+.pN FILE34
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE36
+.pN FILE40
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B master
+program
+searches through the default keyword path (first
+.B MASTER
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBDELETE34 =\fP \fIboolean\fP"
+The program will delete the SO basis two electron integrals in
+.pN FILE34
+if \fIboolean\fP is true.
+Possible values for this parameter are
+.BR TRUE ,
+.BR YES ,
+.BR 1 ,
+.BR FALSE ,
+.BR NO ,
+and
+.BR 0 .
+The default is true for WFN = SCF and false for WFN = CI.
+
+.IP "\fBDELETE36 =\fP \fIboolean\fP"
+The program will delete the SO basis two electron integrals in
+.pN FILE36
+if \fIboolean\fP is true.
+The default is true for WFN = CI and false for WFN = SCF.
+
+.IP "\fBWFN =\fP \fIstring\fP"
+This is the type of wavefunction which is ultimately desired.
+The default is
+.BR SCF .
+
+.IP "\fBSOCC =\fP \fIinteger_vector\fP"
+This gives the number of singly occupied orbitals in each
+irreducible representation.  If \fBOPENTYPE = NONE\fP,
+then this defaults to the zero vector.  Otherwise,
+there is no default.  (NOTE: For this particular keyword the
+.B mastux
+program
+searches through the keyword path
+.BR MASTER ,
+.BR SCF ,
+and then
+.BR DEFAULT .)
+
+.IP "\fBOPENTYPE =\fP \fIstring\fP"
+This specifies the state desired.  It can be one of
+.B NONE
+(for a closed shell singlet),
+.B SINGLET
+(for an open shell singlet with two singly occupied orbitals of
+different irreducible representations),
+.B HIGHSPIN
+(for any high spin open shell system),
+.B TWOCON
+(for a two configuration singlet).
+The default is
+.BR NONE .
+
+.IP "\fBDERTYPE =\fP \fIstring\fP"
+This specifies the order of derivative that is to eventually be done.
+It is used by the
+.B scf
+program to determine if certain files are to be written and it is
+also used to determine the default convergence of the wavefunction.
+The default is
+.BR FIRST .
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+This is a print option.
+The default is 0.

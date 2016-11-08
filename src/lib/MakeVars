@@ -1,0 +1,65 @@
+
+SHELL = /bin/sh
+
+#
+# Initialize variables that have been figured out by configure.
+#
+
+target = i686-generic-linux2.4
+
+prefix = /usr/local/psi
+exec_prefix = $(prefix)/$(target)
+bindir = ${exec_prefix}/bin
+libdir = ${exec_prefix}/lib
+manext = 5
+mandir = ${prefix}/man
+datadir = ${prefix}/share
+incdir = $(prefix)/include
+top_srcdir = /home/usrb/b3/longhorn/psi
+top_objdir = /home/usrb/b3/longhorn/psi
+objincdir = /home/usrb/b3/longhorn/psi/include
+
+RANLIB = ranlib
+YACC = bison -y
+CC = gcc
+CCDEPEND = :
+DODEPEND = no
+FC = g77
+INSTALL = /usr/bin/install -c
+INSTALL_INCLUDE = $(top_srcdir)/installinc.sh
+INSTALL_DATA = ${INSTALL} -m 644
+INSTALL_PROGRAM = ${INSTALL}
+
+PSIPP = /home/usrb/b3/longhorn/psi/src/util/psipp/psipp
+TMPL = /home/usrb/b3/longhorn/psi/src/util/tmpl/tmpl
+MKDIRS = $(top_srcdir)/mkdirs.sh
+
+CDEF =  -DMAIN_FUNC=MAIN__ -DFCLINK=1 -DLinux  -DHAVE_ERRNO_H=1 -DHAVE_FCNTL_H=1 -DHAVE_UNISTD_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_TIMES_H=1 -DHAVE_SYS_PARAM_H=1 
+COPT = -O
+COTH = 
+CDBG = 
+CINC = -I. -I$(objincdir) -I$(incdir)
+
+FDEF =  -DHAS_IAND -DHAS_IOR -DHAS_IEOR -DHAS_ISHFT -DLinux
+FOPT = -O
+FOTH = 
+FDBG = 
+FINC = -I. -I$(objincdir) -I$(incdir)
+FSTATIC = -fno-automatic -finit-local-zero
+
+# flags to be passed to compilers
+CFLAGS = $(CDBG) $(COPT) $(CDEF) $(COTH) $(CINC)
+FFLAGS = $(FDBG) $(FOPT) $(FOTH) $(FSTATIC)
+FFLAGS_NOSTATIC = $(FOPT) $(FOTH) $(FDBG)
+
+# set up suffixes needed for various files
+F77SUF = f
+OBJSUF = o
+LIBSUF = a
+
+#
+# Initialize other variables.
+#
+
+AR = ar
+ARFLAGS = r

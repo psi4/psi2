@@ -1,0 +1,20 @@
+       SUBROUTINE MASS(F,YWGHT)
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       INTEGER SYM
+       REAL*8 MDYNE
+       COMMON /PARAM/VECT(60),ANGS,FRCS,MDYNE
+     1,SYM(60),ICEN,N,ISYM,ITYPE(20),IATNO(20),ITAPE5
+       COMMON /MASSES/ AMASS(30)
+       DIMENSION F(N,N),WGHT(60),YWGHT(ICEN)
+       K = 0
+       DO 10 I=1,ICEN
+       L = IATNO(I)
+       YWGHT(I)=AMASS(L)
+       DO 10 J=1,3
+       K = K + 1
+ 10    WGHT(K) = AMASS(L)
+       DO 20 I=1,N
+       DO 20 J=1,N
+ 20    F(I,J) = F(I,J) / DSQRT(WGHT(I) * WGHT(J))
+       RETURN
+       END

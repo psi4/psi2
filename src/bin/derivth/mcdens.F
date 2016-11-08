@@ -1,0 +1,128 @@
+      SUBROUTINE MCDENS(II,JJ,KK,LL,Q4,RDMBF,ABTEMP,IJOFF,KLOFF,KLSIZ,
+     1                  ISHIZ,IMOSHL)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C11-14-88  (FOR  7MB) DIMENSION ABTEMP(10,10,10,10),RDMBF(10000)
+C11-14-88  (FOR 15MB) DIMENSION ABTEMP(15,15,15,15),RDMBF(50625)
+      LOGICAL IANDJ,KANDL
+      DIMENSION ABTEMP(10,10,10,10),RDMBF(10000)
+      DIMENSION IJOFF(1),KLOFF(1),KLSIZ(1),ISHIZ(1),IMOSHL(1)
+ctph  COMMON/ABDEN/ABDENS(1296)
+C11-14-88  (For  7Mb) COMMON/ABDEN/ABDENS(10000)
+C11-14-88  (For 15Mb) COMMON/ABDEN/ABDENS(50625)
+      COMMON/ABDEN/ABDENS(10000)
+      COMMON/BASIS/NBASIS,NBFAO,NBATRI,NBATR2
+      COMMON/CALCS/ISTYPE,ICTYPE,IRAMAN,IAFOCK,IDFOCK,IDINT
+      COMMON/COUPL/ALP(5,5),BET(5,5)
+      COMMON/DMISC/IANDJ,KANDL,LOCI,LOCJ,LOCK,LOCL,IOFSET
+      COMMON/FUNCS/NTYPES,NTYPEP,NTREAD,NATOM,N3N,NATRI,NSYM
+      COMMON/GAUSB/KNUC(200),KTYPE(200),KSTART(200),KLOC(200),
+     1             KMIN(200),KMAX(200),KNG(200)
+      COMMON/MINS /MINI,MAXI,MINJ,MAXJ,MINK,MAXK,MINL,MAXL
+      COMMON/PARA4/MMIJ,MMKL,ISAME(100)
+      COMMON/POSIX/IPOS(225),JPOS(225),KPOS(225),LPOS(225),IMUL(225)
+      COMMON/SIGNS/IOFF(256),IPRNT
+      COMMON/TCSCF/SOCC1,SOCC2,SOCC12
+      COMMON/TOLER/DLIM
+      DATA ZERO,HALF,TWO,FOUR,EIGHT / 0.0D+00 , 0.5D+00, 2.0D+00 ,
+     1                                4.0D+00 , 8.0D+00 /
+C
+      DMAX=ZERO
+C
+C       READ DENSITY MATRIX FROM  FILE 55
+C
+      IT55=55
+      NN=0
+      DMAX=0.0D+00
+      II2=II
+      JJ2=JJ
+      KK2=KK
+      LL2=LL
+      IJS=IOFF(II)+JJ
+      KLS=IOFF(KK)+LL
+      ISTRT=INTOWP(IJOFF(IJS)+KLOFF(KLS)*KLSIZ(IJS))+IOFSET
+      KIZE=ISHIZ(II)*ISHIZ(JJ)*ISHIZ(KK)*ISHIZ(LL)
+      CALL WREADW(IT55,RDMBF,INTOWP(KIZE),ISTRT,IEND)
+cges  WRITE(6,*)' READING IT55 AT ADDRESS',ISTRT
+cges  WRITE(6,*)' I J K L  SHELLS', II,JJ,KK,LL,' SIZE=',KIZE
+cges  WRITE(6,'(10F13.8)') (RDMBF(I),I=1,KIZE)
+      ICNT=0
+      DO 5 ISH=1,ISHIZ(II)
+        DO 4 JSH=1,ISHIZ(JJ)
+          DO 3 KSH=1,ISHIZ(KK)
+            DO 2 LSH=1,ISHIZ(LL)
+               ICNT=ICNT+1
+               ABTEMP(ISH,JSH,KSH,LSH)=RDMBF(ICNT)
+    2        CONTINUE
+    3      CONTINUE
+    4    CONTINUE
+    5 CONTINUE
+C
+      DO 1700 I=MINI,MAXI
+        DO 1600 J=MINJ,MAXJ
+          LMAX=MAXL
+          DO 1500 K=MINK,MAXK
+            IF (KANDL) LMAX=K
+            DO 1400 L=MINL,LMAX
+              NN=NN+1
+              I1=LOCI+I
+              I2=LOCJ+J
+              I3=LOCK+K
+              I4=LOCL+L
+              IF(I1.GE.I2) GO TO 700
+              N=I1
+              I1=I2
+              I2=N
+  700         IF(I3.GE.I4) GO TO 800
+              N=I3
+              I3=I4
+              I4=N
+  800         IF(I1-I3) 900,1000,1100
+  900         N=I1
+              I1=I3
+              I3=N
+              N=I2
+              I2=I4
+              I4=N
+              GO TO 1100
+ 1000         IF(I2.LT.I4) GO TO 900
+ 1100         CONTINUE
+C
+              IIS = IMOSHL(I1)
+              JJS = IMOSHL(I2)
+              KKS = IMOSHL(I3)
+              LLS = IMOSHL(I4)
+              IF ( (IOFF(IIS)+JJS).GE.(IOFF(KKS)+LLS) ) GO TO 1110
+              N=I1
+              I1=I3
+              I3=N
+              N=I2
+              I2=I4
+              I4=N
+ 1110         J1 = I1 - KLOC(II ) + 1
+              J2 = I2 - KLOC(JJ ) + 1
+              J3 = I3 - KLOC(KK ) + 1
+              J4 = I4 - KLOC(LL ) + 1
+ctph  WRITE(16,'(2X,8I5)') I1,I2,I3,I4,KLOC(II),KLOC(JJ),KLOC(KK)
+ctph 1                          ,KLOC(LL)
+              DFAC=ABTEMP(J1,J2,J3,J4)*8.0
+C
+              IF(I1.EQ.I2) DFAC=DFAC*0.5
+              IF(I3.EQ.I4) DFAC=DFAC*0.5
+              DFAC=DFAC*Q4
+C
+C     ----- THIS FACTOR OF TWO IS NEEDED BECAUSE ONLY GENERATE
+C               ONE OF TWO POSSIBLE DERIVATIVES OF [II,KL]     -----
+C
+              IF (IANDJ.AND.I.EQ.J) DFAC=DFAC*2.0
+C
+              IF (ABS(DFAC).GT.DMAX) DMAX=ABS(DFAC)
+              ABDENS(NN)=DFAC
+ctph  WRITE(6,'(2X,8I5,G18.8)') II,JJ,KK,LL,J1,J2,J3,J4,DFAC
+ 1400       CONTINUE
+ 1500     CONTINUE
+ 1600   CONTINUE
+ 1700 CONTINUE
+      F00TOL=-1.0E+10
+C
+      RETURN
+      END

@@ -1,0 +1,176 @@
+C
+C----------------------------------------------------------------------
+C
+      SUBROUTINE RDINTS(IDISK,MOINTS,LENINT,BUF,IBUF,LENBUF,NO,NV,
+     .                  IPP,IQQ,IOFF,IADD)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      REAL*8 MOINTS(LENINT),BUF(LENBUF)
+      COMMON/INTS/NSGOO,NSGVV,NSGOV,NSHOV,NSLOV,NSLVO
+      INTEGER IBUF(2*LENBUF),
+     .        IOFF(*),IADD(*),IPP(*),IQQ(*)
+C
+      CALL SREW(IDISK)
+      CALL ZERO(MOINTS,LENINT)
+      CALL ZERO(BUF,LENBUF)
+C
+      ITEMP=255
+      INTLEN=(INTOWP(LENBUF)-2)/INTOWP(1)
+      MAXVAL=INTOWP(INTLEN)/(1+INTOWP(1))
+      IBOFF=(MAXVAL+2)/INTOWP(1)
+C
+C***  A INTS  **** (OO|OO) *****
+C
+      IF (IDISK.NE.60) GOTO 110
+  111 CONTINUE
+      CALL SREAD(IDISK,IBUF,INTOWP(LENBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 12 II=1,MBUF
+         IJKL=IBUF(II+2)
+         I=ISHFT(IJKL,-24)
+         J=IAND(ITEMP,ISHFT(IJKL,-16))
+         IJ=IPP(I)+J
+         K=IAND(ITEMP,ISHFT(IJKL,-8))
+         L=IAND(ITEMP,IJKL)
+         KL=IQQ(K)+L
+         IJKL=IOFF(IJ)+IADD(KL)
+         IF(IJKL.GT.NSGOO) GO TO 12
+         MOINTS(IJKL)=BUF(II+IBOFF)
+   12 CONTINUE
+      IF (IFLG.EQ.0) GOTO 111
+  110 CONTINUE
+C
+C***  B INTS  **** (VV|VV) *****
+C
+      IF (IDISK.NE.61) GOTO 120
+  112 CONTINUE
+      CALL SREAD(IDISK,IBUF,INTOWP(LENBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 22 II=1,MBUF
+         IJKL=IBUF(II+2)
+         I=ISHFT(IJKL,-24)-NO
+         J=IAND(ITEMP,ISHFT(IJKL,-16))-NO
+         IJ=IPP(I)+J
+         K=IAND(ITEMP,ISHFT(IJKL,-8))-NO
+         L=IAND(ITEMP,IJKL)-NO
+         KL=IPP(K)+L
+         IJKL=IOFF(IJ)+IADD(KL)
+         IF(IJKL.GT.NSGVV)GO TO 22
+         MOINTS(IJKL)=BUF(II+IBOFF)
+   22 CONTINUE
+      IF (IFLG.EQ.0) GOTO 112
+  120 CONTINUE
+C
+C***  C INTS  **** (VV|OO) *****
+C
+      IF (IDISK.NE.62) GOTO 130
+  113 CONTINUE
+      CALL SREAD(IDISK,IBUF,INTOWP(LENBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 32 II=1,MBUF
+         IJKL=IBUF(II+2)
+         I=ISHFT(IJKL,-24)-NO
+         J=IAND(ITEMP,ISHFT(IJKL,-16))-NO
+         IJ=IPP(I)+J
+         K=IAND(ITEMP,ISHFT(IJKL,-8))
+         L=IAND(ITEMP,IJKL)
+         KL=IQQ(K)+L
+         IJKL=IOFF(IJ)+IADD(KL)
+         IF(IJKL.GT.NSGOV)GO TO 32
+         MOINTS(IJKL)=BUF(II+IBOFF)
+   32 CONTINUE
+      IF (IFLG.EQ.0) GOTO 113
+  130 CONTINUE
+C
+C***  D INTS  **** (VO|VO) *****
+C
+      IF (IDISK.NE.63) GOTO 140
+  114 CONTINUE
+      CALL SREAD(IDISK,IBUF,INTOWP(LENBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 42 II=1,MBUF
+         IJKL=IBUF(II+2)
+         I=ISHFT(IJKL,-24)-NO
+         J=IAND(ITEMP,ISHFT(IJKL,-16))
+         IJ=IPP(I)+J
+         K=IAND(ITEMP,ISHFT(IJKL,-8))-NO
+         L=IAND(ITEMP,IJKL)
+         KL=IQQ(K)+L
+         IJKL=IOFF(IJ)+IADD(KL)
+         IF(IJKL.GT.NSHOV)GO TO 42
+         MOINTS(IJKL)=BUF(II+IBOFF)
+   42 CONTINUE
+      IF (IFLG.EQ.0) GOTO 114
+  140 CONTINUE
+C
+C***  E INTS  **** (VO|OO) *****
+C
+      IF (IDISK.NE.64) GOTO 150
+  115 CONTINUE
+      CALL SREAD(IDISK,IBUF,INTOWP(LENBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 52 II=1,MBUF
+         IJKL=IBUF(II+2)
+         I=ISHFT(IJKL,-24)-NO
+         J=IAND(ITEMP,ISHFT(IJKL,-16))
+         IJ=IPP(I)+J
+         K=IAND(ITEMP,ISHFT(IJKL,-8))
+         L=IAND(ITEMP,IJKL)
+         KL=IQQ(K)+L
+         IJKL=IOFF(IJ)+IADD(KL)
+         IF(IJKL.GT.NSLOV)GO TO 52
+         MOINTS(IJKL)=BUF(II+IBOFF)
+   52 CONTINUE
+      IF (IFLG.EQ.0) GOTO 115
+  150 CONTINUE
+C
+      IF (IDISK.NE.65) GOTO 160
+      CALL SREW(IDISK+1)
+C
+C***  F INTS  **** (VV|VO) *****
+C
+  116 CONTINUE
+      CALL SREAD(IDISK,IBUF,INTOWP(LENBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 62 II=1,MBUF
+         IJKL=IBUF(II+2)
+         I=ISHFT(IJKL,-24)-NO
+         J=IAND(ITEMP,ISHFT(IJKL,-16))-NO
+         IJ=IPP(I)+J
+         K=IAND(ITEMP,ISHFT(IJKL,-8))-NO
+         L=IAND(ITEMP,IJKL)
+         KL=IQQ(K)+L
+         IJKL=IADD(KL)+IOFF(IJ)
+         IF(IJKL.GT.NSLVO)GO TO 62
+         MOINTS(IJKL)=BUF(II+IBOFF)
+   62 CONTINUE
+      IF (IFLG.EQ.0) GOTO 116
+C
+C***  F INTS  **** (VO|VV) *****
+C
+  117 CONTINUE
+      CALL SREAD(IDISK+1,BUF,INTOWP(LENBUF))
+      IFLG=IBUF(1)
+      MBUF=IBUF(2)
+      DO 72 II=1,MBUF
+         IJKL=IBUF(II+2)
+         I=ISHFT(IJKL,-24)-NO
+         J=IAND(ITEMP,ISHFT(IJKL,-16))
+         IJ=IQQ(I)+J
+         K=IAND(ITEMP,ISHFT(IJKL,-8))-NO
+         L=IAND(ITEMP,IJKL)-NO
+         KL=IPP(K)+L
+         IJKL=IADD(IJ)+IOFF(KL)
+         IF(IJKL.GT.NSLVO)GO TO 72
+         MOINTS(IJKL)=BUF(II+IBOFF)
+   72 CONTINUE
+      IF (IFLG.EQ.0) GOTO 117
+  160 CONTINUE
+C
+      RETURN
+      END

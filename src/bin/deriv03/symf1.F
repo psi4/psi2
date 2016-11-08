@@ -1,0 +1,323 @@
+      SUBROUTINE SYMF1(B)
+      IMPLICIT REAL*8 (A-H,O-Z)
+CTPH  DIMENSION TX(10,10),TY(10,10),TZ(10,10)
+      DIMENSION TX(35,35),TY(35,35),TZ(35,35)
+CTPH  DIMENSION UX(10,10),UY(10,10),UZ(10,10)
+      DIMENSION UX(35,35),UY(35,35),UZ(35,35)
+CTPH  DIMENSION VX(10,10),VY(10,10),VZ(10,10)
+      DIMENSION VX(35,35),VY(35,35),VZ(35,35)
+      DIMENSION MI(8),MJ(8),MIAT(8),MOP(8)
+      LOGICAL IANDJ
+      COMMON/BASIS/NBASIS,NBFAO,NBATRI,NBATR2
+      COMMON/FUNCS/NTYPES,NTYPEP,NTREAD,NATOM,N3N,NATRI,NSYM
+      COMMON/GAUSB/KATOM(200),KTYPE(200),KSTART(200),KLOC(200),
+     1             KMIN(200),KMAX(200),KNG(200)
+CTPH  COMMON/GAUSC/T(36),PTR(3,3,8),DTR(6,6,8)
+      COMMON/GAUSC/T(225),PTR(3,3,8),DTR(6,6,8),FTR(10,10,8),
+     1             GTR(15,15,8)
+      COMMON/GAUSD/INVT(8),ISO(200,8),LBLAT(2,50),ICT(50,8)
+      COMMON/ISPAC/INDIN(120),INDOUT(30)
+      COMMON/PARA1/NSHELL,NT,MXT,NISO
+      COMMON/SIGNS/IOFF(256),IPRNT
+      COMMON/TOLER/DLIM
+      DIMENSION B(NBATRI,3,NATOM,NTREAD)
+      DATA ZERO,ONE / 0.0D+00 , 1.0D+00 /
+C
+      IF(NT.EQ.1) RETURN
+C
+      FACT=ONE/DFLOAT(NT)
+C
+C::::::::::::::::::::::::::
+C:::::OPEN-SHELL TYPES:::::
+C::::::::::::::::::::::::::
+C
+      DO 1000 IBSET=1,NTREAD
+C
+C     ----- FIND A BLOCK (I,J) -----
+C
+C#################
+C#####I SHELL#####
+C#################
+C
+      DO 900 II=1,NSHELL
+C
+      DO 101 ITR=1,NISO
+  101 INDOUT(ITR)=ISO(II,ITR)
+cges  CALL ISOOUT
+      call ysoout
+      DO 102 ITR=1,NT
+      IST=INDIN(ITR)
+      IF(IST.GT.II) GO TO 900
+  102 MI(ITR)=IST
+      LIT=KTYPE(II)
+      MINI=KMIN(II)
+      MAXI=KMAX(II)
+      LOCI=KLOC(II)-MINI
+C
+C#################
+C#####J SHELL#####
+C#################
+C
+      DO 800 JJ=1,II
+C
+      DO 103 ITR=1,NISO
+  103 INDOUT(ITR)=ISO(JJ,ITR)
+cges  CALL ISOOUT
+      call ysoout
+      DO 104 ITR=1,NT
+      JST=INDIN(ITR)
+      MJ(ITR)=JST
+      IF(JST.GT.II) GO TO 800
+      IST=MI(ITR)
+      ISH=MAX0(IST,JST)
+      JSH=MIN0(IST,JST)
+      IF(ISH.EQ.II.AND.JSH.GT.JJ) GO TO 800
+  104 CONTINUE
+      LJT=KTYPE(JJ)
+      MINJ=KMIN(JJ)
+      MAXJ=KMAX(JJ)
+      LOCJ=KLOC(JJ)-MINJ
+      IANDJ=II.EQ.JJ
+      JMAX=MAXJ
+C
+C   FIND THEM THERE EQUIVALENT BLOCKS
+C   TRANSFER THE EQUIVALENT BLOCK INTO T-MATRIX
+C   COMPUTE R T R
+C   PUT RESULT BACK INTO THE (I,J) BLOCK OF H-MATRIX
+C
+      DO 400 IAT=1,NATOM
+C
+      DO 105 ITR=1,NT
+  105 MIAT(ITR)=ICT(IAT,ITR)
+ctph  DO 106 I=1,10
+ctph  DO 106 J=1,10
+      DO 106 I=1,35
+      DO 106 J=1,35
+      VX(J,I)=ZERO
+      VY(J,I)=ZERO
+      VZ(J,I)=ZERO
+  106 CONTINUE
+      DO 107 ITR=1,NT
+      MOP(ITR)=0
+      MIT=MI(ITR)
+      MJT=MJ(ITR)
+      MOI=1
+      IF(MIT.LT.MJT) MOI=-1
+      MII=MAX0(MIT,MJT)
+      MJJ=MIN0(MIT,MJT)
+      IF(MII.NE.II.OR.MJJ.NE.JJ) GO TO 107
+      MOP(ITR)=MOI
+      IF(IAT.LT.MIAT(ITR)) GO TO 400
+  107 CONTINUE
+      DO 110 ITR=1,NT
+      NTR=ITR
+      NIAT=MIAT(NTR)
+      KK=MI(ITR)
+      LL=MJ(ITR)
+      LOCK=KLOC(KK)-KMIN(KK)
+      LOCL=KLOC(LL)-KMIN(LL)
+      DO 108 K=MINI,MAXI
+      LCK=LOCK+K
+      IF(IANDJ) JMAX=K
+      DO 108 L=MINJ,JMAX
+      LCL=LOCL+L
+      LCKL=IOFF(MAX0(LCK,LCL))+MIN0(LCK,LCL)
+      TX(K,L)=B(LCKL,1,NIAT,IBSET)
+      TY(K,L)=B(LCKL,2,NIAT,IBSET)
+      TZ(K,L)=B(LCKL,3,NIAT,IBSET)
+      IF(IANDJ) THEN
+      TX(L,K)=B(LCKL,1,NIAT,IBSET)
+      TY(L,K)=B(LCKL,2,NIAT,IBSET)
+      TZ(L,K)=B(LCKL,3,NIAT,IBSET)
+      END IF
+  108 CONTINUE
+      CALL RDFR(TX,MINI,MAXI,LIT,MINJ,MAXJ,LJT,NTR)
+      CALL RDFR(TY,MINI,MAXI,LIT,MINJ,MAXJ,LJT,NTR)
+      CALL RDFR(TZ,MINI,MAXI,LIT,MINJ,MAXJ,LJT,NTR)
+      DO 109 I=MINI,MAXI
+      DO 109 J=MINJ,MAXJ
+      VX(I,J)=VX(I,J) + PTR(1,1,NTR)*TX(I,J)
+     1                + PTR(2,1,NTR)*TY(I,J)
+     2                + PTR(3,1,NTR)*TZ(I,J)
+      VY(I,J)=VY(I,J) + PTR(1,2,NTR)*TX(I,J)
+     1                + PTR(2,2,NTR)*TY(I,J)
+     2                + PTR(3,2,NTR)*TZ(I,J)
+      VZ(I,J)=VZ(I,J) + PTR(1,3,NTR)*TX(I,J)
+     1                + PTR(2,3,NTR)*TY(I,J)
+     2                + PTR(3,3,NTR)*TZ(I,J)
+  109 CONTINUE
+  110 CONTINUE
+C
+      DO 120 ITR=1,NT
+      IF(MOP(ITR).EQ.0) GO TO 120
+      MOI=MOP(ITR)
+      NTR=INVT(ITR)
+      JAT=MIAT(NTR)
+      IF(MOI.LT.0) GO TO 201
+      MINX=MINI
+      MAXX=MAXI
+      LXT=LIT
+      MINY=MINJ
+      MAXY=MAXJ
+      LYT=LJT
+CTPH  DO 111 I=1,10
+CTPH  DO 111 J=1,10
+      DO 111 I=1,35
+      DO 111 J=1,35
+      TX(J,I)=ZERO
+      TY(J,I)=ZERO
+      TZ(J,I)=ZERO
+      UX(J,I)=VX(J,I)
+      UY(J,I)=VY(J,I)
+      UZ(J,I)=VZ(J,I)
+  111 CONTINUE
+      GO TO 203
+  201 MINX=MINJ
+      MAXX=MAXJ
+      LXT=LJT
+      MINY=MINI
+      MAXY=MAXI
+      LYT=LIT
+  202 CONTINUE
+CTPH  DO 112 I=1,10
+CTPH  DO 112 J=1,10
+      DO 112 I=1,35
+      DO 112 J=1,35
+      TX(J,I)=ZERO
+      TY(J,I)=ZERO
+      TZ(J,I)=ZERO
+      UX(J,I)=VX(I,J)
+      UY(J,I)=VY(I,J)
+      UZ(J,I)=VZ(I,J)
+  112 CONTINUE
+C
+  203 CONTINUE
+      CALL RDFR(UX,MINX,MAXX,LXT,MINY,MAXY,LYT,NTR)
+      CALL RDFR(UY,MINX,MAXX,LXT,MINY,MAXY,LYT,NTR)
+      CALL RDFR(UZ,MINX,MAXX,LXT,MINY,MAXY,LYT,NTR)
+      DO 113 I=MINI,MAXI
+      DO 113 J=MINJ,MAXJ
+      TX(I,J)=TX(I,J) + PTR(1,1,NTR)*UX(I,J)
+     1                + PTR(2,1,NTR)*UY(I,J)
+     2                + PTR(3,1,NTR)*UZ(I,J)
+      TY(I,J)=TY(I,J) + PTR(1,2,NTR)*UX(I,J)
+     1                + PTR(2,2,NTR)*UY(I,J)
+     2                + PTR(3,2,NTR)*UZ(I,J)
+      TZ(I,J)=TZ(I,J) + PTR(1,3,NTR)*UX(I,J)
+     1                + PTR(2,3,NTR)*UY(I,J)
+     2                + PTR(3,3,NTR)*UZ(I,J)
+  113 CONTINUE
+      DO 115 I=MINI,MAXI
+      LCI=LOCI+I
+      JMAX=MAXJ
+      IF(IANDJ) JMAX=I
+      DO 115 J=MINJ,JMAX
+      LCJ=LOCJ+J
+      LCIJ=IOFF(MAX0(LCI,LCJ))+MIN0(LCI,LCJ)
+      B(LCIJ,1,JAT,IBSET)=TX(I,J)*FACT
+      B(LCIJ,2,JAT,IBSET)=TY(I,J)*FACT
+      B(LCIJ,3,JAT,IBSET)=TZ(I,J)*FACT
+  115 CONTINUE
+  120 CONTINUE
+C
+  400 CONTINUE
+C
+C   FOR EACH BLOCK(K,L) EQUIVALENT TO (I,J)
+C   FIND THE TRANSFORMATION THAT MAPS (K,L) TO (I,J)
+C   COMPUTE (R)T(R)
+C   PUT THE RESULT BACK INTO THE (K,L) BLOCK OF THE H-MATRIX
+C
+      DO 600 ITR=1,NT
+      IF(ITR.EQ.1) GO TO 600
+      KK=MI(ITR)
+      LL=MJ(ITR)
+      K=MAX0(KK,LL)
+      L=MIN0(KK,LL)
+      IF(K.EQ.II.AND.L.EQ.JJ) GO TO 600
+      NTR=ITR+1
+      IF(NTR.GT.NT) GO TO 205
+      DO 121 IT=NTR,NT
+      IX=MI(IT)
+      JX=MJ(IT)
+      I=MAX0(IX,JX)
+      J=MIN0(IX,JX)
+      IF(I.EQ.K.AND.J.EQ.L) GO TO 600
+  121 CONTINUE
+  205 CONTINUE
+C
+      NTR=INVT(ITR)
+      DO 500 IAT=1,NATOM
+C
+CTPH  DO 122 I=1,10
+CTPH  DO 122 J=1,10
+      DO 122 I=1,35
+      DO 122 J=1,35
+      TX(J,I)=ZERO
+      TY(J,I)=ZERO
+      TZ(J,I)=ZERO
+  122 CONTINUE
+      DO 123 JTR=1,NT
+  123 MIAT(JTR)=ICT(IAT,JTR)
+      NIAT=MIAT(NTR)
+      DO 125 K=MINI,MAXI
+      LCK=LOCI+K
+      IF(IANDJ) JMAX=K
+      DO 125 L=MINJ,JMAX
+      LCL=LOCJ+L
+      LCKL=IOFF(MAX0(LCK,LCL))+MIN0(LCK,LCL)
+      VX(K,L)=B(LCKL,1,NIAT,IBSET)
+      VY(K,L)=B(LCKL,2,NIAT,IBSET)
+      VZ(K,L)=B(LCKL,3,NIAT,IBSET)
+      IF(.NOT.IANDJ) GO TO 125
+      VX(L,K)=B(LCKL,1,NIAT,IBSET)
+      VY(L,K)=B(LCKL,2,NIAT,IBSET)
+      VZ(L,K)=B(LCKL,3,NIAT,IBSET)
+  125 CONTINUE
+      CALL RDFR(VX,MINI,MAXI,LIT,MINJ,MAXJ,LJT,NTR)
+      CALL RDFR(VY,MINI,MAXI,LIT,MINJ,MAXJ,LJT,NTR)
+      CALL RDFR(VZ,MINI,MAXI,LIT,MINJ,MAXJ,LJT,NTR)
+      DO 126 I=MINI,MAXI
+      DO 126 J=MINJ,MAXJ
+      TX(I,J)=TX(I,J) + PTR(1,1,NTR)*VX(I,J)
+     1                + PTR(2,1,NTR)*VY(I,J)
+     2                + PTR(3,1,NTR)*VZ(I,J)
+      TY(I,J)=TY(I,J) + PTR(1,2,NTR)*VX(I,J)
+     1                + PTR(2,2,NTR)*VY(I,J)
+     2                + PTR(3,2,NTR)*VZ(I,J)
+      TZ(I,J)=TZ(I,J) + PTR(1,3,NTR)*VX(I,J)
+     1                + PTR(2,3,NTR)*VY(I,J)
+     2                + PTR(3,3,NTR)*VZ(I,J)
+  126 CONTINUE
+      LOCK=KLOC(KK)-KMIN(KK)
+      LOCL=KLOC(LL)-KMIN(LL)
+      NIAT=IAT
+      DO 127 K=MINI,MAXI
+      LCK=LOCK+K
+      IF(IANDJ) JMAX=K
+      DO 127 L=MINJ,JMAX
+      LCL=LOCL+L
+      LCKL=IOFF(MAX0(LCK,LCL))+MIN0(LCK,LCL)
+      B(LCKL,1,NIAT,IBSET)=TX(K,L)
+      B(LCKL,2,NIAT,IBSET)=TY(K,L)
+      B(LCKL,3,NIAT,IBSET)=TZ(K,L)
+  127 CONTINUE
+C
+  500 CONTINUE
+C
+  600 CONTINUE
+C
+  800 CONTINUE
+  900 CONTINUE
+C
+C###############################
+C#####END OF I AND J SHELLS#####
+C###############################
+C
+ 1000 CONTINUE
+C
+C:::::::::::::::::::::::::::::::::
+C:::::END OF OPEN-SHELL TYPES:::::
+C:::::::::::::::::::::::::::::::::
+C
+      RETURN
+      END

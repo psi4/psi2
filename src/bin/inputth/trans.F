@@ -1,0 +1,15 @@
+      SUBROUTINE TRANS(T,NN)
+      COMMON /INOUT/  IOUT,ICHECK,ITAP30
+      COMMON /MAXDIM/ MXAT,MXTRN,MXPR,MXSH,MXSYM,MXCF,MXT,MXISO,MXPSYM
+      COMMON /TRANSF/ XOLD,YOLD,ZOLD,XNEW,YNEW,ZNEW,XP,YP,ZP
+      REAL*8 T(MXT),XOLD,YOLD,ZOLD,XNEW,YNEW,ZNEW,XP,YP,ZP
+C**********************************************************************
+C      CALCULATE THE COORDINATES (XNEW,YNEW,ZNEW) OF THE TRANSFORM    *
+C      OF THE POINT (XOLD,YOLD,ZOLD) UNDER THE TRANSFORMATION T       *
+C**********************************************************************
+      XNEW=XOLD*T(NN+1)+YOLD*T(NN+2)+ZOLD*T(NN+3)
+      YNEW=XOLD*T(NN+4)+YOLD*T(NN+5)+ZOLD*T(NN+6)
+      ZNEW=XOLD*T(NN+7)+YOLD*T(NN+8)+ZOLD*T(NN+9)
+C
+      RETURN
+      END

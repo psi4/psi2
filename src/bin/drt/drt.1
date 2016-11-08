@@ -1,0 +1,305 @@
+.TH drt 1 "3 Febuary, 1995" "\*(]W" "\*(]D"
+.SH NAME
+drt \- distinct row table program
+
+.SH DESCRIPTION
+.LP
+The command
+.B drt
+is the
+distinct row table program for the shape driven
+graphical unitary group approach (GUGA) configuration
+interation (CI) system of programs.
+This program will read a flexible input format of orbital codes,
+rearrange the orbitals to a form suitable for the CI and generate
+all the arrays needed to describe the CI calculation and the
+integral storage.
+The
+.B gugaci
+program can handle arbitrary reference sets, arbitrary
+excitation levels, and reference sets such as triples in a selected
+space and, say, singles outside that space.  There is essentially no
+limit to the total number of unpaired electrons, orbitals or
+configurations except for the computer time available.
+
+.SH REFERENCES
+.IP "1."
+J. Paldus, J. Chem. Phys. 61 (1974) 5321.
+.IP "2."
+I. Shavitt, Int. J. Quantum Chem. Symp. 11 (1977) 131; 12 (1978) 5
+.LP
+References for interacting configurations:
+.IP "1."
+A. Bunge, J. Chem. Phys. 53 (1970) 20.
+.IP "2."
+C. F. Bender and H. F. Schaefer, J. Chem. Phys. 55 (1971) 4798.
+
+.sL
+.pN INPUT  
+.pN FILE30
+.pN FILE34
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE58
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B drt
+program
+searches through the default keyword path (first
+.B DRT
+and then
+.BR DEFAULT )
+for the following keywords:
+
+
+.IP "\fBLABEL =\fP \fIstring\fP"
+Title for DRT output (for print out only).  There is no default.
+
+.IP "\fBEX_LVL =\fP \fIinteger\fP"
+Excitation level for excitations into virtual
+orbitals (default 2, i.e. CISD)
+.IP
+IMPORTANT: If this option is set > 2 then the LOOPDRVN flag for use by
+.B gugaci
+must be true.  
+
+.IP "\fBWFN =\fP \fIstring\fP"
+This is the type of wavefunction which is ultimately desired.
+The default is
+.BR CI .
+
+.IP "\fBDERTYPE =\fP \fIstring\fP"
+The derivative type desired.  The default is none.
+
+.IP "\fBOPENTYPE =\fP \fIstring\fP"
+This specifies the state desired.  It can be one of
+.B NONE
+(for a closed shell singlet),
+.B SINGLET
+(for an open shell singlet with two singly occupied orbitals of
+different irreducible representations),
+.B HIGHSPIN
+(for any high spin open shell system), or
+.B TWOCON
+(for a two configuration singlet).
+The default is NONE.
+.IP 
+IMPORTANT:  If VAL_EX_LVL > 0 or NUM_REFS > 1
+then OPENTYPE cannot be TWOCON.
+
+.IP "\fBDOCC =\fP \fIinteger_array\fP"
+This vector gives the number of doubly occupied orbitals in each irrep.
+There is no default.
+
+.IP "\fBSOCC =\fP \fIinteger_array\fP"
+This vector gives the number of singly occupied orbitals in each irrep.
+There is no default.
+
+.IP "\fBFROZEN_DOCC =\fP \fIinteger_array\fP"
+The number of lowest energy doubly occupied orbitals in each irreducible
+representation from which there will be no excitations.
+The Cotton ordering of the irredicible representations is used.
+The default is the zero vector.
+
+.IP "\fBFROZEN_UOCC =\fP \fIinteger_vector\fP"
+The number of highest energy unoccupied orbitals in each irreducible
+representation into which there will be no excitations.
+The default is the zero vector.
+
+.LP
+Note,
+.B drt
+needs orbital information from 
+.pN FILE30
+and
+.pN FILE34 .
+If you wish to run
+.B drt
+simply to determine the number of CSFs in your wavefucntion, there
+are two options available to you:
+1) Explicitly enter the number of basis functions with the NBASIS
+keyword, and the number of unoccupied orbitals with the UOCC vector
+(see below). 
+2) Run
+.B input
+and then
+.B ints
+, first setting the MK_1EI and MK_2EI keywords to FALSE.  Doing this
+will generate
+.pN FILE30
+and will write the necessary orbital information to 
+.pN FILE34
+without calculating any integrals. See ints(1) for more information.
+
+
+.\" ---------------------------------------- Uncommonly used input here:
+.LP
+There is also some less commonly used input, which novice uses of Psi
+will have no need to use.
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+Printing option (powers of two).  Default is 0.
+.  iV               "= 1"  "print DRT"
+.  iV               "= 2"  "print external weight arrays"
+.  iV               "= 4"  "print integral pointer arrays"
+.  iV               "= 8"
+.  iV               "= 16"
+.  iV               "= 32"
+.iL
+
+.IP "\fBBLOCKSIZE =\fP \fIinteger\fP"
+Integral block size desired, in hundreds.  This may be necessary if
+.B trans
+aborts with the message "BLKSZ TOO SMALL".
+The default is 300.
+
+.IP "\fBVAL_EX_LVL =\fP \fIinteger\fP"
+Excitation level for references in orbitals
+specified by the VAL_OCC vector.
+
+.IP "\fBVAL_ORB =\fP \fIinteger_array\fP"
+The number of valence excitation orbitals in each irreducible representation.
+If VAL_ORB(i) <= NVALOC=DOCC(i)+SOCC(i)-FROZEN_DOCC(i), then the VALORB(i)
+highest lying occupied MO's are considered to be the valence excitation 
+orbitals in the i'th irrep.  If VAL_ORB(i) > NVALOC, then all NVALOC
+occupied MOs are considered to be valence excitation orbitals, as well as
+the VAL_ORB(i)-NVALOC lowest lying unoccupied MOs.  If you wish to override
+this behavior, then you must use the PSI version 1.1 input format.
+
+.IP "\fBINT_SPC =\fP \fIstring\fP"
+Interacting configurations only (default is ON
+for one reference and valence excitation orbitals, OFF for multireference)
+.  iV               "= OFF"
+turn off limitation to spin interacting
+space (default for multi-reference).
+.  iV               "= SYM"
+limit valence references to those of
+the same symmetry as the one reference.
+.  iV               "= FULLSPIN"
+symmetry limit the valence references but
+use full spin-space.
+.iL
+
+.IP "\fBNBASIS =\fP \fIinteger\fP"
+If 
+.pN FILE30
+is not available, then the number of basis functions must be given.  There
+is no default.
+
+.IP "\fBNIRREPS =\fP \fIinteger\fP"
+Normally, the number of irreducible representations is infered from the 
+length of the DOCC or SOCC vectors.  NIRREPS can be used to override the
+default.  This is not recommended, however.
+
+.IP "\fBUOCC =\fP \fIinteger_array\fP"
+If 
+.pN FILE34
+is not available, then this vector gives the number of virtual orbitals
+in each irreducible representation.
+
+.IP "\fBNUM_REFS =\fP \fIinteger\fP"
+Number of references.  Default is 1.
+Note that TCSCF-CI is considered to be only one reference.
+
+.IP "\fBMULTI_ORBS =\fP \fIinteger_array\fP"
+This vector gives the numbers of those orbitals which differ in different
+references.
+
+.IP "\fBREFERENCES =\fP \fIstring_matrix\fP"
+This is a vector of vectors consisting of orbital codes for 
+those orbitals specified by the
+MULTI_ORBS option.  There must be NUM_REFS of these specified, and each
+vector must be the same length as the MULTI_ORBS vector.
+Valid codes are DOC for doubly occupied orbitals, UOC for unoccupied
+orbitals, ALP for alpha spin singly occupied orbitals, and BET for
+beta spin singly occupied orbials.  It is important that the first
+vector in this matrix matches the reference wavefunction.
+
+.IP "\fB4_EXTERN =\fP \fIboolean\fP"
+.  iV               "= FALSE"  "(default)"
+.  iV               "= TRUE"  "use 4-external arrays in CI"
+
+.IP "\fBFERMILVL =\fP \fIinteger\fP"
+.  iV               "= 0"  "(default)"
+.  iV               "= m"  "set fermi-level to m"
+.iL
+
+.SH EXAMPLES
+.LP
+The following example is for a CISD calculation on water with one frozen core
+orbital and one frozen virtual orbital:
+
+.DS
+drt: (
+  docc = (3 0 1 1)
+  frozen_docc = (1 0 0 0)
+  frozen_uocc = (1 0 0 0)
+  )
+.DE
+
+The following example is for a CISD calculation on triplet methylene:
+
+.DS
+drt: (
+  opentype = highspin
+  docc = (2 0 0 1)
+  socc = (1 0 1 0)
+  )
+.DE
+
+The following example is for a multireference CI for DZ singlet methylene
+(in this example there are 8 A1, 0 A2, 2 B1, and 4 B2 orbitals, thus
+orbitals 3 and 9 will be the open-shell orbitals):
+
+.DS
+drt: (
+  num_refs = 3
+  opentype = singlet
+  docc = (2 0 0 1)
+  socc = (1 0 1 0)
+  multi_orbs = (3 9)
+  references = ((alp bet)
+                (doc uoc)
+                (uoc doc))
+  )
+.DE
+
+The following example is for a second-order CI (singles and doubles out of
+a full valence CI) for triplet methylene:
+
+.DS
+drt: (
+  opentype = highspin
+  docc = (2 0 0 1)
+  socc = (1 0 1 0)
+  frozen_docc = (1 0 0 0)
+  val_orb = (3 0 1 2)
+  val_ex_lvl = 4
+  int_spc = off
+  )
+.DE
+
+The following example is for a multireference CI (singles and doubles out of
+all valence singles and doubles) for open-shell singlet methylene:
+
+.DS
+drt: (
+  opentype = singlet
+  docc = (2 0 0 1)
+  socc = (1 0 1 0)
+  frozen_docc = (1 0 0 0)
+  val_orb = (3 0 1 2)
+  val_ex_lvl = 2
+  int_spc = off
+  )
+.DE

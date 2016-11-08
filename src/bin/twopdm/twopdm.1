@@ -1,0 +1,59 @@
+.TH twopdm 1 "5 March, 1991" "Psi Release 2.0" "\*(]D"
+.SH NAME
+twopdm \- constructs the two particle density matrix
+
+.SH DESCRIPTION
+.LP
+The program
+.B twopdm
+constructs the CI two particle density matrix for use in
+calculating 
+.B gugaci
+energy gradients.
+
+.SH REFERENCES
+.LP
+See the manual pages for the
+.B cphfci
+program.
+
+
+.sL
+.pN INPUT
+.pN FILE54
+.pN FILE58
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE53
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B twopdm
+program
+searches through the default keyword path (first
+.B TWOPDM
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBROOT1 =\fP \fIinteger\fP"
+This is the number of the CI root for which the two
+particle density matrix is to be computed.
+The two particle density matrix can be computed for only
+one CI root at a time.
+The default is 1.
+
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+This is a printing option.
+The default is 0.
+

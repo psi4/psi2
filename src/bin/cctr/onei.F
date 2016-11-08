@@ -1,0 +1,53 @@
+C
+C                         ********************
+C-------------------------******  ONEI  ******-----------------------
+C                         ********************
+C
+      SUBROUTINE ONEI(X,LBLI,STVI,INBUFS,ITAP34)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      COMMON/BASIS/NBASIS,MTRI,NSYM
+      COMMON/SIGNS/IOFF(256),IPRNT
+      COMMON/SYMMS/IDEG(10),NDEG(10),LSYM(10)
+      DIMENSION X(MTRI),LBLI(INBUFS*2),STVI(INBUFS)
+      DATA ZERO / 0.0D+00 /
+    1 FORMAT(2X,' ILSTI = ',I5/
+     1       2X,' NBUF  = ',I5/)
+    2 FORMAT(2X,8I5,3F15.7)
+C
+      DO 101 I=1,MTRI
+  101 X(I)=ZERO
+C
+      IBUFSZ=8942
+      IBUFS3=1491
+      INTI=0
+      NBLI=0
+  201 NBLI=NBLI+1
+      CALL SREAD(ITAP34,LBLI,IBUFSZ)
+      ILSTI=LBLI(1)
+      NBUF=LBLI(2)
+C     IF(IPRNT.GE.5)
+C    *WRITE(6,1) ILSTI,NBUF
+C***  WRITE(8,15) NBUF
+C**15 FORMAT(I5)
+      DO 102 I=1,NBUF
+      JSM=ISHFT(LBLI(I+2),-8)
+      IOR=ISHFT(JSM,-3)
+      ISM=ISHFT(IOR,-8)+1
+      IOR=IAND(IOR,255)
+      JSM=IAND(JSM,7)+1
+      JOR=IAND(LBLI(I+2),255)
+      II=IOR+IDEG(ISM)
+      JJ=JOR+IDEG(JSM)
+      IIJJ=IOFF(II)+JJ
+      STV0=STVI(I+IBUFS3)
+      X(IIJJ)=STV0
+C***  WRITE(8,10) II,JJ,STV0
+C     IF(IPRNT.LE.6) GO TO 102
+C     WRITE(6,2) I,IOR,ISM,JOR,JSM,II,JJ,IIJJ,STV0
+C**10 FORMAT(2I5,F20.10)
+  102 CONTINUE
+      INTI=INTI+NBUF
+      IF(ILSTI.EQ.0) GO TO 201
+C
+      RETURN
+      END

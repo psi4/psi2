@@ -1,0 +1,59 @@
+#define EXTERN
+#include "includes.h"
+#include "common.h"
+
+uxmat()
+
+{
+   int i,j,ij,iabc;
+   double **sm,**b,**u,*temp;
+
+   sm = (double **) init_matrix(natom3x,nbstri);
+   b = (double **) init_matrix(natom3x,nbstri);
+   u = (double **) init_matrix(nbfso,nbfso);
+   temp = (double *) init_array(nbfso*nbfso);
+
+   for(iabc=0; iabc < natom3x ; iabc++) {
+      rread(itap44,b[iabc],sizeof(double)*nbstri,ba_loc[iabc]);
+      if(iabc < natom3)
+         rread(itap44,sm[iabc],sizeof(double)*nbstri,sa_loc[iabc]);
+      }
+
+   for(iabc=0; iabc < natom3x ; iabc++) {
+      if(iabc < natom3) {
+         for(i=ij=0; i < nbfso ; i++)
+            for(j=0; j <= i ; j++,ij++) {
+               if(i != j) {
+                  u[i][j]=b[iabc][ij];
+                  u[j][i]= -u[i][j]-sm[iabc][ij];
+                  }
+               else
+                  u[i][i] = -sm[iabc][ij]*0.5;
+               }
+         }
+      else {
+         for(i=ij=0; i < nbfso ; i++)
+            for(j=0; j <= i ; j++,ij++) {
+               if(i != j) {
+                  u[i][j]=b[iabc][ij];
+                  u[j][i]= -u[i][j];
+                  }
+               else u[i][i]=0.0;
+               }
+         }
+
+      for(i=ij=0; i < nbfso ; i++)
+         for(j=0; j < nbfso ; j++,ij++)
+            temp[ij]=u[j][i];
+      rwrit(itap44,temp,sizeof(double)*nbfso*nbfso,ua_loc[iabc]);
+
+      if(print & 128) {
+         fprintf(outfile,"\nu matrix in uxmat iabc = %5d\n",iabc);
+         print_mat(u,nbfso,nbfso,outfile);
+         }
+      }
+   free_matrix(sm,natom3x);
+   free_matrix(b,natom3x);
+   free_matrix(u,nbfso);
+   free(temp);
+   }

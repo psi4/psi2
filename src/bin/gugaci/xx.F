@@ -1,0 +1,312 @@
+      SUBROUTINE xx(INT,C,S,IJADD,KADD,LADD,WTW,WTX,WTY,WAB,SS
+     #,                 CI,SI,CJ,SJ,H1,H2,IJXX,NKLXX,IJWW,NKLWW
+     #,                 KLXX,KLWW)
+C
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+CTJL 1               CI,SI,CJ,SJ,H1,H2,IJXX,NKLXX,IJWW,NKLWW,
+CTJL 2               KLXX,KLWW
+C
+      real*8 sqrt2,sqrt3,sqt1p5,asqrt2,hsqrt3
+      INTEGER ARR,TR1,TR2,ASM,OS,WTW,WTX,WTY,WAB,SS,SYMORB
+      INTEGER BMAX,ORBFRM
+      REAL*8 INT(NMAX),C(NWKS),S(NWKS)
+C
+      DIMENSION CI(1),CJ(1),SI(1),SJ(1),H1(1),H2(1)
+      DIMENSION KADD(SYMORB),LADD(SYMORB),IJADD(NUMIJ),WTW(ORBFRM,NSYM)
+      DIMENSION WTX(ORBFRM,NSYM),WTY(ORBFRM),WAB(ORBFRM),SS(NORBS)
+      DIMENSION IJXX(NUMIJ ),NKLXX(NSYM,ORBFRM),IJWW(NUMIJ )
+      DIMENSION NKLWW(NSYM,ORBFRM),KLXX(1),KLWW(1)
+C
+      COMMON /COEFS/  A,B,INTAL,INTAU,INTB,INTAD,INTBD
+      COMMON /DIMS/ NBF,NSYM,NORBS,NROWS,NROWS4,NWKS,NWKS2,NLEVS
+     *,             NROWOC,LEVFRM
+     *,             NWKSMX,NLWKMX,NUWKMX,BMAX,NROOTS,ORBFRM
+      COMMON /INTS/   NMAX,NMAX2,NGROUP,NBLKOC,NUMIJ,SYMORB,INTSRT
+C  UNIVERSAL IDENTITY OF THE OBJECTS IN THESE COMMON
+C     COMMON /ALL/ ARR,VAL1,VAL2,VAL3,ITR1,ITR2,IA,JA,ITYPE,ISEGT
+C    *,LVFRM1,NLWKI,NLWKJ,IMAX,IMIN
+C     COMMON /SYMM/ JSM,JFSYM,IFSYM,MAXSYM(8),MINSYM(8),ISMOFF(8)
+C    #,             NUMSYM(8)
+      COMMON /SYMM/ ASM,JS,IS,MX(8),MN(8),OS(8),NUMSYM(8)
+      COMMON /TAPES/ITAP52,ITAPE5,ITAPE6,ITAP58,ITAP54,ITAP99,ITAP94
+     *,             ITAPE3,ITAP95,ITAP96
+      COMMON /ALL/VAL1,VAL2,VAL3,ARR,TR1,TR2,IA,JA,M,ISEG,N,N1,N2
+     *,           IMAX,IMIN
+      COMMON /COUNT/  ICOUNT,IXX4,IXX5,IXX6,IXX8,IWW4,IWW5,IWW6,IWW8
+     #,               IWX7,IXW9,IXY3,IXY16,IXY18,IXY22,IWY2,IWY15,IWY17
+     #,               IWY21,IYX20,IYW19
+      COMMON /XX4X/   NIJVIR,NREFS
+      COMMON /MINMAX/ IMING,IMAXG,JMING,JMAXG
+      common /ets/ isym
+      common /sqrts/ sqrt2,sqrt3,sqt1p5,asqrt2,hsqrt3
+      REAL*8 VAL1,VAL2,VAL3
+C
+C
+cets111090      SQRT2=DSQRT(2.0D+00)
+cets111090      SQRT3=DSQRT(3.0D+00)
+cets111090      SQT1P5=DSQRT(1.5D+00)
+cets111090      ASQRT2=1.0D+00/SQRT2
+cets111090      HSQRT3=0.5D+00*DSQRT(3.0D+00)
+cets110990      RETURN
+C
+C********************************** XX *********************************
+C
+cets110990      ENTRY XX
+C
+      IF (ISEG.GT.8) GO TO 98
+      GO TO (98,98,98,4,5,6,98,8),ISEG
+C
+    4 CONTINUE
+      IXX4=IXX4+1
+      A=-VAL1*ASQRT2
+      B=-(A+A)
+      GO TO 10
+    5 CONTINUE
+      IXX5=IXX5+1
+      A=-VAL1*ASQRT2+VAL3
+      B=VAL1*SQRT2
+   10 CONTINUE
+      INTAL=1
+      INTB =2
+      IF (IS.NE.0) GO TO 20
+      IAS=IA
+      DO 11 I=1,NSYM
+         ISYM=I-1
+         NUMI=NUMSYM(ISYM+1)
+         IF (NUMI.LE.1) GO TO 11
+         CALL HIIS  (H1,ISYM,NUMI,int,ijadd,kadd,ladd,h2)
+         CALL SQUARE(C(IAS),CI,NUMI)
+         CALL EBC   (SJ,H1,CI,NUMI,NUMI,NUMI)
+         CALL FOLD  (S(IAS),SJ,NUMI)
+         IAS=IAS+NUMI*(NUMI-1)/2
+   11 CONTINUE
+      RETURN
+C
+   20 CONTINUE
+      IAS=IA
+      DO 21 ISYM=1,NSYM-1
+         JSYM=IEOR(ISYM,IS)
+         IF (JSYM.GE.ISYM) GO TO 21
+         NUMI=NUMSYM(ISYM+1)
+         NUMJ=NUMSYM(JSYM+1)
+         NUMIJ=NUMI*NUMJ
+         IF (NUMIJ.LE.0) GO TO 21
+         CALL HIIS  (H1,ISYM,NUMI,int,ijadd,kadd,ladd,h2)
+         CALL HIIS2 (H2,JSYM,NUMJ,int,ijadd,kadd,ladd,h1)
+C     CALL APBCT (S(IAS),C(IAS),H1,NUMJ,NUMI,NUMI)
+         CALL ATPBCT(S(IAS),H1,C(IAS),NUMI,NUMI,NUMJ)
+         CALL APBC  (S(IAS),H2,C(IAS),NUMJ,NUMJ,NUMI)
+         IAS=IAS+NUMIJ
+   21 CONTINUE
+      RETURN
+C
+C     ----- ISEG 6 AND 8 CASES -----
+C
+    6 CONTINUE
+      IXX6=IXX6+1
+      A=-VAL1*ASQRT2+VAL3
+      B=VAL1*SQRT2
+      INTAL=3
+      INTAU=1
+      INTB =2
+      INTAD=1
+      INTBD=2
+      GO TO 30
+    8 CONTINUE
+      IXX8=IXX8+1
+      A=VAL1
+      B=0.0
+      INTAL=TR1
+      INTAU=1
+      INTB=2
+      INTAD=1
+      INTBD=2
+   30 CONTINUE
+C
+      IF (IS.NE.JS) GO TO 40
+      IF (IS.NE.0) GO TO 35
+      IAS=IA
+      JAS=JA
+      DO 31 I=1,NSYM
+         ISYM=I-1
+         NUMI=NUMSYM(ISYM+1)
+         IF (NUMI.LE.1) GO TO 31
+         CALL SQUARE(C(IAS),CI,NUMI)
+         CALL SQUARE(C(JAS),CJ,NUMI)
+         CALL HII   (H1,ISYM,NUMI,int,ijadd,kadd,ladd,h2)
+         CALL EBC   (SJ,H1,CI,NUMI,NUMI,NUMI)
+         CALL EBTC  (SI,H1,CJ,NUMI,NUMI,NUMI)
+         CALL FOLD  (S(IAS),SI,NUMI)
+         CALL FOLD  (S(JAS),SJ,NUMI)
+         IOFF=NUMI*(NUMI-1)/2
+         IAS=IAS+IOFF
+         JAS=JAS+IOFF
+   31 CONTINUE
+      RETURN
+   35 CONTINUE
+      IAS=IA
+      JAS=JA
+      DO 36 I=2,NSYM
+         ISYM=I-1
+         JSYM=IEOR(IS,ISYM)
+         IF (JSYM.GE.ISYM) GO TO 36
+         NUMI=NUMSYM(ISYM+1)
+         NUMJ=NUMSYM(JSYM+1)
+         IOFF=NUMI*NUMJ
+         IF (IOFF.LT.1) GO TO 36
+         CALL HII   (H1,ISYM,NUMI,int,ijadd,kadd,ladd,h2)
+         CALL HII2  (H2,JSYM,NUMJ,int,ijadd,kadd,ladd,h1)
+C     CALL APBCT (S(JAS),C(IAS),H1,NUMJ,NUMI,NUMI)
+         CALL ATPBCT(S(JAS),H1,C(IAS),NUMI,NUMI,NUMJ)
+         CALL APBC  (S(JAS),H2,C(IAS),NUMJ,NUMJ,NUMI)
+C     CALL APBC  (S(IAS),C(JAS),H1,NUMJ,NUMI,NUMI)
+         CALL APBCTT(S(IAS),H1,C(JAS),NUMI,NUMI,NUMJ)
+         CALL APBTC (S(IAS),H2,C(JAS),NUMJ,NUMJ,NUMI)
+         IAS=IAS+IOFF
+         JAS=JAS+IOFF
+   36 CONTINUE
+      RETURN
+C
+   40 CONTINUE
+      IF (IS.NE.0) GO TO 50
+      IAS=IA
+      DO 42 I=1,NSYM
+         ISYM=I-1
+         KSYM=IEOR(JS,ISYM)
+         NUMI=NUMSYM(ISYM+1)
+         NUMK=NUMSYM(KSYM+1)
+         IF (NUMI.LE.1.OR.NUMK.LE.0) GO TO 42
+         IF (KSYM.GT.ISYM) GO TO 41
+         IAS=IA+WTX(MN(ISYM+1)+1,IS+1)
+         JAS=JA+WTX(MN(ISYM+1),JS+1)
+         INTAL=1
+         CALL HIJ   (H1,ISYM,KSYM,NUMI,NUMK,int,ijadd,kadd,ladd)
+         CALL SQUARE(C(IAS),CI,NUMI)
+         CALL APBTCT(S(JAS),H1,CI,NUMK,NUMI,NUMI)
+C     CALL EBTCT (SI,C(JAS),H1,NUMI,NUMK,NUMI)
+         CALL ATEBC (SI,H1,C(JAS),NUMI,NUMK,NUMI)
+         CALL FOLD  (S(IAS),SI,NUMI)
+         GO TO 42
+   41    CONTINUE
+         IAS=IA+WTX(MN(ISYM+1)+1,IS+1)
+         JAS=JA+WTX(MN(KSYM+1),JS+1)
+         INTAL=3
+         CALL HIJ   (H1,KSYM,ISYM,NUMK,NUMI,int,ijadd,kadd,ladd)
+         CALL SQUARE(C(IAS),CI,NUMI)
+C     CALL APBTCT(S(JAS),CI,H1,NUMI,NUMI,NUMK)
+         CALL ATPBC (S(JAS),H1,CI,NUMK,NUMI,NUMI)
+         CALL EBTCT (SI,H1,C(JAS),NUMI,NUMK,NUMI)
+         CALL FOLD  (S(IAS),SI,NUMI)
+   42 CONTINUE
+      RETURN
+C
+   50 IF (JS.NE.0) GO TO 60
+      DO 52 I=1,NSYM
+         ISYM=I-1
+         KSYM=IEOR(IS,ISYM)
+         NUMI=NUMSYM(ISYM+1)
+         NUMK=NUMSYM(KSYM+1)
+         IF (NUMI.LE.1.OR.NUMK.LE.0) GO TO 52
+         IF (KSYM.GT.ISYM) GO TO 51
+         IAS=IA+WTX(MN(ISYM+1)  ,IS+1)
+         JAS=JA+WTX(MN(ISYM+1)+1,JS+1)
+         INTAL=3
+         CALL HIJ   (H1,ISYM,KSYM,NUMI,NUMK,int,ijadd,kadd,ladd)
+         CALL SQUARE(C(JAS),CJ,NUMI)
+         CALL APBTCT(S(IAS),H1,CJ,NUMK,NUMI,NUMI)
+C     CALL EBTCT (SJ,C(IAS),H1,NUMI,NUMK,NUMI)
+         CALL ATEBC (SJ,H1,C(IAS),NUMI,NUMK,NUMI)
+         CALL FOLD  (S(JAS),SJ,NUMI)
+         GO TO 52
+   51    CONTINUE
+         IAS=IA+WTX(MN(KSYM+1)  ,IS+1)
+         JAS=JA+WTX(MN(ISYM+1)+1,JS+1)
+         INTAL=1
+         CALL HIJ   (H1,KSYM,ISYM,NUMK,NUMI,int,ijadd,kadd,ladd)
+         CALL SQUARE(C(JAS),CJ,NUMI)
+C     CALL APBTCT(S(IAS),CJ,H1,NUMI,NUMI,NUMK)
+         CALL ATPBC (S(IAS),H1,CJ,NUMK,NUMI,NUMI)
+         CALL EBTCT (SJ,H1,C(IAS),NUMI,NUMK,NUMI)
+         CALL FOLD  (S(JAS),SJ,NUMI)
+   52 CONTINUE
+      RETURN
+C
+   60 CONTINUE
+      DO 66 I=1,NSYM
+         ISYM=I-1
+         NUMI=NUMSYM(ISYM+1)
+         IF (NUMI.LE.0) GO TO 66
+         JSYM=IEOR(ISYM,IS)
+         IF (JSYM.GE.ISYM) GO TO 66
+         NUMJ=NUMSYM(JSYM+1)
+         IF (NUMJ.LE.0) GO TO 66
+         IAS=IA+WTX(MN(ISYM+1),IS+1)
+         KSYM=IEOR(JSYM,JS)
+         NUMK=NUMSYM(KSYM+1)
+         IF (NUMK.LE.0) GO TO 63
+         IF (KSYM.GE.JSYM) GO TO 61
+         JAS=JA+WTX(MN(JSYM+1),JS+1)
+         INTAL=1
+         CALL HIJ   (H1,ISYM,KSYM,NUMI,NUMK,int,ijadd,kadd,ladd)
+         CALL AMBTCT(S(JAS),H1,C(IAS),NUMK,NUMI,NUMJ)
+C     CALL AMBTCT(S(IAS),C(JAS),H1,NUMJ,NUMK,NUMI)
+         CALL ATMBC (S(IAS),H1,C(JAS),NUMI,NUMK,NUMJ)
+         GO TO 63
+   61    CONTINUE
+         IF (KSYM.GE.ISYM) GO TO 62
+         JAS=JA+WTX(MN(KSYM+1),JS+1)
+         INTAL=1
+         CALL HIJ   (H1,ISYM,KSYM,NUMI,NUMK,int,ijadd,kadd,ladd)
+C     CALL APBC  (S(JAS),C(IAS),H1,NUMJ,NUMI,NUMK)
+         CALL APBCTT(S(JAS),H1,C(IAS),NUMK,NUMI,NUMJ)
+C     CALL APBCT (S(IAS),C(JAS),H1,NUMJ,NUMK,NUMI)
+         CALL ATPBCT(S(IAS),H1,C(JAS),NUMI,NUMK,NUMJ)
+         GO TO 63
+   62    CONTINUE
+         JAS=JA+WTX(MN(KSYM+1),JS+1)
+         INTAL=3
+         CALL HIJ   (H1,KSYM,ISYM,NUMK,NUMI,int,ijadd,kadd,ladd)
+C     CALL APBCT (S(JAS),C(IAS),H1,NUMJ,NUMI,NUMK)
+         CALL ATPBCT(S(JAS),H1,C(IAS),NUMK,NUMI,NUMJ)
+C     CALL APBC  (S(IAS),C(JAS),H1,NUMJ,NUMK,NUMI)
+         CALL APBCTT(S(IAS),H1,C(JAS),NUMI,NUMK,NUMJ)
+C
+C     C(I,J) AND C(I,K) PART
+C
+   63    CONTINUE
+         KSYM=IEOR(ISYM,JS)
+         NUMK=NUMSYM(KSYM+1)
+         IF (NUMK.LE.0) GO TO 66
+         IF (KSYM.GE.JSYM) GO TO 64
+         JAS=JA+WTX(MN(ISYM+1),JS+1)
+         INTAL=1
+         CALL HIJ   (H1,JSYM,KSYM,NUMJ,NUMK,int,ijadd,kadd,ladd)
+         CALL APBTC (S(JAS),H1,C(IAS),NUMK,NUMJ,NUMI)
+         CALL APBC  (S(IAS),H1,C(JAS),NUMJ,NUMK,NUMI)
+         GO TO 66
+   64    CONTINUE
+         IF (KSYM.GE.ISYM) GO TO 65
+         JAS=JA+WTX(MN(ISYM+1),JS+1)
+         INTAL=3
+         CALL HIJ   (H1,KSYM,JSYM,NUMK,NUMJ,int,ijadd,kadd,ladd)
+         CALL APBC  (S(JAS),H1,C(IAS),NUMK,NUMJ,NUMI)
+         CALL APBTC (S(IAS),H1,C(JAS),NUMJ,NUMK,NUMI)
+         GO TO 66
+   65    CONTINUE
+         JAS=JA+WTX(MN(KSYM+1),JS+1)
+         INTAL=3
+         CALL HIJ   (H1,KSYM,JSYM,NUMK,NUMJ,int,ijadd,kadd,ladd)
+C     CALL AMBTCT(S(JAS),C(IAS),H1,NUMI,NUMJ,NUMK)
+         CALL ATMBC (S(JAS),H1,C(IAS),NUMK,NUMJ,NUMI)
+         CALL AMBTCT(S(IAS),H1,C(JAS),NUMJ,NUMK,NUMI)
+   66 CONTINUE
+      RETURN
+C
+C
+   98 CONTINUE
+      WRITE(ITAPE6,99) ISEG
+   99 FORMAT (//,' ***** ERROR IN XX ENTRY, ISEG=',I5,//)
+      CALL MABORT
+C
+      END

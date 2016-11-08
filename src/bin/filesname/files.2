@@ -1,0 +1,210 @@
+.TH files 2 "10 April, 1991" "\*(]W" "\*(]D"
+.SH NAME
+files \- tells Psi how to name files
+
+.SH DESCRIPTION
+.LP
+Throughout the Psi manual pages there are references to the names
+of binary data files as
+FILE\fIun\fP where \fIun\fP is two digits and equals the logical unit number
+of the file.  This is not the actual name, the
+actual name that is used can be determined by the user with entries
+in the
+.pN INPUT
+file.
+
+.LP
+Many Unix systems do not permit the distribution of large files across
+several disk volumes.  The Psi binary I/O routines method overcome
+this problem in a relatively simple manner.  These routines allow a
+single logical unit to be split up so that it resides
+in several different Unix directories.  The number of volumes which
+the Psi programs will use can be specified as an input parameter,
+.BR NVOLUME .
+
+.LP
+A unique path name for each of the volumes must also be given.
+This is done with the input
+parameters \fBVOLUME1\fP, \fBVOLUME2\fP, ...  \fBVOLUME\fP\fIn\fP,
+where \fIn\fP is the number specified for \fBNVOLUME\fP parameter.
+
+.LP
+A common name for each of the volumes must also be specified.  This
+name is appended to the name for each volume followed by a "." and
+then the logical unit number \fIun\fP to obtain the full path name for
+each of the files in the \fIn\fP volumes.
+
+.LP
+If you are running multiple jobs or use multiple volumes, you must
+make sure that all path names are unique.  If two files end up with
+the same path, then the results will undoubtedly be wrong, but not
+necessarily obviously so.
+
+.LP
+Also, there is usually nothing to gain
+by giving two or more unique paths to the same physical volume.  The
+only case where you may want to try this is where the scratch
+volumes have different amounts of disk space available.
+
+.SH REMOVING TEMPORY FILES
+.LP
+After a sequence of Psi programs is run, it is necessary to remove the
+files that are taking up public resources in the machines temporary
+directories.  This can be done by running by using the \fBpsiclean\fP
+command, and the manual pages for \fBpsiclean\fP should be consulted for
+more information.
+
+.SH REMOVING TEMPORY FILES IN BATCH MODE
+.LP
+When the Psi programs are run in batch mode, the Psi I/O routines will
+maintain a list of files kept in the machines temporary directories, so
+that the batch facility can delete these files at the end of a batch job.
+
+.LP
+The I/O routines look for the MBATCH environmental variable to determine
+whether or not the program is running in batch mode.  If MBATCH is set and
+the pathname to the volume being opened is in one of the machine's temporary
+directories (that is, the first four characters of the pathname are "/tmp"),
+then the name of the file being opened is appended to the list of names
+in the file "Batch_Clean.\fIjobid\fB", where \fIjobid\fB is the unique
+integer identifier for the batch job as specified in the MBATCH environmental
+variable.  This integer must be greater than 0 and less than 100000.
+
+.LP
+When the batch job completes it is the responsibility of the batch
+facility to examine the list of filenames in the "Batch_Clean.\fIjobid\fB"
+file and remove these from the system.
+
+.SH INPUT FORMAT
+.LP
+Whenever a binary file is opened by the Psi I/O routines,
+these routines search through the following keyword path:
+.IP "1."
+\fIprogid\fP\fB:FILES:FILE\fP\fIun\fP
+.IP "2."
+\fIprogid\fP\fB:FILES:DEFAULT\fP
+.IP "3."
+\fBDEFAULT:FILES:FILE\fP\fIun\fP
+.IP "4."
+\fBDEFAULT:FILES:DEFAULT\fP
+.LP
+Here \fIprogid\fP is the name of the program which is calling the
+Psi I/O routines and \fIun\fP is the logical unit number.
+So if the \fBinput\fP program is calling the
+Psi I/O routines for logical unit 30 (that is,
+.pN FILE30 ),
+then the value of \fIprogid\fP is \fBINPUT\fP and the value of \fIun\fP
+is \fB30\fP.
+
+.LP
+The Psi I/O routines stop searching for a value from the
+.pN INPUT
+file as soon as a keyword matches one of the keywords.  The search order
+is as given above.  Note that the I/O routines allow a Psi user to
+specify that different paths for files can be given for different programs.
+This might be useful in the case that scratch files for different programs
+have the same logical unit number, because the user will be able to specifically
+place the files in the most suitable place, but it also allows the unwary user
+to make errors, such as placing the basis set and wavefunction information
+file,
+.pN FILE30 ,
+in two different places for programs that need the same file.  It is up
+to the user to avoid this problem.
+
+.LP
+The keywords for which Psi searches that were discussed above
+are listed below, along with
+a few less frequently used keywords:
+
+.IP "\fBNVOLUME =\fP \fIstring\fP"
+The number of volumes across which a file is to be split.
+The default for binary files whose path begins with the characters "/tmp"
+is read from ~psi/lib/tmpdisks.dat, which contains a list of machine
+names and the number of /tmp volumes available to each.
+
+.IP "\fBVOLUME\fP\fIi\fP\fB =\fP \fIstring\fP"
+The unique name for the files on volume \fIi\fP.
+There is no default.  \fBVOLUME\fP\fIi\fP must be given through
+\fIi\fP\fB = NVOLUME\fP.
+
+.IP "\fBNAME =\fP \fIstring\fP"
+The common name for the files on all volumes.
+There is no default.
+
+.LP
+Users of Psi should not need to modify the following parameters:
+
+.IP "\fBKEEP =\fP \fIboolean\fP"
+If this is \fBYES\fP, then this file will not be discarded at the
+end of a batch job.
+The default is \fBNO\fP for binary files whose path begins with
+the characters "/tmp" and \fBYES\fP otherwise.
+
+.IP "\fBVERBOSE =\fP \fIboolean\fP"
+This causes extra information about the file to be printed out.
+The default is \fBNO\fP.
+
+.IP "\fBBLOCKSIZE =\fP \fIinteger\fP"
+This is the number of bytes written to one volume before the I/O routines
+switch to the next volume.
+The default is \fB8192\fP.
+
+.IP "\fBMETHOD =\fP \fIstring\fP"
+This choses the type of I/O.  Standard Fortran I/O can be selected
+by setting this to \fBFORTRAN\fP, but it is not guaranteed to work.
+Using a value other than \fBSEQUENTIAL\fP can cause the I/O routines
+to behave very differently than described above and even read different
+input, so only users familiar with the source code to Psi should use
+anything other than the default.
+The default is \fBSEQUENTIAL\fP.
+
+.SH EXAMPLE
+.LP
+This places FILE30 in the current direct and all other files
+in fred's temporary directory (which should have much free disk
+space.):
+.nf
+
+  default: (
+    files: (
+      default: (
+        name = "h2odz"
+        nvolume = 3
+        volume1 = "/tmp1/fred/"
+        volume2 = "/tmp2/fred/"
+        volume3 = "/tmp3/fred/"
+        )
+      file30: (
+        nvolume = 1
+        volume1 = "./"
+        )
+      )
+    )
+.fi
+.LP
+Suppose fred runs the \fBinput\fP program from the directory ~fred/chem/h2odz.
+When the Psi programs open FILE30
+it will be named ~fred/chem/h2odz/ho2dz.30.
+When FILE92 is opened it will be distributed across three files, with
+blocks being alternately written to each of these files.
+These files will be named
+.nf
+/tmp1/fred/h2odz.92,
+/tmp2/fred/h2odz.92,
+and
+/tmp3/fred/h2odz.92.
+.fi
+
+.LP
+However, all ascii files
+must be in or will be placed in the directory in which
+Psi is run; in this example that would be ~fred/chem/h2odz.
+So the ascii files used in this example would be named
+.nf
+.pN INPUT , ~fred/chem/h2odz/
+.pN OUTPUT , ~fred/chem/h2odz/
+and
+.pN BASIS . ~fred/chem/h2odz/
+.fi
+..
+

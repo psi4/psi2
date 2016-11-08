@@ -1,0 +1,510 @@
+C
+      SUBROUTINE SYMORB(T,INVT,ISO,PTR,DTR,KATOM,KTYPE,ISC,IPC,SB,CC,
+     1  LAB,LOC1,LOC2,KLASS,LAMBDA,IADDR,IPA,GEN1,GEN2,GEN3,KMIN,
+     2  ICT,GAM,TRACEP,TRACED,CHARR,ISGRP,FTR,GTR,TRACEF,TRACEG)
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+      LOGICAL NODD
+C
+C
+      integer mxt,mxcf,mxtrn,mxsym,mxiso,mxsh,mxpsym,mxat
+      REAL*8 T(MXT),CC(MXCF),PTR(3,3,MXTRN)
+      REAL*8 DTR(6,6,MXTRN),GEN1(MXSYM,3,3),GEN2(MXSYM,3,3)
+      REAL*8 GEN3(MXSYM,3,3),GAM(MXTRN,MXTRN)
+      REAL*8 TRACEP(MXTRN),TRACED(MXTRN),CHARR(MXTRN,MXSYM)
+      REAL*8 TRACEF(MXTRN),TRACEG(MXTRN),FTR(10,10,MXTRN)
+      REAL*8 GTR(15,15,MXTRN)
+      INTEGER INVT(MXTRN),ISO(MXSH,MXISO),KATOM(MXSH),KTYPE(MXSH)
+      INTEGER ISC(MXSH,MXPSYM),IPC(MXSH,MXPSYM),LAB(MXCF)
+      INTEGER KLASS(MXAT),LAMBDA(MXSYM),IADDR(MXSYM),IPA(MXSYM)
+      INTEGER LOC1(MXAT,5),LOC2(MXAT,5),KMIN(MXSH),ICT(MXAT,MXTRN)
+      INTEGER SB(MXSYM),ISGRP(MXAT)
+      COMMON /MAXDIM/ MXAT,MXTRN,MXPR,MXSH,MXSYM,MXCF,MXT,MXISO,MXPSYM
+      COMMON /PSIZE/  MSU,KAORDS,MCONSU,MGCSU,MSTU,MRU,MCSU,MCTU,MCONU,
+     1                MCU,MSFU,MGU,MSFRU,MNSFU,MPRU,MCXU,MCCU,MBLU,MRCRU
+      COMMON /SCHMDT/ P(18,18),PNORM(18)
+      COMMON /IOFILE/ IR,IW,IP,IS,IPK,IDAF,NAV
+      COMMON /SYMTRY/ NT
+      COMMON /SMORB/  GRP,IGROUP,NAXIS
+      COMMON /NSHEL/  NSHELL,MSHELL
+      COMMON /INFOA/  NAT,NUM,NQW,NX
+      COMMON /INOUT/  IOUT,ICHECK,ITAP30
+      COMMON /ISOPAC/ INDIN(120),INDOUT(30)
+      COMMON /SALCS/  NIRR
+      COMMON /CIPAS/  NIRRED
+      COMMON /OUTPUT/ NPRINT
+      DIMENSION MUD(5),NUD(5),FF(4),JUD(5),NIR(5),NKL(10,5)
+      DIMENSION NGNRTR(19)
+      DATA MUD/5,19,15,6,30/,NUD/1,1,2,2,2/,FF/1.,1.,-1.,-1./
+C
+      DATA JUD/1,5,6,15,39/,NIR/3,6,5,5,10/
+      DATA NKL/1,2,3,7*0,1,2,3,1,2,3,4*0,1,1,2,3,3,5*0,1,1,2,3,3,5*0,
+     11,1,2,3,3,1,1,2,3,3/
+      DATA ZERO,ONE,TWO/0.0D+00,1.0D+00,2.0D+00/
+cges  DATA PI2 /6.2831853071795867D+00/
+      DATA PI2 /6.2831853071796D+00/
+      DATA NGNRTR/4*1,4*2,2*3,9*0/
+      DATA BLANK/8H          /
+ 9999 FORMAT(1H1,20X,'THE POINT GROUP IS NO.',I2,', ',A3,', N=',
+     1I2,', ORDER=',I2//' -- GENERATORS OF THE GROUP AND',
+     2' IRREDUCIBLE REPRESENTATIONS --'//
+     3' REPRESENTATION',3(A10,'GENERATOR',I2,4X))
+ 9998 FORMAT(I5,1X,A4,3(15X,F10.6))
+ 9997 FORMAT(/I5,1X,A4,10X,2F10.6/20X,2F10.6)
+ 9996 FORMAT(/I5,1X,A4,10X,2F10.6,5X,2F10.6/20X,2F10.6,5X,2F10.6)
+ 9995 FORMAT(/I5,1X,A4,5X,3(5X,2F10.6)/15X,3(5X,2F10.6))
+ 9994 FORMAT(4(/),5X,5(A10,'R',I2,12X))
+ 9993 FORMAT(1X,A4,5(F15.6,10X))
+ 9992 FORMAT(/1X,A4,5(2F10.6,5X))
+ 7772 FORMAT(/1X,A4,3(3F12.8,3X))
+ 7771 FORMAT(5X,3(3F12.8,3X))
+ 9991 FORMAT(5X,5(2F10.6,5X))
+C
+C     CALCULATE TRANSFORMATION MATRICES PTR AND DTR
+C
+      CALL TRMAT6(PTR,DTR,FTR,GTR,T)
+      N=NAXIS
+      IF(IGROUP.GT.10)GO TO 5
+      IF(N.NE.0) THETA=PI2/DBLE(N)
+      NODD=.TRUE.
+      IF(N.EQ.2*(N/2)) NODD=.FALSE.
+      GEN1(1,1,1)=ONE
+      LAMBDA(1)=1
+      NGEN=NGNRTR(IGROUP)
+      GEN2(1,1,1)=ONE
+      GEN1(2,1,1)=ONE
+      GEN2(2,1,1)=-ONE
+      LAMBDA(2)=1
+    5 CONTINUE
+C***  IF(IGROUP.GT.17) CALL ABORT(8,
+C*** 161HSUBROUTINE SYMORB--CURRENTLY DOES NOT HANDLE THIS POINT GROUP)
+      CALL SYMBOL(SB,IGROUP,NAXIS)
+      GO TO (10,20,20,40,50,60,70,70,80,90,6,6,6,6,6,6,6),IGROUP
+    6 GO TO 600
+C
+C     -- C1 --
+C
+   10 IADDR(1)=0
+      IPA(1)=NUM
+      NIRR=1
+      LAMBDA(1)=1
+CIBM  SB(1)=BLANK
+      NIRRED=1
+      KB=1
+      GO TO 200
+C     GO TO 9000
+C
+C     -- CS,CI --
+C
+   20 NIRRED=2
+      GEN1(2,1,1)=-ONE
+      KB=2
+      GO TO 200
+C
+C     -- CN --
+C
+   40 IF(N.EQ.1) GO TO 10
+      IF(NODD) GO TO 45
+      GEN1(2,1,1)=-ONE
+      NIRRED=N/2+1
+      KB=2
+      IF(N-2) 170,200,170
+   45 KB=1
+      NIRRED=(N+1)/2
+      GO TO 170
+C
+C     -- S2N --
+C
+   50 IF(N.EQ.1) GO TO 20
+      NIRRED=N+1
+      KB=2
+      MAXK=NIRRED-KB
+      DO 55 KK=1,MAXK
+        K=KK+KB
+        ARG=DBLE(KK)*THETA/TWO
+        GEN2(K,1,1)=DCOS(ARG)
+        GEN2(K,2,2)=DCOS(ARG)
+        DUM=DSIN(ARG)
+        GEN2(K,1,2)=-DUM
+        GEN2(K,2,1)=DUM
+   55 CONTINUE
+      GO TO 170
+C
+C     -- CNH --
+C
+   60 IF(N.EQ.1) GO TO 20
+      IF(NODD) GO TO 62
+C***************  CHANGED BY TJL TO COTTON ORDERING *******************
+      GEN2(2,1,1)=-ONE
+      GEN1(2,1,1)=-ONE
+      GEN2(4,1,1)=ONE
+      GEN1(3,1,1)=ONE
+      GEN1(4,1,1)=-ONE
+      GEN2(3,1,1)=-ONE
+      LAMBDA(3)=1
+      LAMBDA(4)=1
+      NIRRED=N+2
+      KB=4
+      IF(N-2) 150,200,150
+   62 KB=2
+      NIRRED=N+1
+      GO TO 150
+C
+C     -- CNV,DN --
+C
+   70 IF(NODD) GO TO 72
+      GEN1(3,1,1)=-ONE
+      GEN1(4,1,1)=-ONE
+      GEN2(4,1,1)=-ONE
+      GEN2(3,1,1)=ONE
+      LAMBDA(3)=1
+      LAMBDA(4)=1
+      NIRRED=N/2+3
+      KB=4
+      IF(N-2) 160,200,160
+   72 KB=2
+      NIRRED=(N+3)/2
+      GO TO 160
+C
+C     -- DNH --
+C
+   80 GEN3(1,1,1)=ONE
+      GEN3(2,1,1)=-ONE
+      GEN2(2,1,1)=ONE
+      LAMBDA(3)=1
+      LAMBDA(4)=1
+      GEN2(3,1,1)=-ONE
+      GEN2(4,1,1)=-ONE
+      IF(NODD) GO TO 82
+      GEN3(3,1,1)=-ONE
+      GEN3(4,1,1)=ONE
+      GEN3(5,1,1)=ONE
+      GEN3(6,1,1)=-ONE
+      GEN3(7,1,1)=-ONE
+      GEN3(8,1,1)=ONE
+      LAMBDA(5)=1
+      LAMBDA(6)=1
+      LAMBDA(7)=1
+      LAMBDA(8)=1
+      GEN2(5,1,1)=-ONE
+      GEN2(7,1,1)=ONE
+      GEN2(6,1,1)=-ONE
+      GEN2(8,1,1)=ONE
+      GEN1(3,1,1)=-ONE
+      GEN1(4,1,1)=-ONE
+      GEN1(7,1,1)=-ONE
+      GEN1(8,1,1)=-ONE
+      GEN1(5,1,1)=ONE
+      GEN1(6,1,1)=ONE
+      NIRRED=N+6
+      KB=8
+      IF(N-2) 84,200,84
+   82 GEN3(3,1,1)=-ONE
+      GEN3(4,1,1)=-ONE
+      GEN1(3,1,1)=ONE
+      GEN1(4,1,1)=ONE
+      NIRRED=N+3
+      KB=4
+   84 MAXK=NIRRED-KB
+      DO 86 KK=1,MAXK
+         K=KK+KB
+         GEN3(K,1,1)=ONE
+         GEN3(K,2,2)=-ONE
+         GEN3(K,1,2)=ZERO
+         GEN3(K,2,1)=ZERO
+   86 CONTINUE
+      GO TO 150
+C
+C     -- DND --
+C
+   90 NIRRED=N+3
+      KB=4
+      GEN3(1,1,1)=ONE
+      GEN3(2,1,1)=ONE
+      GEN3(3,1,1)=-ONE
+      GEN3(4,1,1)=-ONE
+      LAMBDA(3)=1
+      LAMBDA(4)=1
+      GEN1(3,1,1)=ONE
+      GEN1(4,1,1)=ONE
+      GEN2(3,1,1)=ONE
+      GEN2(4,1,1)=-ONE
+      MAXK=NIRRED-KB
+      DO 92 KK=1,MAXK
+         K=KK+KB
+         ARG=DBLE(KK)*THETA/TWO
+         DUM=DCOS(ARG)
+         GEN3(K,1,1)=DUM
+         GEN3(K,2,2)=-DUM
+         GEN3(K,1,2)=DSIN(ARG)
+         GEN3(K,2,1)=DSIN(ARG)
+   92 CONTINUE
+      GO TO 160
+  150 MAXK=NIRRED-KB
+      DO 155 KK=1,MAXK
+         K=KK+KB
+         LAMBDA(K)=2
+         M=(KK+1)/2
+         ARG=DBLE(M)*THETA
+         GEN1(K,1,1)=DCOS(ARG)
+         GEN1(K,2,2)=DCOS(ARG)
+         DUM=DSIN(ARG)
+         GEN1(K,1,2)=-DUM
+         GEN1(K,2,1)=DUM
+  155 CONTINUE
+      S=ONE
+      DO 157 KK=1,MAXK
+         S=-S
+         K=KK+KB
+         GEN2(K,1,1)=S
+         GEN2(K,2,2)=S
+         GEN2(K,1,2)=ZERO
+         GEN2(K,2,1)=ZERO
+  157 CONTINUE
+      GO TO 200
+  160 MAXK=NIRRED-KB
+      DO 165 KK=1,MAXK
+         K=KK+KB
+         GEN2(K,1,1)=ONE
+         GEN2(K,2,2)=-ONE
+         GEN2(K,1,2)=ZERO
+         GEN2(K,2,1)=ZERO
+  165 CONTINUE
+      IF(IGROUP.EQ.9) GO TO 200
+  170 MAXK=NIRRED-KB
+      DO 175 KK=1,MAXK
+         K=KK+KB
+         LAMBDA(K)=2
+         ARG=DBLE(KK)*THETA
+         GEN1(K,1,1)=DCOS(ARG)
+         GEN1(K,2,2)=DCOS(ARG)
+         DUM=DSIN(ARG)
+         GEN1(K,1,2)=-DUM
+         GEN1(K,2,1)=DUM
+  175 CONTINUE
+  200 IB=0
+      DO 250 IRP=1,NIRRED
+         LL=LAMBDA(IRP)
+         DO 210 I=1,LL
+            K1=IB+LL*(I-1)
+            DO 205 J=1,LL
+  205       GAM(1,K1+J)=ZERO
+  210    GAM(1,K1+I)=ONE
+         NMAX=NAXIS
+         IF (IGROUP.EQ.1) NMAX=1
+         IF(IGROUP.EQ.2) NMAX=2
+         IF(IGROUP.EQ.3) NMAX=2
+         DO 220 N=2,NMAX
+            DO 220 I=1,LL
+               K1=IB+LL*(I-1)
+               DO 220 J=1,LL
+                  DUM=ZERO
+                  DO 215 K=1,LL
+  215             DUM=DUM+GAM(N-1,K1+K)*GEN1(IRP,K,J)
+                  GAM(N,K1+J)=DUM
+  220    CONTINUE
+         IF(NGEN.EQ.1) GO TO 250
+         DO 230 N=1,NMAX
+            DO 230 I=1,LL
+               K1=IB+LL*(I-1)
+               DO 230 J=1,LL
+                  DUM=ZERO
+                  DO 225 K=1,LL
+  225             DUM=DUM+GAM(N,K1+K)*GEN2(IRP,K,J)
+                  GAM(NMAX+N,K1+J)=DUM
+  230    CONTINUE
+         IF(NGEN.EQ.2) GO TO 250
+         NMAX=NMAX+NMAX
+         DO 240 N=1,NMAX
+            DO 240 I=1,LL
+               K1=IB+LL*(I-1)
+               DO 240 J=1,LL
+                  DUM=ZERO
+                  DO 235 K=1,LL
+  235             DUM=DUM+GAM(N,K1+K)*GEN3(IRP,K,J)
+                  GAM(NMAX+N,K1+J)=DUM
+  240    CONTINUE
+  250 IB=IB+LL*LL
+      IF (NPRINT.NE.1) GO TO 461
+      WRITE(IW,9999) IGROUP,GRP,NAXIS,NT,(BLANK,I,I=1,NGEN)
+      DO 340 IRP=1,KB
+         GO TO (310,320,330),NGEN
+  310    WRITE(IW,9998) IRP,SB(IRP),GEN1(IRP,1,1)
+         GO TO 340
+  320    WRITE(IW,9998) IRP,SB(IRP),GEN1(IRP,1,1),GEN2(IRP,1,1)
+         GO TO 340
+  330    WRITE(IW,9998)IRP,SB(IRP),GEN1(IRP,1,1),GEN2(IRP,1,1)
+     1   ,GEN3(IRP,1,1)
+  340 CONTINUE
+      IF(KB.EQ.NIRRED) GO TO 410
+      MIN=KB+1
+      DO 400 IRP=MIN,NIRRED
+         GO TO (350,360,370),NGEN
+  350    WRITE(IW,9997)IRP,SB(IRP),((GEN1(IRP,I,J),J=1,2),I=1,2)
+         GO TO 400
+  360    WRITE(IW,9996)IRP,SB(IRP),((GEN1(IRP,I,J),J=1,2),(GEN2(IRP,I,J)
+     *   ,J=1,2),I=1,2)
+         GO TO 400
+  370    WRITE(IW,9995)IRP,SB(IRP),((GEN1(IRP,I,J),J=1,2),(GEN2(IRP,I,J)
+     *   ,J=1,2),(GEN3(IRP,I,J),J=1,2),I=1,2)
+  400 CONTINUE
+      GO TO 410
+  600 CONTINUE
+      DO 605 I=1,NT
+  605 GAM(I,1)=ONE
+      INDEXG=IGROUP-12
+      IF(INDEXG.GT.5)GO TO 800
+      MX=0
+      NXX=MUD(INDEXG)
+      DO 615 I=1,NT
+         DO 610 J=1,9
+  610    GAM(I,NXX+J)=T(MX+J)
+  615 MX=MX+9
+      CEE=-1./2.
+      ESS=DSQRT(0.75D+00)
+      MX=0
+      NXX=NUD(INDEXG)
+      DO 620 I=1,4
+         GAM(I,NXX+1)=1.
+         GAM(I,NXX+2)=0.
+         GAM(I,NXX+3)=0.
+  620 GAM(I,NXX+4)=1.
+      DO 625 I=5,8
+         GAM(I,NXX+1)=CEE
+         GAM(I,NXX+2)=-ESS
+         GAM(I,NXX+3)=ESS
+  625 GAM(I,NXX+4)=CEE
+      DO 630 I=9,12
+         GAM(I,NXX+1)=CEE
+         GAM(I,NXX+2)=ESS
+         GAM(I,NXX+3)=-ESS
+  630 GAM(I,NXX+4)=CEE
+      GO TO (750,660,650,650,650) INDEXG
+  650 DO 655 I=13,24
+         DO 655 J=1,4
+  655 GAM(I,NXX+J)=GAM(I-12,NXX+J)*FF(J)
+      IF(INDEXG.LT.5) GO TO 680
+  660 CONTINUE
+      IB=NT/2+1
+      IE=NT/2
+      MX=15
+      IF(INDEXG.EQ.5)MX=26
+      DO 665 I=IB,NT
+         DO 665 J=1,4
+  665 GAM(I,NXX+J)=GAM(I-IB,NXX+J)
+      DO 670 I=1,IE
+         DO 670 J=1,4
+  670 GAM(I,MX+J)=GAM(I,NXX+J)
+      DO 675 I=IB,NT
+         DO 675 J=1,4
+  675 GAM(I,MX+J)=-GAM(I,NXX+J)
+  680 LX=2
+      IF(INDEXG.EQ.2)LX=15
+      DO 690 I=1,12
+         GAM(I,LX)=1.
+  690 GAM(I+12,LX)=-1.
+      IF(INDEXG.LT.5) GO TO 700
+      DO 695 I=1,24
+         GAM(I+24,2)=GAM(I,2)
+         GAM(I,25)=1.
+         GAM(I+24,25)=-1.
+         GAM(I,26)=GAM(I,2)
+  695 GAM(I+24,26)=-GAM(I,2)
+  700 IF(INDEXG.EQ.2)GO TO 730
+      IX=JUD(INDEXG)
+      JX=MUD(INDEXG)
+      DO 705 I=1,12
+         DO 705 J=1,9
+            GAM(I,IX+J)=GAM(I,JX+J)
+  705 GAM(I+12,IX+J)=-GAM(I+12,JX+J)
+      IF(INDEXG.LT.5) GO TO 750
+      DO 710 I=1,24
+         DO 710 J=1,9
+            GAM(I+24,39+J)=-GAM(I,39+J)
+            GAM(I,6+J)=GAM(I,30+J)
+            GAM(I,15+J)=GAM(I,39+J)
+            GAM(I+24,6+J)=GAM(I,30+J)
+  710 GAM(I+24,15+J)=GAM(I,39+J)
+      GO TO 750
+  730 DO 735 I=1,12
+         DO 735 J=1,9
+            GAM(I,5+J)=GAM(I,19+J)
+  735 GAM(I+12,5+J)=GAM(I,19+J)
+  750 CONTINUE
+      NIRRED=NIR(INDEXG)
+      DO 760 I=1,NIRRED
+  760 LAMBDA(I)=NKL(I,INDEXG)
+  800 CONTINUE
+C
+C
+  410 CONTINUE
+      MAX=0
+  420 MIN=MAX+1
+      MAX=MAX+3
+      IF(MAX.GT.NT) MAX=NT
+      WRITE(IW,9994) (BLANK,M,M=MIN,MAX)
+      IB=0
+      DO 460 IRP=1,NIRRED
+         LL=LAMBDA(IRP)
+         GO TO (430,440,450),LL
+  430    WRITE(IW,9993) SB(IRP),(GAM(M,IB+1),M=MIN,MAX)
+         GO TO 460
+  440    WRITE(IW,9992) SB(IRP),(GAM(M,IB+1),GAM(M,IB+2),M=MIN,MAX)
+         WRITE(IW,9991) (GAM(M,IB+3),GAM(M,IB+4),M=MIN,MAX)
+         GO TO 460
+  450    WRITE(IW,7772)SB(IRP),(GAM(M,IB+1),GAM(M,IB+2),GAM(M,IB+3),
+     1   M=MIN,MAX)
+         WRITE(IW,7771)(GAM(M,IB+4),GAM(M,IB+5),GAM(M,IB+6),M=MIN,MAX)
+         WRITE(IW,7771)(GAM(M,IB+7),GAM(M,IB+8),GAM(M,IB+9),M=MIN,MAX)
+  460 IB=IB+LL*LL
+      IF(MAX.LT.NT) GO TO 420
+C
+C     GET CHARACTERS OF IRREDUCIBLE REPRESENTATIONS.
+C
+  461 CONTINUE
+      L=0
+      DO 465 I=1,NSHELL
+         J=KATOM(I)
+         IF(J.EQ.L) GO TO 465
+         L=J
+         DO 463 IT=1,15
+  463    INDOUT(IT)=ISO(I,IT)
+         CALL ISOOUT
+         DO 464 IT=1,NT
+            K=INDIN(IT)
+  464    ICT(J,IT)=KATOM(K)
+  465 CONTINUE
+      DO 490 IT=1,NT
+         IB=0
+         DO 480 IRP=1,NIRRED
+            LL=LAMBDA(IRP)
+            DUM=ZERO
+            DO 470 L=1,LL
+  470       DUM=DUM+GAM(IT,IB+LL*(L-1)+L)
+            CHARR(IT,IRP)=DUM
+  480    IB=IB+LL*LL
+  490 CONTINUE
+C
+C     CALCULATE TRACE OF PTR AND DTR FOR EACH OPERATION.
+C
+      DO 495 IT=1,NT
+         TRACEP(IT)=PTR(1,1,IT)+PTR(2,2,IT)+PTR(3,3,IT)
+         TRACED(IT)=DTR(1,1,IT)+DTR(2,2,IT)+DTR(3,3,IT)+DTR(4,4,IT)+
+     #     DTR(5,5,IT)+DTR(6,6,IT)
+         TRACEF(IT)=0.0D0
+         TRACEG(IT)=0.0D0
+         DO 497 JKI=1,10
+  497    TRACEF(IT)=TRACEF(IT)+FTR(JKI,JKI,IT)
+         DO 499 JKI=1,15
+  499    TRACEG(IT)=TRACEG(IT)+GTR(JKI,JKI,IT)
+  495 CONTINUE
+C
+      MSTU=NIRRED
+C
+      CALL CIPA(PTR,DTR,KATOM,KTYPE,ISC,IPC,CC,LAB,LOC1,LOC2,
+     1  KLASS,LAMBDA,IPA,KMIN,SB,IADDR,ISO,ICT,GAM,TRACEP,TRACED,
+     2  CHARR,ISGRP,FTR,GTR,TRACEF,TRACEG)
+C
+ 9000 CONTINUE
+      RETURN
+      END

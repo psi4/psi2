@@ -1,0 +1,91 @@
+      SUBROUTINE READ48(F3Q,F4Q,F3X,F4X,DD,CC)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION F3Q(N3N,N3N,N3N),F4Q(N3N,N3N,N3N,N3N)
+      DIMENSION F3X(NVIB,NVIB,NVIB),F4X(NVIB,NVIB,NVIB,NVIB)
+      DIMENSION DD(N3N,N3N),CC(1)
+      DIMENSION LOCS(1024),I48(1024)
+      COMMON/VIB101/NATOM,N3N,NATRI,ILIN,NVIB
+      COMMON/VIB102/ITHREE,IFOUR,N3TOT,N4TOT
+      COMMON/VIB203/IOFF(150),IPRNT
+      COMMON/VIB205/IFREQ,NFRQ(150)
+      DATA A00 / 0.0D+00 /
+      DATA ITAP48 / 48 /
+      DATA NSECT,NSECTH / 1024 , 512 /
+    1 FORMAT(//,2X,' PARAMETERS IN THE TAPE48'/
+     1          2X,' ISPOT2  = ',I5/
+     2          2X,' ISPOT3  = ',I5/
+     3          2X,' ISPOT4  = ',I5/)
+    2 FORMAT(//,2X,' *************************************************'/
+     1          2X,' ***THIRD DERIVATIVES W.R.T. NORMAL COORDINATES***'/
+     2          2X,' *************************************************')
+    3 FORMAT(//,2X,' F3(QI*QJ*QK) MATRIX (IN CM-1),  QVIB = ',I3,2X,
+     1      ', IVIB = ',I3/)
+    4 FORMAT(//,2X,' **************************************************'
+     1        /,2X,' ***FOURTH DERIVATIVES W.R.T. NORMAL COORDINATES***'
+     2        /,2X,' **************************************************'
+     3        /)
+    5 FORMAT(//,2X,' F4(QI*QJ*QK*QL) MATRIX (IN CM-1),',
+     1 1X,' QVIB (',I3,',',I3,')',2X,',',' IVIB (',I3,',',I3,')'/)
+C
+C   READ IN PARAMETERS FROM THE TAPE48
+      IF(IFREQ.NE.0) NVIB=IABS(IFREQ)
+      CALL RFILE(ITAP48)
+      CALL RREAD(ITAP48,LOCS,NSECT,1)
+      CALL RREAD(ITAP48,I48,NSECT,2)
+      ISPOT2=I48(22)
+      ISPOT3=I48(23)
+      ISPOT4=I48(24)
+      WRITE(6,1) ISPOT2,ISPOT3,ISPOT4
+C
+C   READ IN THIRD DERIVATIVES W.R.T. THE NORMAL COORDINATES
+      IF(ITHREE.EQ.48.AND.ISPOT3.NE.0) THEN
+        CALL RREAD(ITAP48,F3X,NVIB*NVIB*NVIB*2,ISPOT3)
+        CALL ZERO(F3Q,N3N*N3N*N3N)
+        DO 101 I=1,NVIB
+        DO 101 J=1,NVIB
+        DO 101 K=1,NVIB
+        F3Q(I,J,K)=F3X(I,J,K)
+  101   CONTINUE
+        WRITE(6,2)
+        DO 103 III=1,NVIB
+        IVIB=NFRQ(III)
+        WRITE(6,3) III,IVIB
+        DO 102 I=1,NVIB
+        II=NFRQ(I)
+        DO 102 J=1,NVIB
+        JJ=NFRQ(J)
+        DD(I,J)=F3Q(II,JJ,IVIB)
+  102   CONTINUE
+        CALL ANHOUT(DD,N3N,N3N,NVIB,NVIB,6)
+  103 CONTINUE
+      END IF
+C
+C   READ IN FOURTH DERIVATIVES W.R.T. THE NORMAL COORDINATES
+      IF(IFOUR.EQ.48.AND.ISPOT4.NE.0) THEN
+        CALL RREAD(ITAP48,F4X,NVIB*NVIB*NVIB*NVIB*2,ISPOT4)
+        CALL ZERO(F4Q,N3N*N3N*N3N*N3N)
+        DO 105 I=1,NVIB
+        DO 105 J=1,NVIB
+        DO 105 K=1,NVIB
+        DO 105 L=1,NVIB
+        F4Q(I,J,K,L)=F4X(I,J,K,L)
+  105   CONTINUE
+        WRITE(6,4)
+        DO 107 III=1,NVIB
+        IVIB=NFRQ(III)
+        DO 107 JJJ=1,NVIB
+        JVIB=NFRQ(JJJ)
+        WRITE(6,5) III,JJJ,IVIB,JVIB
+        DO 106 I=1,NVIB
+        II=NFRQ(I)
+        DO 106 J=1,NVIB
+        JJ=NFRQ(J)
+        DD(I,J)=F4Q(II,JJ,IVIB,JVIB)
+  106   CONTINUE
+        CALL ANHOUT(DD,N3N,N3N,NVIB,NVIB,6)
+  107   CONTINUE
+      END IF
+C
+      CALL RCLOSE(ITAP48,3)
+      RETURN
+      END

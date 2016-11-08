@@ -1,0 +1,91 @@
+.TH cphfci 1 "2 December, 1990" "\*(]W" "\*(]D"
+.SH NAME
+cphfci \- calculate the cphf correction to a correlated gradient
+
+.SH DESCRIPTION
+.LP
+The program
+.B cphfci
+solves the coupled-perturbed Hartree-Fock equations for
+correlated wavefunctions and completes the calculation of
+the gradient and the dipole moment.
+
+
+.SH REFERENCES
+.IP "1."
+B. R. Brooks, W. D. Laidig, P. Saxe, J. D. Goddard, Y. Yamaguchi
+and H. F. Schaefer, J. Chem. Phys. 72 (1980) 4652.
+.IP "2."
+Y. Osamura, Y. Yamaguchi and H. F. Schaefer, J. Chem. Phys. 77
+(1982) 383.
+.IP "3."
+N. C. Handy and H. F. Schaefer, J. Chem. Phys. 81 (1984) 5031.
+.IP "4."
+J. E. Rice, R. D. Amos, N. C. Handy, T. J. Lee and H. F. Schaefer,
+J. Chem. Phys. 85 (1986) 963.
+.IP "5."
+Y. Osamura, Y. Yamaguchi and H. F. Schaefer, Theor. Chim. Acta 72
+(1987) 71.
+
+.LP
+TCSCF-CI gradients:
+.IP "6."
+T. J. Lee, W. D. Allen and H. F. Schaefer, J. Chem. Phys. 87
+(1987) 7062.
+.IP "7."
+W. D. Allen and H. F. Schaefer, J. Chem. Phys. 87 (1987) 7076.
+
+.sL
+.pN INPUT
+.pN FILE30
+.pN FILE42
+.pN FILE47
+.pN FILE54
+.pN FILE58
+.pN FILE59
+.eL "FILES REQUIRED"
+
+.sL
+.pN FILE94
+.pN FILE96
+.pN FILE98
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN OUTPUT
+.pN FILE30
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE11
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B cphfci
+program
+searches through the default keyword path (first
+.B CPHFCI
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBDELETE52 =\fP \fIboolean\fP"
+The program will delete the MO basis two electron integrals in
+.pN FILE52
+if \fIboolean\fP is true.
+Possible values for this parameter are
+.BR TRUE ,
+.BR YES ,
+.BR 1 ,
+.BR FALSE ,
+.BR NO ,
+and
+.BR 0 .
+The default is true.
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+A printing option for use in debugging. The default is 0.

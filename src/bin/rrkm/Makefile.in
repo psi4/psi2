@@ -1,0 +1,10 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+BINOBJ = rrkm.o
+
+ALLOC =
+include ../MakeRules
+

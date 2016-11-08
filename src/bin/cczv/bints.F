@@ -1,0 +1,85 @@
+C
+C-----------------------------------------------------------------------
+C
+      SUBROUTINE BINTS(BMAT,BBMAT,NV,NO,FLOV,ORBSYM,NIRRED,FZO,FZV)
+      IMPLICIT INTEGER(A-Z)
+      COMMON/TAPES/TPBMAT,TPFMAT,TPHMAT,TPRMAT,TPQMAT,TPJMAT,ITAP71,
+     .             TPAMAT
+      COMMON/NEWPAR/NAB(8),NAI(8),NIJ(8),MAXOO,MAXVV,MAXOV
+      REAL*8 BMAT(NV*NV),BBMAT(NV*NV)
+      INTEGER FLOV(NIRRED,4),ORBSYM(*),FZO(*),FZV(*)
+C
+      CALL RFILE(TPBMAT)
+      CALL RFILE(ITAP71)
+      ADR71=1
+      POINTB=1
+C     WRITE(6,*)
+      DO 100 TSYM=1,NIRRED
+C
+C   LAB MUST CONTAIN FROZEN PAIRS (UNTIL FILE71 IS MODIFIED IN NCCSORT)
+C   BUT! TPBMAT IS SET WITHOUT THE FROZEN PAIRS (SMALLER THAN 71)
+C
+      LAB=0
+      DO 90 A=1,NV
+         ASYM=ORBSYM(A+NO)
+         DO 88 B=1,NV
+            BSYM=ORBSYM(B+NO)
+            ABSYM=IEOR(ASYM,BSYM)
+            IF(ABSYM.NE.TSYM-1)GO TO 88
+            LAB=LAB+1
+   88    CONTINUE
+   90 CONTINUE
+      NAB(TSYM)=LAB
+      WRITE(6,*)'TSYM=',TSYM,' NAB FOR BMAT',LAB
+C
+      FAB=0
+      DO 190 A=1,NV
+         IF(FZV(A).EQ.1)GO TO 190
+         ASYM=ORBSYM(A+NO)
+         BSYM=IEOR(ASYM,TSYM-1)+1
+         FB=FLOV(BSYM,3)-NO
+         LB=FLOV(BSYM,4)-NO
+         DO 188 B=FB,LB
+            FAB=FAB+1
+  188    CONTINUE
+  190 CONTINUE
+      NAB(TSYM)=FAB
+      WRITE(6,*)'TSYM=',TSYM,' FAB FOR BMAT',FAB
+C
+      DO 10 BE=1,NV
+         BESYM=ORBSYM(BE+NO)
+         DO 11 GA=1,BE
+            GASYM=ORBSYM(GA+NO)
+            BEGAS=IEOR(BESYM,GASYM)
+            IF(BEGAS.NE.TSYM-1)GO TO 11
+            CALL WREADW(ITAP71,BMAT,INTOWP(LAB),ADR71,ADR71)
+            IF(FZV(BE).EQ.1.OR.FZV(GA).EQ.1)GO TO 11
+C           DO 99 K=1,LAB
+C              BMAT(K)=-BMAT(K)
+C  99       CONTINUE
+            ALLCNT=0
+            FZVCNT=0
+            DO 290 A=1,NV
+               ASYM=ORBSYM(A+NO)
+               DO 288 B=1,NV
+                  BSYM=ORBSYM(B+NO)
+                  ABSYM=IEOR(ASYM,BSYM)
+                  IF(ABSYM.NE.TSYM-1)GO TO 288
+                  ALLCNT=ALLCNT+1
+                  IF(FZV(A).EQ.1.OR.FZV(B).EQ.1)GO TO 287
+                  FZVCNT=FZVCNT+1
+                  BBMAT(FZVCNT)=-BMAT(ALLCNT)
+  287          CONTINUE
+  288       CONTINUE
+  290    CONTINUE
+         CALL WWRITW(TPBMAT,BBMAT,INTOWP(FAB),POINTB,POINTB)
+   11    CONTINUE
+   10 CONTINUE
+  100 CONTINUE
+C
+      CALL RCLOSE(TPBMAT,3)
+      CALL RCLOSE(ITAP71,3)
+c     CALL RCLOSE(ITAP71,4)
+C
+      RETURN
+      END

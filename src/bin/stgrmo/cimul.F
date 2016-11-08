@@ -1,0 +1,17 @@
+      SUBROUTINE CIMUL(AB,A,B,N)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION AB(N),A(N),B(N)
+      COMMON/SIGNS/IOFF(32897),IPRNT
+      DATA A00 / 0.0D+00 /
+C
+      DO 102 I=1,N
+      VALU=A00
+      DO 101 J=1,N
+      IJ=IOFF(MAX0(I,J))+MIN0(I,J)
+      VALU=VALU+A(IJ)*B(J)
+  101 CONTINUE
+      AB(I)=VALU
+  102 CONTINUE
+C
+      RETURN
+      END

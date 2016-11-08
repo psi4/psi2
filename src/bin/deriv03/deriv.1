@@ -1,0 +1,117 @@
+.TH deriv 1 "30 May, 1991" "\*(]W" "\*(]D"
+.SH NAME
+deriv \- calculates AO derivative integrals
+
+.SH DESCRIPTION
+The program
+.B deriv
+calculates the AO derivative integrals up to second order for
+SCF wavefunctions.
+
+.SH REFERENCES
+.IP "1."
+P. Pulay, Mol. Phys. 17 (1969) 197, 204.
+.IP "2."
+R. Moccia, Chem. Phys. Lett. 5 (1970) 260.
+.IP "3."
+J. A. Pople, R. Krishnan, H. B. Schlegel and J. S. Binkley,
+Int. J. Quant. Chem. Symp. S13 (1979) 225.
+.IP "4."
+P. Pulay, J. Chem. Phys. 78 (1983) 5043.
+.IP "5."
+H. F. Schaefer and Y. Yamaguchi, J. Mol. Struct. 135 (1986) 369.
+.IP "6."
+Y. Osamura, Y. Yamaguchi, and H. F. Schaefer, Chem. Phys. 103
+(1986) 227.
+
+.sL
+.pN INPUT
+.pN FILE30
+.pN FILE40       "	(if \fBDERTYPE = SECOND\fP)"
+.eL "FILES REQUIRED"
+
+
+.sL
+.pN OUTPUT
+.pN FILE30
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE6
+.pN FILE11
+.pN FILE42       "	(if \fBDERTYPE = SECOND\fP)"
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B deriv
+program
+searches through the default keyword path (first
+.B DERIV
+and then
+.BR DEFAULT )
+for the following keywords:
+
+
+.IP "\fBDERTYPE =\fP \fIstring\fP"
+This specifies the order of derivative that is to eventually be done.
+It is used by the
+.B scf
+program to determine if certain files are to be written and it is
+also used to determine the default convergence of the wavefunction.
+The default is
+.BR FIRST .
+
+.IP "\fBOPENTYPE =\fP \fIstring\fP"
+This specifies the state desired.  It can be one of
+.B NONE
+(for a closed shell singlet),
+.B SINGLET
+(for an open shell singlet with two singly occupied orbitals of
+different irreducible representations),
+.B HIGHSPIN
+(for any high spin open shell system),
+.B TWOCON
+(for a two configuration singlet).
+The default is
+.BR NONE .
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+This is a print option.
+The default is 0.
+
+.IP "\fBTCSCF_GR =\fP \fIboolean\fP"
+This option forces the program to use the general-restricted Hartree-Fock
+form of the equations for two-configuration SCF wavefunctions, rather than the
+hardwired alpha and beta coefficients for the TCSCF case.  The default
+is false.  Setting this option to true allows the evaluation of
+analytic derivatives for the second root of a TCSCF.  This keyword 
+should have no effect for the lowest root of a TCSCF.
+.LP
+The are also keywords provided for compatability.
+These are subject to
+change.
+If they are to be
+used, then Psi maintenance personnel should be consulted first.
+The options are
+.BR RAMAN ,
+.BR NOSYM ,
+.BR AFOCK ,
+.BR DFOCK ,
+and
+.BR DERINT .
+
+.SH PRINT CONTROL
+The following print control options are recognized by \fBderiv\fP:
+
+.IP \fBBRIEF\fP
+Only print out total first derivatives.  Defaults to ON.
+
+.IP \fBVERBOSE\fP
+Print out components of first and second derivatives.  Defaults to
+OFF.  If VERBOSE is ON, then BRIEF is reset to OFF.
+
+.IP \fBDEBUG\fP
+Print out far more information than you could possibly want.

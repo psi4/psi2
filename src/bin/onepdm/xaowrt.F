@@ -1,0 +1,38 @@
+C////////////////////////////////////////////////////////////////////
+      SUBROUTINE XAOWRT(USOTAO,XSO,XAO,SCRT1,SCRT2,SCRT3,NBF,NUMAO
+     $,   LOCU)
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      DIMENSION USOTAO(1),XSO(1),XAO(1)
+      DIMENSION SCRT1(NUMAO,NUMAO),SCRT2(NUMAO,NUMAO),SCRT3(NUMAO)
+      COMMON /TAPES/IFILE3,IFILE5,IFILE6,ITAPE7,IFIL58,IFIL54,IFIL50
+     $,             IFIL51,IDEV,IFIL30,ifil76
+      KK=NUMAO*NBF
+      CALL WREADW(IFIL30,USOTAO,INTOWP(KK),LOCU,JJ)
+      KK=0
+      DO 10  I=1,NBF
+           SCRT3(I)=0.0D0
+           DO 10  K=1,NUMAO
+           KK=KK+1
+           SCRT2(K,I)=USOTAO(KK)
+ 10        SCRT3(I)=SCRT3(I)+USOTAO(KK)*USOTAO(KK)
+      DO 15  J=1,NBF
+      DO 15  I=1,NUMAO
+CWA   SCRT1(J,I)=SCRT2(I,J)/SCRT3(J)
+ 15   SCRT1(J,I)=SCRT2(I,J)
+      CALL SREW(IFIL50)
+      KK=NBF*(NBF+1)/2
+      CALL SREAD(IFIL50,XSO,INTOWP(KK))
+      DO 20  I=1,NUMAO
+      DO 20  J=1,I
+           KK=I*(I-1)/2+J
+           VAL1=0.0D0
+           DO 25  L=1,NBF
+           DO 25  K=1,NBF
+           LL=MIN0(K,L)
+           MM=MAX0(K,L)
+           LL=MM*(MM-1)/2+LL
+ 25        VAL1=SCRT1(K,I)*SCRT1(L,J)*XSO(LL)+VAL1
+ 20   XAO(KK)=VAL1
+CWA   WRITE THE AO 1-PDM TO THE MASTER FILE.
+      CALL MWRIT(XAO,34)
+      END

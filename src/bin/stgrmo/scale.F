@@ -1,0 +1,10 @@
+      SUBROUTINE SCALE(B,A,FACT,N)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION A(N),B(N)
+C
+      DO 101 I=1,N
+      B(I)=B(I)+A(I)*FACT
+  101 CONTINUE
+C
+      RETURN
+      END

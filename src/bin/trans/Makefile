@@ -1,0 +1,18 @@
+# Generated automatically from Makefile.in by configure.
+srcdir = /home/usrb/b3/longhorn/psi/src/bin/trans
+VPATH = /home/usrb/b3/longhorn/psi/src/bin/trans
+
+include ../MakeVars
+
+TRUESRC = \
+alloc.F chckit.F cisort.F fentry.F getdrt.F getint.F gprgid.F maxs.F neotrn.F setd2h.F sortwo.F srtone.F stufit.F trn1e.F trnsss.F trnsst.F trntts.F trnttt.F vecs.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+
+install_man:: trans.1
+	$(MKDIRS) $(mandir)/man1
+	cat $(top_srcdir)/lib/macro.psi $< | sed "s OS_NAME_HERE UNIX " > \
+            $(mandir)/man1/trans.1
+

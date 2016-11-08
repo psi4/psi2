@@ -1,0 +1,163 @@
+cets121890      SUBROUTINE GETB(A,EPS,ZETA,ALPHA,BETA,SS)
+      subroutine gb1(IJND,IL,JL,IK,JK,VAL2,VAL1,VAL3,KL,
+     1 a,eps,zeta,alpha,beta,ss,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      REAL*8 A(IJIND,NDF   ),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ),SS(NUMIJ,NDF)
+      REAL*8 A2,VAL1,VAL2,VAL3
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+C INITIALIZATION OF SUROUTINE GETB.
+C
+cets121890      RETURN
+C
+cets121890      ENTRY GB1(IJND,IL,JL,IK,JK,VAL2,VAL1,VAL3,KL)
+C
+      DO 10 IDF = 1,NDF
+C     XDF = IJIND + IDF
+      XDF =  IDF
+      A(IJND,XDF)=A(IJND,XDF)+SS(KL,IDF)*(A2*(ALPHA(IL)-ALPHA(JL) +
+     1  ALPHA(IK)-ALPHA(JK))*VAL2+(BETA(IL)-BETA(JL)+BETA(IK)-BETA(JK))
+     2 *(VAL1+VAL3))
+   10 CONTINUE
+      RETURN
+      end
+C
+      subroutine GB21(JLND,JJ,JL,IJ,IL,VAL1,VAL2,JOR,
+     1 a,eps,zeta,alpha,beta,ss,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      REAL*8 A(IJIND,NDF   ),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ),SS(NUMIJ,NDF)
+      REAL*8 A2,VAL1,VAL2,zet
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      zet=zeta(motyp(jor),il)
+      DO 21 IDF = 1,NDF
+      XDF =  IDF
+      A(JLND,XDF)=A(JLND,XDF)+SS(IJ,IDF)*(A2*(ALPHA(JJ)-ALPHA(JL) +
+     1  ALPHA(IJ)-ALPHA(IL))*VAL1+(BETA(JJ)-BETA(JL)+BETA(IJ)-BETA(IL))
+     2 *(VAL1+VAL2)-EPS(IL)+zet)
+cets121890     2 *(VAL1+VAL2)-EPS(IL)+ZETA(IL,JOR))
+   21 CONTINUE
+      RETURN
+      end
+C
+      subroutine GB22(IJND,IL,JL,IJ,JJ,VAL1,VAL2,JOR,
+     1 a,eps,zeta,alpha,beta,ss,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      REAL*8 A(IJIND,NDF   ),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ),SS(NUMIJ,NDF)
+      REAL*8 A2,VAL1,VAL2,zet
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      zet=zeta(motyp(jor),il)
+      DO 20 IDF = 1,NDF
+      XDF =  IDF
+      A(IJND,XDF)=A(IJND,XDF)+SS(JL,IDF)*(A2*(ALPHA(IL)-ALPHA(JL) +
+     1  ALPHA(IJ)-ALPHA(JJ))*VAL1+(BETA(IL)-BETA(JL)+BETA(IJ)-BETA(JJ))
+     2 *(VAL1+VAL2)+EPS(IL)-zet)
+cets     2 *(VAL1+VAL2)+EPS(IL)-ZETA(IL,JOR))
+   20 CONTINUE
+      RETURN
+      end
+C
+      subroutine GB3(IKND,IL,KL,II,IK,VAL1,VAL2,IOR,
+     1 a,eps,zeta,alpha,beta,ss,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      REAL*8 A(IJIND,NDF   ),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ),SS(NUMIJ,NDF)
+      REAL*8 A2,VAL1,VAL2,zet
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      zet=zeta(motyp(ior),kl)
+      DO 30 IDF = 1,NDF
+      XDF =  IDF
+      A(IKND,XDF)=A(IKND,XDF)+SS(IL,IDF)*(A2*(ALPHA(IL)-ALPHA(KL) +
+     1  ALPHA(II)-ALPHA(IK))*VAL1+(BETA(IL)-BETA(KL)+BETA(II)-BETA(IK))
+     2 *(VAL1+VAL2)-EPS(KL)+ zet)
+cets     2 *(VAL1+VAL2)-EPS(KL)+ZETA(KL,IOR))
+   30 CONTINUE
+      RETURN
+      end
+C
+      subroutine GB4(IKND,IK,KK,IJ,JK,VAL1,VAL2,KOR,
+     1 a,eps,zeta,alpha,beta,ss,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      REAL*8 A(IJIND,NDF   ),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ),SS(NUMIJ,NDF)
+      REAL*8 A2,VAL1,VAL2,zet
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      zet=zeta(motyp(kor),ij)
+      DO 40 IDF = 1,NDF
+      XDF =  IDF
+      A(IKND,XDF)=A(IKND,XDF)+SS(JK,IDF)*(A2*(ALPHA(IK)-ALPHA(KK) +
+     1  ALPHA(IJ)-ALPHA(JK))*VAL1+(BETA(IK)-BETA(KK)+BETA(IJ)-BETA(JK))
+     2 *(VAL1+VAL2)+EPS(IJ)- zet)
+cets     2 *(VAL1+VAL2)+EPS(IJ)-ZETA(IJ,KOR))
+   40 CONTINUE
+      RETURN
+      end
+C
+      subroutine GB6(IKND,II,KK,VAL1,VAL2,IK,IOR,KOR,
+     1 a,eps,zeta,alpha,beta,ss,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      REAL*8 A(IJIND,NDF   ),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ),SS(NUMIJ,NDF)
+      REAL*8 A2,VAL1,VAL2,zet1,zet2
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      zet1=zeta(motyp(kor),ii)
+      zet2=zeta(motyp(ior),kk)
+      DO 60 IDF = 1,NDF
+      XDF =  IDF
+      A(IKND,XDF)=A(IKND,XDF)+SS(IK,IDF)*(A2*(ALPHA(II)-ALPHA(KK))*
+     1  VAL1+(BETA(II)-BETA(KK))*(VAL1+VAL2) +
+     2  EPS(II)-zet1-EPS(KK)+zet2)
+   60 CONTINUE
+      RETURN
+      end
+C
+      subroutine GBD(IJND,IK,JK,VAL2,VAL1,KK,
+     1 a,eps,zeta,alpha,beta,ss,ntypep)
+      IMPLICIT INTEGER (A-Z)
+      REAL*8 A(IJIND,NDF   ),EPS(NUMIJ),zeta(ntypep,numij)
+      REAL*8 ALPHA(NUMIJ),BETA(NUMIJ),SS(NUMIJ,NDF)
+      REAL*8 A2,VAL1,VAL2
+      common /ptrs/ motyp(500),mopos(5)
+      COMMON /TAPES/ NOUT,ICHK,IT30,IT42,IT47,IT52,IT58,IT94,IT96,IT98
+      COMMON /DIMSG/ SYMORB,NUMIJ,NBF,NMAX,NBFORB,NSYM,NDF,NORBS
+      COMMON /OCCS/ NSPE,NSA,NSB,NALP,NOP,NDOC,LFERM,NUOC,IJIND,IJIND3
+      DATA A2 /2.0D+00/
+C
+      DO 80 IDF = 1,NDF
+      XDF =  IDF
+      A(IJND,XDF)=A(IJND,XDF)+SS(KK,IDF)*A2*((ALPHA(IK)-ALPHA(JK))*
+     1  VAL2+(BETA(IK)-BETA(JK))*VAL1)
+   80 CONTINUE
+      RETURN
+      END

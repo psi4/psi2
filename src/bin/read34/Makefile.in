@@ -1,0 +1,9 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+BINOBJ = fentry.o gprgid.o
+
+include ../MakeRules
+

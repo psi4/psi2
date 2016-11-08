@@ -1,0 +1,15 @@
+      SUBROUTINE VEKTOR (U,R,I,J,XA,YA,ZA)
+      IMPLICIT REAL*8 (A-H,O-Z)
+      DIMENSION U(3), XA(1), YA(1), ZA(1)
+C
+C        BILDET DEN NORMIERTEN ENTFERNUNGSVECTOR VON KERN J NACH KERN I
+C        UND DIE ENTFERNUNG R
+C
+      U(1)=XA(I)-XA(J)
+      U(2)=YA(I)-YA(J)
+      U(3)=ZA(I)-ZA(J)
+      Y = SCALAR(U,U)
+      R = DSQRT(Y)
+      CALL NOM (U)
+      RETURN
+      END

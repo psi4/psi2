@@ -1,0 +1,42 @@
+      SUBROUTINE hs(h1,isym,numi,INT,IJADD,KADD,LADD,H2)
+C
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+      real*8 sqrt2,sqrt3,sqt1p5,asqrt2,hsqrt3
+C
+      INTEGER SYMORB,ARR,ORBFRM,ASM,OS,BMAX
+      REAL*8 INT
+C
+      COMMON /COEFS/  A,B,INTAL,INTAU,INTB,INTAD,INTBD
+      COMMON /INTS/   NMAX,NMAX2,NGROUP,NBLKOC,NUMIJ,SYMORB,INTSRT
+      COMMON /DIMS/   NBF,NSYM,NORBS,NROWS,NROWS4,NWKS,NWKS2,NLEVS
+     #,               NROWOC,LEVFRM
+     #,               NWKSMX,NLWKMX,NUWKMX,BMAX,NROOTS,ORBFRM
+      COMMON /ALL/    VAL1,VAL2,VAL3,ARR,ITR1,ITR2,IA,JA,ITYPE,ISEGT
+     #,               LVFRM1,NLWKI,NLWKJ,IMAX,IMIN
+      COMMON /SYMM/   ASM,JS,IS,MX(8),MN(8),OS(8),NUMSYM(8)
+      common /sqrts/ sqrt2,sqrt3,sqt1p5,asqrt2,hsqrt3
+C
+      DIMENSION INT(NMAX),IJADD(NUMIJ),KADD(SYMORB),LADD(SYMORB)
+C     DIMENSION HIIM (1),HIISM(1),HIJM (1),HIM(1),HSM(1)
+      DIMENSION H1(1),H2(1)
+C
+      DATA ACRCY /1.0D-09/
+C
+cets110990      RETURN
+C
+C******************************* HS ************************************
+C
+cets110990      ENTRY HS(H1,ISYM,NUMI)
+C
+cets111090      A2=A*DSQRT(2.0D+00)
+      a2=a*sqrt2
+      LAD=ARR+LADD(OS(ASM+1)+MN(ISYM+1))+2
+      DO 410 I=1,NUMI
+         H1(I)=A2*INT(LAD)
+         LAD=LAD+3
+  410 CONTINUE
+      RETURN
+C
+C
+      END

@@ -1,0 +1,20 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+ifeq ($(target)-f77,mips-dec-ultrix3.0-f77)
+  FFLAGS = $(FDBG) $(FOTH)
+endif
+
+TRUESRC = fentry.F getdrt.F getit.F order.F gprgid.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+
+install_man:: drtso.1
+	$(MKDIRS) $(mandir)/man1
+	cat $(top_srcdir)/lib/macro.psi $< | sed "s OS_NAME_HERE UNIX " > \
+            $(mandir)/man1/drtso.1
+

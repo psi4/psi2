@@ -1,0 +1,12 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+TRUESRC = \
+fentry.F gprgid.F polder.F ssmat.F
+
+BINOBJ = $(TRUESRC:%.F=%.o)
+
+include ../MakeRules
+

@@ -1,0 +1,13 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include ../MakeVars
+
+ifeq ($(target)-$(FC),power-aix-3.1-xlf)
+  FFLAGS = $(FDBG)
+endif
+
+BINOBJ = fentry.o gprgid.o cx.o
+
+include ../MakeRules
+

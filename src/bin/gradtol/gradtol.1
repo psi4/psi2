@@ -1,0 +1,135 @@
+.TH gradtol 1 "10 Oct, 1994" "Psi Release 2.0" "\*(]D"
+.SH NAME
+gradtol \- determines whether an optimization step has converged
+
+.SH DESCRIPTION
+.LP
+The program
+.B gradtol
+determines whether a geometry optimization step has converged 
+using several criterion including energy change, gradient size, and
+geometry change.
+
+.sL
+.pN INPUT      "	"
+.pN FILE11     "	"
+.eL "FILES REQUIRED"
+
+.sL
+.eL "TEMPORARY FILES USED"
+
+.sL
+.pN OUTPUT     "	"
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B gradtol
+program searches
+through the default keyword path (first
+.B GRADTOL
+and then
+.BR DEFAULT ).
+The geometry point evaluated is the one at the bottom of file11.dat.
+The following keywords are valid:
+
+.IP "\fBMINIMUM =\fP \fIboolean\fP"
+If the optimization is a minimum search then the energy should decrease
+every step.  Not so for a transition state search.
+Options are 
+.B true,
+.B false,
+.B 1,
+or
+.B 0.
+The default is true.
+
+.IP "\fBNO_INT =\fP \fIboolean\fP"
+If 
+.B true 
+then the program will only do Cartesian convergence analysis.  If
+.B false, 
+the program will also do convergence analysis in internal coordinates.
+The default is true since the program cannot currently do internal
+coordinates.
+
+.IP "\fBFIRST_RUN =\fP \fIboolean\fP"
+If 
+.B true 
+then the program will assume there is only one gradient point (the
+last one in file11.dat) and make no comparisons to the previous 
+gradient point.  If
+.B false, 
+the program will make comparisons to the previous geometry step.
+The default is false if more than one gradient point exists in file11.dat.
+
+.SH CONVERGENCE CRITERION
+The following convergence criterion are recognized by \fBgradtol\fP.
+In all cases, the criterion used by the program is 10**-\fIinteger\fP.
+In general, the defaults should be adequate, and should not be overridden
+unless you are the type of egotist who thinks he knows what he is doing.
+The exceptions may be \fBRMS_GRAD_CART\fP and \fBRMS_GRAD_INT\fP.
+Note that in some cases the defaults depend on other criterion, and that
+changing one value could change several.
+
+.IP "\fBMAX_NRG =\fP \fIinteger\fP"
+The maximum allowable energy change between geometry points to be considered
+converged.  Default value is 10.
+
+.IP "\fBRMS_GRAD_INT =\fP \fIinteger\fP"
+The largest allowable root-mean-squared internal coordinate gradient for a
+geometry point to be considered to be converged.
+Default value is 6.
+
+.IP "\fBRMS_GRAD_CART =\fP \fIinteger\fP"
+The largest allowable root-mean-squared Cartesian coordinate gradient for a
+geometry point to be considered to be converged.
+Default value is 6.
+
+.IP "\fBMAX_GRAD_INT =\fP \fIinteger\fP"
+The maximum allowable internal coordinate gradient for a
+geometry point to be considered to be converged.
+This criterion defaults to 1.5 times the associated rms criterion.
+
+.IP "\fBMAX_GRAD_CART =\fP \fIinteger\fP"
+The maximum allowable Cartesian coordinate gradient for a
+geometry point to be considered to be converged.
+This criterion defaults to 1.5 times the associated rms criterion.
+
+.IP "\fBRMS_DISP_CART =\fP \fIinteger\fP"
+The largest allowable root-mean-squared Cartesian coordinate change between 
+geometry points to be considered to be converged.
+This criterion defaults to 4.0 times the associated gradient criterion.
+
+.IP "\fBMAX_DISP_CART =\fP \fIinteger\fP"
+The maximum allowable Cartesian coordinate change between 
+geometry points to be considered to be converged.
+This criterion defaults to 1.5 times the associated rms criterion.
+
+.SH PRINT CONTROL
+The following print control options are recognized by \fBgradtol\fP:
+
+.IP \fBBRIEF\fP
+This should be \fBON\fP to indicate that minimal printing is
+desired.  The default is \fBON\fP.
+
+.IP \fBVERBOSE\fP
+Print out more output than is typically necessary this inculdes the value
+of internal coordinates.  Defaults to
+OFF.  If VERBOSE is ON, then BRIEF is reset to OFF.
+
+.IP \fBDEBUG\fP
+Print out far more information than anyone could possibly want.
+
+.SH EXAMPLES
+.LP
+To override the 
+.B BRIEF
+printing option and get more output, input.dat should include
+
+.DS
+  gradtol: (
+    print = ((ON VERBOSE)(OFF BRIEF DEBUG))
+    )
+.DE

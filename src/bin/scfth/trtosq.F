@@ -1,0 +1,20 @@
+      SUBROUTINE TRTOSQ(SQUARE,TRIANG,NUM,NNP)
+C
+C***PURPOSE: TO EXPAND A LOWER TRIANGULAR MATRIX TO A SYMMETRIC
+C            SQUARE MATRIX.
+C
+C PAUL SAXE                27 NOVEMBER 1984                UCB
+C
+      REAL*8 SQUARE(NUM,NUM),TRIANG(NNP)
+C
+      IJ=0
+      DO 2 I=1,NUM
+         DO 1 J=1,I
+            IJ=IJ+1
+            SQUARE(I,J)=TRIANG(IJ)
+            SQUARE(J,I)=TRIANG(IJ)
+    1    CONTINUE
+    2 CONTINUE
+C
+      RETURN
+      END

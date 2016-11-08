@@ -1,0 +1,43 @@
+.TH dipder 1 "26 August, 1991" "Psi Release 2.0" "\*(]D"
+.SH NAME
+dipder \- calculates derivatives of dipole moments
+
+.SH DESCRIPTION
+.LP
+The program
+.B dipder
+calculates derivatives of dipole moments for SCF wavefunctions.
+
+.SH REFERENCES
+.IP "1."
+Y. Yamaguchi, M. Frisch, J. Gaw, H. F. Schaefer and J. S. Binkley, 
+J. Chem. Phys. 84 (1986) 2262.
+
+
+.sL
+.pN INPUT  
+.pN FILE30
+.eL "FILES REQUIRED"
+
+.sL
+.pN OUTPUT
+.eL "FILES UPDATED"
+
+.sL
+.pN CHECK
+.pN FILE43
+.eL "FILES GENERATED"
+
+.SH INPUT FORMAT
+.LP
+The
+.B dipder
+program
+searches through the default keyword path (first
+.B DIPDER
+and then
+.BR DEFAULT )
+for the following keywords:
+
+.IP "\fBIPRINT =\fP \fIinteger\fP"
+A printing flag.  The default is 0.

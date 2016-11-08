@@ -1,0 +1,212 @@
+      SUBROUTINE wy(INT,C,S,IJADD,KADD,LADD,WTW,WTX,WTY,WAB,SS
+     #,                 CI,SI,CJ,SJ,H1,H2,IJXX,NKLXX,IJWW,NKLWW
+     #,                 KLXX,KLWW)
+C
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+CTJL 1               CI,SI,CJ,SJ,H1,H2,IJXX,NKLXX,IJWW,NKLWW,
+CTJL 2               KLXX,KLWW
+C
+      real*8 sqrt2,sqrt3,sqt1p5,asqrt2,hsqrt3
+      INTEGER ARR,TR1,TR2,ASM,OS,WTW,WTX,WTY,WAB,SS,SYMORB
+      INTEGER BMAX,ORBFRM
+      REAL*8 INT(NMAX),C(NWKS),S(NWKS)
+C
+      DIMENSION CI(1),CJ(1),SI(1),SJ(1),H1(1),H2(1)
+      DIMENSION KADD(SYMORB),LADD(SYMORB),IJADD(NUMIJ),WTW(ORBFRM,NSYM)
+      DIMENSION WTX(ORBFRM,NSYM),WTY(ORBFRM),WAB(ORBFRM),SS(NORBS)
+      DIMENSION IJXX(NUMIJ ),NKLXX(NSYM,ORBFRM),IJWW(NUMIJ )
+      DIMENSION NKLWW(NSYM,ORBFRM),KLXX(1),KLWW(1)
+C
+      COMMON /COEFS/  A,B,INTAL,INTAU,INTB,INTAD,INTBD
+      COMMON /DIMS/ NBF,NSYM,NORBS,NROWS,NROWS4,NWKS,NWKS2,NLEVS
+     *,             NROWOC,LEVFRM
+     *,             NWKSMX,NLWKMX,NUWKMX,BMAX,NROOTS,ORBFRM
+      COMMON /INTS/   NMAX,NMAX2,NGROUP,NBLKOC,NUMIJ,SYMORB,INTSRT
+C  UNIVERSAL IDENTITY OF THE OBJECTS IN THESE COMMON
+C     COMMON /ALL/ ARR,VAL1,VAL2,VAL3,ITR1,ITR2,IA,JA,ITYPE,ISEGT
+C    *,LVFRM1,NLWKI,NLWKJ,IMAX,IMIN
+C     COMMON /SYMM/ JSM,JFSYM,IFSYM,MAXSYM(8),MINSYM(8),ISMOFF(8)
+C    #,             NUMSYM(8)
+      COMMON /SYMM/ ASM,JS,IS,MX(8),MN(8),OS(8),NUMSYM(8)
+      COMMON /TAPES/ITAP52,ITAPE5,ITAPE6,ITAP58,ITAP54,ITAP99,ITAP94
+     *,             ITAPE3,ITAP95,ITAP96
+      COMMON /ALL/VAL1,VAL2,VAL3,ARR,TR1,TR2,IA,JA,M,ISEG,N,N1,N2
+     *,           IMAX,IMIN
+      COMMON /COUNT/  ICOUNT,IXX4,IXX5,IXX6,IXX8,IWW4,IWW5,IWW6,IWW8
+     #,               IWX7,IXW9,IXY3,IXY16,IXY18,IXY22,IWY2,IWY15,IWY17
+     #,               IWY21,IYX20,IYW19
+      COMMON /XX4X/   NIJVIR,NREFS
+      COMMON /MINMAX/ IMING,IMAXG,JMING,JMAXG
+      common /ets/ isym
+      common /sqrts/ sqrt2,sqrt3,sqt1p5,asqrt2,hsqrt3
+      REAL*8 VAL1,VAL2,VAL3
+C
+C
+cets111090      SQRT2=DSQRT(2.0D+00)
+cets111090      SQRT3=DSQRT(3.0D+00)
+cets111090      SQT1P5=DSQRT(1.5D+00)
+cets111090      ASQRT2=1.0D+00/SQRT2
+cets111090      HSQRT3=0.5D+00*DSQRT(3.0D+00)
+cets110990      RETURN
+C
+C****************************** WY *************************************
+C
+cets110990      ENTRY WY
+C
+      IF (ISEG.EQ.15) GO TO 600
+      IF (ISEG.EQ.17) GO TO 630
+      IF (ISEG.EQ.21) GO TO 670
+C
+C     ----- WY ISEG=2 -----
+C
+      IWY2=IWY2+1
+      JJA=JA
+      NKL=NKLWW(IS+1,N)
+C     DO 430 I=MN(JS+1),MX(JS+1)
+      DO 430 I=MN(JS+1),MN(JS+1)+NUMSYM(JS+1)-1
+         IF (I.LT.JMING.OR.I.GT.JMAXG) GO TO 430
+         IJ=IJWW(ARR+I)
+C     CALL DOT(T,INT(IJ+1),C(IA),NKL)
+         S(JJA)=S(JJA)+VAL1*DOT(INT(IJ+1),C(IA),NKL)
+  430 JJA=JJA+1
+C
+      NKLOFF=NKLWW(IS+1,ORBFRM)
+      NJJ=NUMSYM(JS+1)
+      IIA=IA
+C
+      JINF=MN(JS+1)
+      IF (JMING.GT.JINF) JINF=JMING
+      JDIFF=JINF-MN(JS+1)
+C     JSUP=MX(JS+1)
+      JSUP=MN(JS+1)+NUMSYM(JS+1)-1
+      IF (JMAXG.LT.JSUP) JSUP=JMAXG
+      IST=IJWW(ARR+JINF)
+      DO 432 I=1,NKL
+         IPT=IST+I
+         JJA=JA+JDIFF
+         T=0.0
+         DO 431 J=JINF,JSUP
+            T=T+INT(IPT)*C(JJA)
+            IPT=IPT-NKLOFF
+  431    JJA=JJA+1
+         S(IIA)=S(IIA)+T*VAL1
+         IIA=IIA+1
+  432 CONTINUE
+      RETURN
+C
+C     ----- WY ISEG=15 -----
+C
+  600 CONTINUE
+      IWY15=IWY15+1
+      A=VAL1
+      B=VAL1
+      INTAL=1
+      INTB=3
+      GO TO 632
+C
+C     ----- WY ISEG=17 -----
+C
+  630 CONTINUE
+      IWY17=IWY17+1
+      A=VAL1
+      B=0.0
+      INTAL=3
+      INTB=3
+  632 CONTINUE
+C
+C     ----- SPECIAL LOOP FOR D.O.--S.O. INTERACTIONS -----
+C
+      IF (IS.NE.0) GO TO 620
+      NUMI=NUMSYM(JS+1)
+      IF (NUMI.LT.1) RETURN
+      CALL HS(H1,JS,NUMI,int,ijadd,kadd,ladd,h2)
+      ISKIP=1
+      IAS=IA+WAB(MN(JS+1))
+      JAS=JA
+      DO 631 I=1,NUMI
+         S(IAS)=S(IAS)+H1(I)*C(JAS)
+         S(JAS)=S(JAS)+H1(I)*C(IAS)
+         JAS=JAS+1
+         ISKIP=ISKIP+1
+         IAS=IAS+ISKIP
+  631 CONTINUE
+      GO TO 620
+C
+C     ----- WY ISEG=21 -----
+C
+  670 CONTINUE
+      IWY21=IWY21+1
+      A=VAL1
+      B=VAL1*VAL2
+      INTAL=TR1
+      INTB=TR2
+  620 CONTINUE
+      IF (JS.NE.0) GO TO 610
+      IF (IS.NE.0) GO TO 602
+C
+C     ----- IS.EQ.0, JS.EQ.0 -----
+C
+      NUMI=NUMSYM(1)
+      IF (NUMI.LT.1) RETURN
+      CALL HI    (H1,0,NUMI,int,ijadd,kadd,ladd,h2)
+      CALL SQUARW(C(IA),CI,NUMI)
+      CALL APBC  (S(JA),H1,CI,1,NUMI,NUMI)
+      CALL EBC   (SI,H1,C(JA),NUMI,1,NUMI)
+      CALL FOLDW (S(IA),SI,NUMI)
+      RETURN
+C
+C     ----- IS.NE.0, JS.EQ.0 -----
+C
+  602 CONTINUE
+      NUMI=NUMSYM(IS+1)
+      IF (NUMI.LT.1) RETURN
+      NUMJ=NUMSYM(1)
+      IF (NUMJ.LT.1) RETURN
+      IAS=IA+WTW(MN(IS+1),IS+1)
+      CALL HI    (H1,IS,NUMI,int,ijadd,kadd,ladd,h2)
+      CALL APBCT (S(JA),H1,C(IAS),1,NUMI,NUMJ)
+C     CALL APBTCT(S(IAS),C(JA),H1,NUMJ,1,NUMI)
+      CALL ATPBC(S(IAS),H1,C(JA),NUMI,1,NUMJ)
+      RETURN
+C
+C     ----- JS.NE.0 -----
+C
+  610 CONTINUE
+      IF (IS.NE.0) GO TO 611
+C
+C     ----- IS.EQ.0, JS.NE.0 -----
+C
+      NUMI=NUMSYM(JS+1)
+      IF (NUMI.LT.1) RETURN
+      IAS=IA+WAB(MN(JS+1))
+      CALL HI    (H1,JS,NUMI,int,ijadd,kadd,ladd,h2)
+      CALL SQUARW(C(IAS),CI,NUMI)
+      CALL APBC  (S(JA),H1,CI,1,NUMI,NUMI)
+      CALL EBC   (SI,H1,C(JA),NUMI,1,NUMI)
+      CALL FOLDW (S(IAS),SI,NUMI)
+      RETURN
+C
+C     ----- IS.NE.0, JS.NE.0 -----
+C
+  611 CONTINUE
+      ISYM=IEOR(IS,JS)
+      NUMJ=NUMSYM(JS+1)
+      IF (NUMJ.LT.1) RETURN
+      NUMI=NUMSYM(ISYM+1)
+      IF (NUMI.LT.1) RETURN
+      IF (ISYM.LT.JS) GO TO 612
+      IAS=IA+WTW(MN(ISYM+1),IS+1)
+      CALL HI    (H1,ISYM,NUMI,int,ijadd,kadd,ladd,h2)
+      CALL APBCT (S(JA),H1,C(IAS),1,NUMI,NUMJ)
+C     CALL APBTCT(S(IAS),C(JA),H1,NUMJ,1,NUMI)
+      CALL ATPBC(S(IAS),H1,C(JA),NUMI,1,NUMJ)
+      RETURN
+  612 CONTINUE
+      IAS=IA+WTW(MN(JS+1),IS+1)
+      CALL HI    (H1,ISYM,NUMI,int,ijadd,kadd,ladd,h2)
+      CALL APBC  (S(JA),H1,C(IAS),1,NUMI,NUMJ)
+      CALL APBC  (S(IAS),H1,C(JA),NUMI,1,NUMJ)
+      RETURN
+C
+      END
